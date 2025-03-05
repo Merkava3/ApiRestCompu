@@ -1,6 +1,6 @@
 from api.app import create_app
 
-from config import config
+from api.config import config
 
 environment = config['development']
 app = create_app(environment)

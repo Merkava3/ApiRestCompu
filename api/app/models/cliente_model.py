@@ -7,7 +7,9 @@ class Cliente(db.Model):
     cedula = Column(String(16), nullable=False, unique=True)
     nombre_cliente = Column(String(255), nullable=False)
     direccion = Column(Text, nullable=False)
-    telefono_cliente = Column(String(50))
+    telefono_cliente = Column(String(50), nullable=False)
+
+    dispositivos = db.relationship('Dispositivo', back_populates='cliente', cascade="all, delete-orphan")
 
     @staticmethod
     def get_cliente(cedula):

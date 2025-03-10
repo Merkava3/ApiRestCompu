@@ -7,7 +7,7 @@ class Help:
         return str(numero)
 
     @staticmethod
-    def add_id_cliente(objeto: any, atributo: str) -> any:
+    def generator_id(objeto: any, atributo: str) -> any:
 
         """Asigna un ID generado al atributo especificado de un objeto.
 

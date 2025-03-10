@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from ..models.cliente_model import Cliente
-from ..helpers.response import response, badRequest, notFound, badEquals, delete, successfully, update
+from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
@@ -42,7 +42,7 @@ def post_client():
         return badEquals()
     else:
         device = Cliente.new(json)
-        device = Help.add_id_cliente(device, ID_CLIENTE)        
+        device = Help.generator_id(device, ID_CLIENTE)        
         if device.save():
             return response(api_cliente.dump(device))
     return badRequest()  

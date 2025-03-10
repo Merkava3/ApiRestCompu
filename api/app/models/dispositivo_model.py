@@ -18,10 +18,15 @@ class Dispositivo(db.Model):
     # Relación con la tabla de clientes (si existe)
     cliente = db.relationship('Cliente', back_populates='dispositivos')
 
+
     # Métodos de la clase
     @staticmethod
     def get_dispositivo(numero_serie):  # Método estático para obtener un dispositivo por su número de serie
         return Dispositivo.query.filter_by(numero_serie=numero_serie).first()
+    
+    @staticmethod
+    def get_id_dispositivo(id_dispositivo):
+        return Dispositivo.query.filter_by(id_dispositivo =id_dispositivo).first()
 
     @classmethod
     def new(cls, kwargs):  # Convierte un diccionario en un objeto Dispositivo

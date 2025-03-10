@@ -9,8 +9,6 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:Dimichev3.@localhost:5432/tecnoexpress'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-
-
 class TestConfig(Config):
     DEBUG = False  
     TESTING = True  # Activa el modo de pruebas en Flask

@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
+from .cliente_model import Cliente
 from . import db
 
 class Dispositivo(db.Model):
@@ -12,12 +13,11 @@ class Dispositivo(db.Model):
     marca = db.Column(db.String(255), nullable=False)
     modelo = db.Column(db.String(255), nullable=False)
     reporte = db.Column(db.Text, nullable=False)
-    numero_serie = db.Column(db.String(255), nullable=False, unique=True)
+    numero_serie = db.Column(db.String(255), nullable=False)
     fecha_ingreso = db.Column(db.TIMESTAMP, default=datetime.utcnow, nullable=False)
 
     # Relación con la tabla de clientes (si existe)
     cliente = db.relationship('Cliente', back_populates='dispositivos')
-
 
     # Métodos de la clase
     @staticmethod
@@ -31,11 +31,48 @@ class Dispositivo(db.Model):
     @classmethod
     def new(cls, kwargs):  # Convierte un diccionario en un objeto Dispositivo
         return Dispositivo(**kwargs)
-
+        
+    def get_dispositivos_con_clientes():
+        """
+        Retorna dispositivos con clientes usando una tupla de campos.
+        """
+        return db.session.query(
+            Dispositivo.fecha_ingreso,
+            Dispositivo.tipo,
+            Dispositivo.modelo,
+            Dispositivo.marca,
+            Dispositivo.reporte,
+            Dispositivo.numero_serie,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente
+        ).join(Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente).all()
+    
     @staticmethod
-    def get_all():
-        """Obtiene todos los dispositivos almacenados en la base de datos."""
-        return Dispositivo.query.all()
+    def get_dispositivo_filter(cedula=None, numero_serie=None):
+        """
+        Obtiene dispositivos filtrando por cédula o número de serie.
+        Si ambos valores son None, devuelve todos los dispositivos con clientes.
+        """
+        query = db.session.query(
+            Dispositivo.fecha_ingreso,
+            Dispositivo.tipo,
+            Dispositivo.modelo,
+            Dispositivo.marca,
+            Dispositivo.reporte,
+            Dispositivo.numero_serie,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente 
+        ).join(Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente)
+        if cedula:
+            query = query.filter(Cliente.cedula == cedula)            
+        if numero_serie:
+            query = query.filter(Dispositivo.numero_serie == numero_serie)       
+        return query.first()
+        
 
     def save(self):
         try:

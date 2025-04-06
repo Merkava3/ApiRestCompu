@@ -18,6 +18,8 @@ class Dispositivo(db.Model):
 
     # Relación con la tabla de clientes (si existe)
     cliente = db.relationship('Cliente', back_populates='dispositivos')
+    reparaciones = db.relationship('Reparaciones', back_populates='dispositivo', cascade="all, delete-orphan")
+    servicios = db.relationship('Servicios', back_populates='dispositivos', cascade="all, delete-orphan")
 
     # Métodos de la clase
     @staticmethod

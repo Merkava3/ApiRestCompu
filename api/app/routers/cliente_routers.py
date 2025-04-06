@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from ..models.cliente_model import Cliente
 from ..helpers.response import *
 from ..database.schemas import *

@@ -65,7 +65,7 @@ def delete_dispositivo(dispositivo):
 
 @dispositivo_routes.route('/dispositivo', methods=['PUT'])
 @set_dispositivo_by()
-def update_client(dispositivo):
+def update_dispositivo(dispositivo):
     json = request.get_json(force=True)
     for key, value in json.items():
         setattr(dispositivo, key, value)

@@ -61,7 +61,7 @@ ID_FACTURA = 'id_factura'
 ID_COMPRA = 'id_compra'
 
 # --- procedimientos almacenados factura ---
-INSERTAR_FACTURA = "SELECT InsertarFactura(:p_cedula, :p_pago, :p_id_usuario, :p_productos)"
+INSERTAR_FACTURA = "SELECT InsertarFactura(:p_cedula, :p_pago, :p_id_usuario, :p_productos: p_nombre_cliente, :p_direccion, :p_telefono_cliente)"
 COLUMN_LIST_FACTURA = ["cedula", "pago", "id_usuario", "productos", "nombre_cliente", "direccion", "telefono_cliente"]
 
 # --- procedimientos almacenados compra ---

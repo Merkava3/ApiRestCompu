@@ -39,6 +39,16 @@ def post_inventario():
         return response(api_inventario.dump(inventario))
     return badRequest()
 
+@inventario_routes.route('/inventarioproducto', methods=['POST'])
+def post_inventario_producto():   
+    data = request.get_json(force=True)    
+    if not data:
+        return badRequest(ERROR)        
+    if Inventario.insertar_inventario_producto(data):
+        return response(SUCCESSFUL)        
+    return badEquals()
+   
+
 @inventario_routes.route('/inventario', methods=['GET'])
 @set_inventario_by()
 def get_inventario(inventario):   

@@ -68,6 +68,12 @@ COLUMN_LIST_FACTURA = ["cedula", "pago", "id_usuario", "productos", "nombre_clie
 INSERTAR_COMPRA = "SELECT InsertarCompra(:p_email_usuario, :p_nit, :p_nombre_proveedor, :p_informacion_contacto, :p_metodo_pago, :p_productos)"
 COLUMN_LIST_COMPRA = ["email_usuario", "nit", "nombre_proveedor", "informacion_contacto", "metodo_pago", "productos"]
 
+# --- procedimientos almacenados inventario ---
+#SELECT transferir_stock_json('[{"id_producto": 934924, "cantidad": 2}]'::json);
+
+INSERTAR_INVENTARIO = "SELECT  transferir_stock_json (:p_productos, :p_cantidad)"
+COLUMN_LIST_INVENTARIO = ["productos", "cantidad"]
+
 # ---- const successful ----
 
 SUCCESSFUL = {"mensaje": "Factura creada exitosamente"}

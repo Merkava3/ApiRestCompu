@@ -65,6 +65,25 @@ class Help:
             extracted_data[f"p_{column}"] = value
 
         return extracted_data
+    
+    @staticmethod
+    def extract_params_inventario(data, column_list):
+        """
+        Extrae los valores de un diccionario según una lista de claves.
+        Convierte listas o diccionarios en JSON si es necesario.
+        """
+        extracted_data = {}
+        
+        for column in column_list:
+            value = data.get(column)
+            
+            # Asegurar que productos se almacene como JSON correctamente
+            if column == "productos" and isinstance(value, list):
+                value = json.dumps(value, ensure_ascii=False)  # Convertir lista a JSON
+            
+            extracted_data[f"p_{column}"] = value
+        
+        return extracted_data
         
        
 

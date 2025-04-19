@@ -2,6 +2,9 @@ from . import db
 from datetime import datetime
 from  .producto_model import Productos
 from .prooveedor_model  import Proveedor
+from  ..helpers.const import INSERTAR_INVENTARIO, COLUMN_LIST_INVENTARIO
+from ..helpers.helpers import Help
+from sqlalchemy import text
 
 class Inventario(db.Model):
     __tablename__ = 'inventario'
@@ -76,6 +79,19 @@ class Inventario(db.Model):
         .filter(Productos.id_producto == id_producto) \
         .order_by(Inventario.ultima_actualizacion.desc()) \
         .all()
+    
+    @classmethod
+    def insertar_inventario_producto(cls, data):
+        """Llama al procedimiento almacenado usando extract_params para limpiar el código."""
+        try:           
+            query_params = Help.extract_params_inventario(data, COLUMN_LIST_INVENTARIO)            
+            query = text(INSERTAR_INVENTARIO)
+            db.session.execute(query, query_params)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al insertar inventario: {e}")  # Para depuración
 
     
  

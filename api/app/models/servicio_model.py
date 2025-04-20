@@ -3,6 +3,10 @@ from . import db
 from .dispositivo_model import Dispositivo
 from .cliente_model import Cliente
 from .usuario_model import Usuario
+from ..helpers.helpers import Help
+from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO
+from sqlalchemy import text
+
 
 class Servicios(db.Model):
     __tablename__ = 'servicios'  # Nombre de la tabla
@@ -108,3 +112,18 @@ class Servicios(db.Model):
             query = query.filter(Servicios.id_servicio == id_servicio)
         resultado = query.first()
         return resultado
+    
+    @staticmethod
+    def insertar_servicio(data):
+        """
+        Llama al procedimiento almacenado usando extract_params para limpiar el código.
+        """
+        try:           
+            query_params = Help.extract_params_servicio(data, COLUMN_LIST_SERVICIO)            
+            query = text(INSERTAR_SERVICIO)
+            db.session.execute(query, query_params)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al insertar servicio: {e}")

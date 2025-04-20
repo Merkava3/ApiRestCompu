@@ -61,3 +61,12 @@ def delete_servicio(servicio):
     if servicio.delete():
         return delete()
     return badRequest()
+
+@servicios_routes.route('/servicio/cliente', methods=['POST'])
+def post_servicio_cliente():
+    data = request.get_json(force=True)    
+    if not data:
+        return badRequest(ERROR)        
+    if Servicios.insertar_servicio(data):
+        return response(SUCCESSFUL)        
+    return badEquals()

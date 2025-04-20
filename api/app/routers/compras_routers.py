@@ -22,10 +22,6 @@ def set_compras_by():
         return wrap
     return decorator
 
-
-
-
-
 @compras_routes.route('/compras', methods=['POST'])
 def post_compras():
     data = request.get_json(force=True)    

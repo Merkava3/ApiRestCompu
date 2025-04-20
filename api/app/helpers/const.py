@@ -77,7 +77,26 @@ INSERTAR_CLIENTE_DISPOSITIVO = "SELECT  InsertarClienteYDispositivo(:p_cedula, :
 COLUMN_LIST_CLIENTE_DISPOSITIVO = ["cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo", "marca", "modelo", "reporte", "numero_serie"]
 
 # --- procedimientos almacenados servicio---
-INSERTAR_SERVICIO = " SELECT * FROM InsertarClienteYRelacionados (:p_cedula_cliente,  p_nombre_cliente, :p_direccion_cliente, :p_telefono_cliente, :p_tipo_dispositivo, :p_tipo_dispositivo, :p_marca_dispositivo, :p_modelo_dispositivo, :p_reporte_dispositivo, :p_numero_serie_dispositivo, : p_tipo_servicio, :p_descripcion_servicio, :p_fecha_servicio, :p_pago_servicio, :p_precio_servicio, :p_correo_usuario)"
+INSERTAR_SERVICIO = """
+    SELECT * FROM InsertarClienteYRelacionados(
+        :p_cedula_cliente,
+        :p_nombre_cliente,
+        :p_direccion_cliente,
+        :p_telefono_cliente,
+        :p_tipo_dispositivo,
+        :p_marca_dispositivo,
+        :p_modelo_dispositivo,
+        :p_reporte_dispositivo,
+        :p_numero_serie_dispositivo,
+        :p_tipo_servicio,
+        :p_descripcion_servicio,
+        :p_fecha_servicio,
+        :p_pago_servicio,
+        :p_precio_servicio,
+        :p_correo_usuario
+    )
+"""
+
 COLUMN_LIST_SERVICIO = ["cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
 
 # ---- const successful ----

@@ -1,6 +1,9 @@
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from .cliente_model import Cliente
+from sqlalchemy import text
+from ..helpers.helpers import Help
+from ..helpers.const import INSERTAR_CLIENTE_DISPOSITIVO, COLUMN_LIST_CLIENTE_DISPOSITIVO
 from . import db
 
 class Dispositivo(db.Model):
@@ -98,3 +101,16 @@ class Dispositivo(db.Model):
 
     def __str__(self):
         return self.numero_serie  # Representación en string del objeto
+    
+    @classmethod
+    def insertar_dispositivo(cls, data):
+        """Llama al procedimiento almacenado usando extract_params para limpiar el código."""
+        try:           
+            query_params = Help.extract_params_cliente_dispositivo(data, COLUMN_LIST_CLIENTE_DISPOSITIVO)            
+            query = text(INSERTAR_CLIENTE_DISPOSITIVO)
+            db.session.execute(query, query_params)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al insertar dispositivo: {e}")

@@ -72,3 +72,13 @@ def update_dispositivo(dispositivo):
     if dispositivo.save():
         return update(api_dispositivo.dump(dispositivo))
     return badRequest()
+
+@dispositivo_routes.route('/dispositivo/cliente', methods=['POST'])
+def post_cliente_dispositivo():
+    data = request.get_json(force=True)    
+    if not data:
+        return badRequest(ERROR) 
+       
+    if Dispositivo.insertar_dispositivo(data):
+        return response(SUCCESSFUL)        
+    return badEquals()

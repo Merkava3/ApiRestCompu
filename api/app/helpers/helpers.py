@@ -84,7 +84,25 @@ class Help:
             extracted_data[f"p_{column}"] = value
         
         return extracted_data
-        
+    
+    @staticmethod
+    def extract_params_cliente_dispositivo(data, column_list):
+        """
+        Extrae los valores de un diccionario según una lista de claves.
+        Convierte listas o diccionarios en JSON si es necesario.
+        """
+        extracted_data = {}
+
+        for column in column_list:
+            value = data.get(column)
+
+            # Si es una lista o diccionario, convertirlo a JSON
+            if isinstance(value, (list, dict)):
+                value = json.dumps(value, ensure_ascii=False)
+
+            extracted_data[f"p_{column}"] = value
+
+        return extracted_data
        
 
                 

@@ -72,6 +72,10 @@ COLUMN_LIST_COMPRA = ["email_usuario", "nit", "nombre_proveedor", "informacion_c
 INSERTAR_INVENTARIO = "SELECT transferir_stock_json (:p_productos)"
 COLUMN_LIST_INVENTARIO = ["productos"]
 
+# --- procedimientos almacenados clientes dispositivo ---
+INSERTAR_CLIENTE_DISPOSITIVO = "SELECT  InsertarClienteYDispositivo(:p_cedula, :p_nombre_cliente, :p_direccion, :p_telefono_cliente, :p_tipo, :p_marca, :p_modelo, :p_reporte, :p_numero_serie)"
+COLUMN_LIST_CLIENTE_DISPOSITIVO = ["cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo", "marca", "modelo", "reporte", "numero_serie"]
+
 # ---- const successful ----
 
 SUCCESSFUL = {"mensaje": "Factura creada exitosamente"}

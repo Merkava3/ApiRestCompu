@@ -34,6 +34,17 @@ class InventarioSchemas(Schema):
     class Meta:
         fields = CAMPOS_INVENTARIO
 
+class ServicioClientesSchemas(Schema):
+    cliente = serializacion.Nested(ClienteSchemas)
+    dispostivos = serializacion.Nested(Dispostivoschemas)
+    servicio = serializacion.Nested(ServiciosSchemas)
+    usuario = serializacion.Nested(UsuarioSchemas)
+    class Meta:
+        fields = columns_servicio_cliente 
+    
+    
+    
+
 # --- serialization cliente ----- 
 api_cliente  = ClienteSchemas()
 api_clientes = ClienteSchemas(many=True)
@@ -49,6 +60,7 @@ api_reparaciones = ReparacionesSchemas(many=True)
 # --- serialization servicios ---
 api_servicio = ServiciosSchemas()
 api_servicios = ServiciosSchemas(many=True)
+api_servicio_cliente = ServicioClientesSchemas(many=True)
 
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()

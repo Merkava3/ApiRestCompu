@@ -97,6 +97,24 @@ INSERTAR_SERVICIO = """
     )
 """
 
+columns_servicio_cliente = [
+    "cedula_cliente",
+    "nombre_cliente",
+    "direccion_cliente",
+    "telefono_cliente",
+    "tipo_dispositivo",
+    "marca_dispositivo",
+    "modelo_dispositivo",
+    "reporte_dispositivo",
+    "numero_serie_dispositivo",
+    "tipo_servicio",
+    "descripcion_servicio",
+    "fecha_servicio",
+    "pago_servicio",
+    "precio_servicio",
+    "correo_usuario"
+]
+
 COLUMN_LIST_SERVICIO = ["cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
 
 # ---- const successful ----

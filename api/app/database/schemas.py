@@ -60,7 +60,7 @@ api_reparaciones = ReparacionesSchemas(many=True)
 # --- serialization servicios ---
 api_servicio = ServiciosSchemas()
 api_servicios = ServiciosSchemas(many=True)
-api_servicio_cliente = ServicioClientesSchemas()
+api_servicio_cliente = ServicioClientesSchemas(many=True)
 
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()

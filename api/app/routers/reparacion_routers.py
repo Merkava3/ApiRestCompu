@@ -14,7 +14,9 @@ def set_reparacion_by():
             id_reparacion = json.get(ID_REPARACION)
             numero_serie = json.get(NUMERO_SERIE)
             cedula_cliente = json.get(CEDULA_CLIENT)
-            reparacion = Reparaciones.get_reparacion(id_reparacion)            
+            reparacion = Reparaciones.get_reparacion(id_reparacion)
+            if not reparacion:
+                reparacion = Reparaciones.get_reparaciones_filter(cedula=cedula_cliente, numero_serie=numero_serie)           
             if not reparacion:
                 return notFound()
             return function(reparacion, *args, **kwargs)
@@ -52,3 +54,9 @@ def delete_reparacion(reparacion):
     if reparacion.delete():
         return delete()
     return badRequest()
+
+@reparacion_routes.route('/consulta/reparacion', methods=['GET'])
+@set_reparacion_by()
+def get_reparacion_cliente(reparacion):
+    return successfully(api_reparaciones.dump(reparacion))
+    

@@ -58,5 +58,5 @@ def delete_reparacion(reparacion):
 @reparacion_routes.route('/consulta/reparacion', methods=['GET'])
 @set_reparacion_by()
 def get_reparacion_cliente(reparacion):
-    return successfully(api_servicio_cliente.dump(reparacion))
+    return successfully(api_servicio_cliente.dump([reparacion]))
     

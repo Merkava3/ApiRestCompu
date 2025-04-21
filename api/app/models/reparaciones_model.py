@@ -64,11 +64,11 @@ class Reparaciones(db.Model):
         ).join(Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo) \
          .join(Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente).all()
     
-    @classmethod
+    @staticmethod
     def get_reparaciones_filter(cedula=None, numero_serie=None, id_reparacion=None):
         """
         Obtiene reparaciones filtrando por cédula, número de serie o ID de reparación.
-        Si todos los valores son None, devuelve todas las reparaciones con clientes y dispositivos.
+        Si todos los valores son None, devuelve None.
         """
         query = db.session.query(
             Reparaciones.id_reparacion,
@@ -83,14 +83,16 @@ class Reparaciones(db.Model):
             Reparaciones.estado,
             Dispositivo.fecha_ingreso,
             Reparaciones.fecha_entrega
-        ).join(Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
-        ).join(Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente)
-
-        if cedula:
+        ).join(
+            Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
+        ).join(
+            Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente
+        )        
+        if cedula is not None:
             query = query.filter(Cliente.cedula == cedula)
-        if numero_serie:
+        if numero_serie is not None:
             query = query.filter(Dispositivo.numero_serie == numero_serie)
-        if id_reparacion:
+        if id_reparacion is not None:
             query = query.filter(Reparaciones.id_reparacion == id_reparacion)
 
-        return query.first()            
+        return query.first()

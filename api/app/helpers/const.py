@@ -98,21 +98,18 @@ INSERTAR_SERVICIO = """
 """
 
 columns_servicio_cliente = [
-    "cedula_cliente",
+    "id_reparacion",
+    "dispositivo_id_reparacion",
+    "cedula",
     "nombre_cliente",
-    "direccion_cliente",
-    "telefono_cliente",
-    "tipo_dispositivo",
-    "marca_dispositivo",
-    "modelo_dispositivo",
-    "reporte_dispositivo",
-    "numero_serie_dispositivo",
-    "tipo_servicio",
-    "descripcion_servicio",
-    "fecha_servicio",
-    "pago_servicio",
-    "precio_servicio",
-    "correo_usuario"
+    "precio_reparacion",
+    "tipo",
+    "marca",
+    "modelo",
+    "numero_serie",
+    "estado",
+    "fecha_ingreso",
+    "fecha_entrega"
 ]
 
 COLUMN_LIST_SERVICIO = ["cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]

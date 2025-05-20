@@ -92,3 +92,25 @@ def auth_usuario(usuario):
     if usuario.save():
         return update(api_usuario.dump(usuario))      
     return badRequest()
+
+@usuario_routes.route('/usuario/login', methods=['POST'])
+def login_usuario():
+    json = request.get_json(force=True)
+
+    email_usuario = json.get("email_usuario")  # Corrige el nombre del campo
+    password = json.get("password")
+
+    if not email_usuario or not password:
+        return badRequest("Email y contraseña son obligatorios")
+
+    usuario = Usuario.get_user(email_usuario)
+    if not usuario:
+        return unauthorized("Correo o contraseña incorrectos")
+
+    if not usuario.check_password(password):
+        return unauthorized("Correo o contraseña incorrectos")
+
+    return successfully({
+        "mensaje": "Inicio de sesión exitoso",
+        "usuario": api_usuario.dump(usuario)
+    })

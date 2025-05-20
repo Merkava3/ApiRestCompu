@@ -17,6 +17,12 @@ def notFound():
         'code': 404
         }), 404
 
+def unauthorized(message="No autorizado"):
+    return jsonify({
+        "status": "error",
+        "message": message
+    }), 401
+
 def badEquals():
     return jsonify({
         'sucess': False,

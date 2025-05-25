@@ -97,7 +97,7 @@ def auth_usuario(usuario):
 def login_usuario():
     json = request.get_json(force=True)
 
-    email_usuario = json.get("email_usuario")  # Corrige el nombre del campo
+    email_usuario = json.get("email_usuario")
     password = json.get("password")
 
     if not email_usuario or not password:
@@ -110,7 +110,12 @@ def login_usuario():
     if not usuario.check_password(password):
         return unauthorized("Correo o contraseña incorrectos")
 
+    # Generar token de autenticación
+    token = usuario.generate_auth_token()
+    usuario.save()
+
     return successfully({
         "mensaje": "Inicio de sesión exitoso",
+        "token": token,
         "usuario": api_usuario.dump(usuario)
     })

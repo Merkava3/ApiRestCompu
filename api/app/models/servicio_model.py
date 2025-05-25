@@ -10,7 +10,6 @@ from sqlalchemy import text
 
 class Servicios(db.Model):
     __tablename__ = 'servicios'  # Nombre de la tabla
-
     id_servicio = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     cliente_id_servicio = db.Column(db.BigInteger, db.ForeignKey('clientes.id_cliente'), nullable=False)
     dispositivos_id_servicio = db.Column(db.BigInteger, db.ForeignKey('dispositivos.id_dispositivo'), nullable=False)

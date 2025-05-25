@@ -1,26 +1,48 @@
 from . import db
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime,timedelta
 from sqlalchemy.exc import IntegrityError
 from flask_bcrypt import Bcrypt
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Boolean
+import secrets
 
-bcrypt = Bcrypt()  # Inicializa Bcrypt
+bcrypt = Bcrypt()
 
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
+    
     id_usuario = Column(Integer, primary_key=True, autoincrement=True)
     nombre_usuario = Column(String(255), nullable=False)
     email_usuario = Column(Text, nullable=False, unique=True)
     password = Column(String(255), nullable=False)
     autenticado = Column(Boolean, default=False)
     ultima_autenticacion = Column(TIMESTAMP, default=datetime.utcnow, nullable=True)
+    token = Column(String(255), unique=True, nullable=True)
+    token_expiration = Column(TIMESTAMP, nullable=True)
 
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")
     facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
 
+    def generate_auth_token(self, expires_in=3600):
+        self.token = secrets.token_urlsafe(32)
+        self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
+        self.autenticado = True
+        self.ultima_autenticacion = datetime.utcnow()
+        return self.token
+    
+    def revoke_token(self):
+        self.token = None
+        self.token_expiration = None
+        self.autenticado = False
+
+    @staticmethod
+    def check_token(token):
+        usuario = Usuario.query.filter_by(token=token).first()
+        if usuario is None or usuario.token_expiration < datetime.utcnow():
+            return None
+        return usuario
      
     def set_password(self, password):
         """Encripta la contraseña antes de almacenarla"""

@@ -5,9 +5,15 @@ from datetime import datetime,timedelta
 from sqlalchemy.exc import IntegrityError
 from flask_bcrypt import Bcrypt
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Boolean
-import secrets
+from dotenv import load_dotenv
+import jwt
+import os
+
+load_dotenv()
 
 bcrypt = Bcrypt()
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'D5*F?_1?-d$f*1')
+JWT_ALGORITHM = "HS256" # Algoritmo de encriptación
 
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
@@ -24,25 +30,56 @@ class Usuario(db.Model):
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")
     facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
-
+    
     def generate_auth_token(self, expires_in=3600):
-        self.token = secrets.token_urlsafe(32)
+        """Genera un JWT token con los datos del usuario"""
+        token_payload = {
+            'sub': self.id_usuario,
+            'name': self.nombre_usuario,
+            'email': self.email_usuario,
+            'iat': datetime.utcnow(),
+            'exp': datetime.utcnow() + timedelta(seconds=expires_in),
+            'aud': 'your-app-name'  # Opcional: identifica tu aplicación
+        }
+        
+        self.token = jwt.encode(
+            token_payload,
+            os.getenv('JWT_KEY'),
+            algorithm='HS256'
+        )
         self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
         self.autenticado = True
         self.ultima_autenticacion = datetime.utcnow()
         return self.token
     
     def revoke_token(self):
+        """Invalida el token actual del usuario"""
         self.token = None
         self.token_expiration = None
         self.autenticado = False
 
     @staticmethod
     def check_token(token):
-        usuario = Usuario.query.filter_by(token=token).first()
-        if usuario is None or usuario.token_expiration < datetime.utcnow():
+        """Verifica un token JWT y devuelve el usuario si es válido"""
+        try:
+            if not token:
+                return None
+                
+            payload = jwt.decode(
+                token,
+                os.getenv('JWT_KEY'),
+                algorithms=['HS256'],
+                options={'verify_aud': False}  # Si no usas 'aud' en el payload
+            )
+            
+            usuario = Usuario.query.get(payload['sub'])
+            if not usuario or usuario.token != token:
+                return None
+                
+            return usuario
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
+            print(f"Error de token: {str(e)}")
             return None
-        return usuario
      
     def set_password(self, password):
         """Encripta la contraseña antes de almacenarla"""

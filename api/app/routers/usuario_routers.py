@@ -5,6 +5,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
+from ..helpers.auth_decorator import token_required
 
 usuario_routes = Blueprint('usuarios_routes', __name__)
 
@@ -96,6 +97,9 @@ def auth_usuario(usuario):
 @usuario_routes.route('/usuario/login', methods=['POST'])
 def login_usuario():
     json = request.get_json(force=True)
+    
+    if not json:
+        return badRequest("Datos de autenticación requeridos")
 
     email_usuario = json.get("email_usuario")
     password = json.get("password")
@@ -105,17 +109,34 @@ def login_usuario():
 
     usuario = Usuario.get_user(email_usuario)
     if not usuario:
-        return unauthorized("Correo o contraseña incorrectos")
+        return unauthorized("Credenciales incorrectas")
 
     if not usuario.check_password(password):
-        return unauthorized("Correo o contraseña incorrectos")
+        return unauthorized("Credenciales incorrectas")
 
-    # Generar token de autenticación
-    token = usuario.generate_auth_token()
-    usuario.save()
+    try:
+        token = usuario.generate_auth_token()
+        if usuario.save():
+            return successfully({
+                "mensaje": "Inicio de sesión exitoso",
+                "token": token,
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "usuario": api_usuario.dump(usuario)
+            })
+        return badRequest("Error al guardar el token")
+    except Exception as e:
+        return serverError(f"Error en el servidor: {str(e)}")
+    
+@usuario_routes.route('/usuario/logout', methods=['POST'])
+@token_required
+def logout_usuario(usuario):
+    usuario.revoke_token()
+    if usuario.save():
+        return successfully({"mensaje": "Sesión cerrada correctamente"})
+    return badRequest("Error al cerrar sesión")
 
-    return successfully({
-        "mensaje": "Inicio de sesión exitoso",
-        "token": token,
-        "usuario": api_usuario.dump(usuario)
-    })
+@usuario_routes.route('/usuario/me', methods=['GET'])
+@token_required
+def get_current_user(usuario):
+    return successfully(api_usuario.dump(usuario))

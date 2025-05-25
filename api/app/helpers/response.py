@@ -61,3 +61,10 @@ def update(data):
         'message': 'Registro Actualizado',        
         'code': 200        
     }), 200
+
+def serverError(message="Error interno del servidor"):
+    return jsonify({
+        "success": False,
+        "code": 500,
+        "message": message
+    }), 500

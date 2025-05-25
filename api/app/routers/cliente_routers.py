@@ -4,6 +4,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
+from ..helpers.auth_decorator import token_required
 
 cliente_routes = Blueprint('cliente_routes', __name__)
 
@@ -25,6 +26,7 @@ def set_client_by(field):
     return decorator
 
 @cliente_routes.route('/clientes', methods=['GET'])
+@token_required
 def get_clients():
     clientes = Cliente.query.all()   
     return successfully(api_clientes.dump(clientes))

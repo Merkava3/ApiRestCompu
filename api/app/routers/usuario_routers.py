@@ -41,27 +41,42 @@ def post_user():
     if usuario_exist:
         return badEquals()
 
-    # Validar que la contraseña esté presente
-    password = json.get("password")
-    if not password:
-        return badRequest("El campo 'password' es obligatorio")
+    # Validar campos obligatorios
+    required_fields = ["nombre_usuario", "email_usuario", "password"]
+    for field in required_fields:
+        if not json.get(field):
+            return badRequest(f"El campo '{field}' es obligatorio")
 
-    # Crear usuario sin incluir la contraseña en el constructor
-    user = Usuario.new(
-        nombre_usuario=json.get("nombre_usuario"),
-        email_usuario=json.get("email_usuario")
-    )
-
-    # Encriptar la contraseña antes de guardarla
-    user.set_password(password)
-
-    # Generar ID si es necesario
-    user = Help.generator_id(user, ID_USUARIO)
-
-    # Guardar el usuario en la base de datos
-    if user.save():
-        return response(api_usuario.dump(user))
-    return badRequest()
+    try:
+        # Crear nuevo usuario
+        user = Usuario.new(
+            nombre_usuario=json.get("nombre_usuario"),
+            email_usuario=json.get("email_usuario")
+        )
+        
+        # Encriptar contraseña
+        user.set_password(json.get("password"))
+        
+        # Generar ID si es necesario
+        user = Help.generator_id(user, ID_USUARIO)
+        
+        # Generar token JWT inmediatamente
+        token = user.generate_auth_token()
+        
+        # Guardar usuario en la base de datos
+        if user.save():
+            return successfully({
+                "mensaje": "Usuario registrado y autenticado exitosamente",
+                "token": token,
+                "expires_in": 3600,  # 1 hora
+                "token_type": "Bearer",
+                "usuario": api_usuario.dump(user)
+            }, 201)  # Código 201 para creación exitosa
+        
+        return badRequest("Error al guardar el usuario")
+        
+    except Exception as e:
+        return serverError(f"Error en el servidor: {str(e)}")
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()
@@ -96,18 +111,19 @@ def auth_usuario(usuario):
 
 @usuario_routes.route('/usuario/login', methods=['POST'])
 def login_usuario():
+    """Endpoint para login de usuarios existentes"""
     json = request.get_json(force=True)
     
     if not json:
         return badRequest("Datos de autenticación requeridos")
 
-    email_usuario = json.get("email_usuario")
+    email = json.get("email_usuario")
     password = json.get("password")
 
-    if not email_usuario or not password:
+    if not email or not password:
         return badRequest("Email y contraseña son obligatorios")
 
-    usuario = Usuario.get_user(email_usuario)
+    usuario = Usuario.get_user(email)
     if not usuario:
         return unauthorized("Credenciales incorrectas")
 
@@ -115,6 +131,7 @@ def login_usuario():
         return unauthorized("Credenciales incorrectas")
 
     try:
+        # Generar nuevo token al hacer login
         token = usuario.generate_auth_token()
         if usuario.save():
             return successfully({
@@ -131,6 +148,7 @@ def login_usuario():
 @usuario_routes.route('/usuario/logout', methods=['POST'])
 @token_required
 def logout_usuario(usuario):
+    """Endpoint para cerrar sesión"""
     usuario.revoke_token()
     if usuario.save():
         return successfully({"mensaje": "Sesión cerrada correctamente"})
@@ -139,4 +157,8 @@ def logout_usuario(usuario):
 @usuario_routes.route('/usuario/me', methods=['GET'])
 @token_required
 def get_current_user(usuario):
-    return successfully(api_usuario.dump(usuario))
+    """Endpoint protegido que devuelve datos del usuario actual"""
+    return successfully({
+        "usuario": api_usuario.dump(usuario),
+        "is_authenticated": usuario.autenticado
+    })

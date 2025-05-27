@@ -31,21 +31,40 @@ class Usuario(db.Model):
     facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
     
-    def generate_auth_token(self):
+    def generate_auth_token(self, expires_in=3600):
+        """Genera un token JWT y actualiza los campos en la base de datos"""
         try:
+            # 1. Crear payload del token
             payload = {
-                'sub': str(self.id_usuario),  # Asegurar string
+                'sub': str(self.id_usuario),  # Asegurar que es string
                 'email': str(self.email_usuario),
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(seconds=3600)
+                'exp': datetime.utcnow() + timedelta(seconds=expires_in)
             }
-            return jwt.encode(
+            
+            # 2. Generar el token JWT
+            token = jwt.encode(
                 payload,
-                os.getenv('JWT_SECRET_KEY', 'fallback-secret'),  # Asegurar que existe
+                os.getenv('JWT_SECRET_KEY', 'fallback-secret-key'),  # Clave segura
                 algorithm='HS256'
             )
+            
+            # 3. Asegurar que el token es un string (PyJWT puede devolver bytes)
+            if isinstance(token, bytes):
+                token = token.decode('utf-8')
+                
+            # 4. Actualizar los campos en el modelo
+            self.token = token
+            self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
+            self.autenticado = True
+            
+            # 5. Retornar el token generado
+            return token
+            
         except Exception as e:
-            raise ValueError(f"Error generando token: {str(e)}")
+            # Log detallado del error
+            print(f"Error generando token para usuario {self.id_usuario}: {str(e)}")
+            raise ValueError(f"No se pudo generar el token: {str(e)}")
     
     def revoke_token(self):
         """Invalida el token actual del usuario"""

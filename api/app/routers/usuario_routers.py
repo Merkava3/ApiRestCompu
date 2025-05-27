@@ -51,43 +51,62 @@ def post_user():
         if missing_fields:
             return badRequest(", ".join([required_fields[field] for field in missing_fields]))
 
+        # Normalización y limpieza
+        nombre = str(json["nombre_usuario"]).strip()
+        email = str(json["email_usuario"]).strip().lower()
+        password = str(json["password"]).strip()
+
         # Verificar si el usuario ya existe
-        if Usuario.get_user(json["email_usuario"]):
+        if Usuario.get_user(email):
             return badRequest("El email ya está registrado")
 
+        # Validar contraseña
+        if len(password) < 8:
+            return badRequest("La contraseña debe tener al menos 8 caracteres")
+
         # Crear nuevo usuario
-        user = Usuario.new(
-            nombre_usuario=str(json["nombre_usuario"]).strip(),
-            email_usuario=str(json["email_usuario"]).strip()
+        user = Usuario(
+            nombre_usuario=nombre,
+            email_usuario=email
         )
-        
-        # Validar y establecer contraseña
-        password = str(json["password"]).strip()
-        if len(password) < 4:
-            return badRequest("La contraseña debe tener al menos 4 caracteres")
         user.set_password(password)
 
-        # Generar ID
-        user = Help.generator_id(user, ID_USUARIO)
-        
-        # Generar token
-        token = user.generate_auth_token()
-        if not isinstance(token, str):
-            return serverError("Error generando token de autenticación")
+        # Generar ID (si es necesario, según tu implementación)
+        if hasattr(Help, 'generator_id'):
+            user = Help.generator_id(user, ID_USUARIO)
 
-        # Guardar usuario
-        if user.save():
-            return successfully({
+        # Generar token JWT (esto actualiza user.token y user.token_expiration automáticamente)
+        try:
+            token = user.generate_auth_token()
+            if not isinstance(token, str):
+                return serverError("Formato de token inválido")
+        except Exception as e:
+            return serverError(f"Error generando token: {str(e)}")
+
+        # Guardar usando el método save() existente
+        if not user.save():
+            return serverError("Error al guardar el usuario en la base de datos")
+
+        # Serializar datos del usuario
+        usuario_data = api_usuario.dump(user)
+        if not usuario_data:
+            return serverError("Error serializando datos del usuario")
+
+        # Respuesta exitosa
+        return jsonify({
+            "code": 201,
+            "success": True,
+            "message": "Usuario registrado exitosamente",
+            "data": {
                 "token": token,
                 "expires_in": 3600,
                 "token_type": "Bearer",
-                "usuario": api_usuario.dump(user)
-            }, "Usuario registrado exitosamente", 201)
-            
-        return badRequest("Error al guardar el usuario en la base de datos")
-        
+                "usuario": usuario_data
+            }
+        }), 201
+
     except Exception as e:
-        print(f"Error en registro de usuario: {str(e)}")
+        print(f"Error inesperado en registro: {str(e)}")
         return serverError("Error procesando la solicitud")
 
 @usuario_routes.route('/usuario', methods=['GET'])

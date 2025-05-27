@@ -6,6 +6,7 @@ from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
 from ..helpers.auth_decorator import token_required
+from flask import g
 
 usuario_routes = Blueprint('usuarios_routes', __name__)
 
@@ -36,58 +37,39 @@ def get_usuarios():
 def post_user():
     json = request.get_json(force=True)
 
-    # Verificar si el usuario ya existe
+    # Validaciones existentes...
     usuario_exist = Usuario.get_user(json.get(EMAIL_USUARIO))
     if usuario_exist:
         return badEquals()
 
-    # Validar campos obligatorios
     required_fields = ["nombre_usuario", "email_usuario", "password"]
     for field in required_fields:
         if not json.get(field):
             return badRequest(f"El campo '{field}' es obligatorio")
 
     try:
-        # Crear nuevo usuario
         user = Usuario.new(
             nombre_usuario=json.get("nombre_usuario"),
             email_usuario=json.get("email_usuario")
         )
-        
-        # Encriptar contraseña
         user.set_password(json.get("password"))
-        
-        # Generar ID si es necesario
         user = Help.generator_id(user, ID_USUARIO)
         
-        # Generar token JWT inmediatamente
+        # Generar token SOLO durante el registro
         token = user.generate_auth_token()
         
-        # Guardar usuario en la base de datos
         if user.save():
-            # Construir respuesta manualmente para evitar problemas con la función successfully()
-            response_data = {
-                "code": 201,
-                "success": True,
-                "message": "Usuario registrado y autenticado exitosamente",
-                "data": {
-                    "token": token,
-                    "expires_in": 3600,
-                    "token_type": "Bearer",
-                    "usuario": api_usuario.dump(user)
-                }
-            }
-            return response_data, 201
-        
+            return successfully({
+                "mensaje": "Usuario registrado exitosamente",
+                "token": token,  # Token generado durante registro
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "usuario": api_usuario.dump(user)
+            }, 201)
         return badRequest("Error al guardar el usuario")
-        
     except Exception as e:
-        error_response = {
-            "code": 500,
-            "success": False,
-            "message": f"Error en el servidor: {str(e)}"
-        }
-        return error_response, 500
+        return serverError(f"Error en el servidor: {str(e)}")
+
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()
@@ -122,7 +104,6 @@ def auth_usuario(usuario):
 
 @usuario_routes.route('/usuario/login', methods=['POST'])
 def login_usuario():
-    """Endpoint para login de usuarios existentes"""
     json = request.get_json(force=True)
     
     if not json:
@@ -142,20 +123,26 @@ def login_usuario():
         return unauthorized("Credenciales incorrectas")
 
     try:
-        # Generar nuevo token al hacer login
-        token = usuario.generate_auth_token()
+        # Verificar si el usuario tiene un token válido
+        if not usuario.token or not usuario.token_expiration or usuario.token_expiration < datetime.utcnow():
+            return unauthorized("No hay token válido. Contacte al administrador")
+        
+        # Actualizar última autenticación SIN generar nuevo token
+        usuario.ultima_autenticacion = datetime.utcnow()
+        usuario.autenticado = True
+        
         if usuario.save():
             return successfully({
                 "mensaje": "Inicio de sesión exitoso",
-                "token": token,
-                "expires_in": 3600,
+                "token": usuario.token,  # Usa el token existente
+                "expires_in": (usuario.token_expiration - datetime.utcnow()).total_seconds(),
                 "token_type": "Bearer",
                 "usuario": api_usuario.dump(usuario)
             })
-        return badRequest("Error al guardar el token")
+        return badRequest("Error al actualizar la autenticación")
     except Exception as e:
         return serverError(f"Error en el servidor: {str(e)}")
-    
+
 @usuario_routes.route('/usuario/logout', methods=['POST'])
 @token_required
 def logout_usuario(usuario):
@@ -173,3 +160,12 @@ def get_current_user(usuario):
         "usuario": api_usuario.dump(usuario),
         "is_authenticated": usuario.autenticado
     })
+
+@usuario_routes.route('/renovar-token', methods=['POST'])
+@token_required
+def renovar_token():
+    usuario = g.current_user
+    nuevo_token = usuario.generate_auth_token()
+    if usuario.save():
+        return successfully({"token": nuevo_token})
+    return badRequest("Error al renovar token")

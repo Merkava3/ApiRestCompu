@@ -32,24 +32,21 @@ class Usuario(db.Model):
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
     
     def generate_auth_token(self, expires_in=3600):
-        """Genera un JWT token con los datos del usuario"""
+        """Genera token SOLO durante el registro"""
         token_payload = {
             'sub': self.id_usuario,
-            'name': self.nombre_usuario,
             'email': self.email_usuario,
             'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + timedelta(seconds=expires_in),
-            'aud': 'your-app-name'  # Opcional: identifica tu aplicación
+            'exp': datetime.utcnow() + timedelta(seconds=expires_in)
         }
         
         self.token = jwt.encode(
             token_payload,
-            os.getenv('JWT_KEY'),
+            os.getenv('JWT_SECRET_KEY'),
             algorithm='HS256'
         )
         self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
         self.autenticado = True
-        self.ultima_autenticacion = datetime.utcnow()
         return self.token
     
     def revoke_token(self):
@@ -65,20 +62,29 @@ class Usuario(db.Model):
             if not token:
                 return None
                 
-            payload = jwt.decode(
-                token,
-                os.getenv('JWT_KEY'),
-                algorithms=['HS256'],
-                options={'verify_aud': False}  # Si no usas 'aud' en el payload
-            )
+            # Limpieza básica del token (por si hay espacios o caracteres raros)
+            clean_token = token.strip()
             
+            payload = jwt.decode(
+                clean_token,
+                os.getenv('JWT_SECRET_KEY', 'fallback-secret-key'),
+                algorithms=['HS256']
+            )
             usuario = Usuario.query.get(payload['sub'])
-            if not usuario or usuario.token != token:
-                return None
-                
-            return usuario
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as e:
-            print(f"Error de token: {str(e)}")
+            
+            # Verificación adicional de coincidencia de token
+            if usuario and usuario.token == clean_token:
+                return usuario
+            return None
+            
+        except jwt.ExpiredSignatureError:
+            print("Token expirado")
+            return None
+        except jwt.InvalidTokenError as e:
+            print(f"Token inválido: {str(e)}")
+            return None
+        except Exception as e:
+            print(f"Error verificando token: {str(e)}")
             return None
      
     def set_password(self, password):

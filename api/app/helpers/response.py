@@ -1,14 +1,12 @@
 from flask import jsonify
 
-def badRequest():
+def badRequest(message="Solicitud incorrecta"):
     return jsonify({
-        'sucess': False,
-        'data': {},
-        'mensaje': 'Falta un registro',
-        'code': 400
-        
+        "code": 400,
+        "success": False,
+        "message": message
     }), 400
-    
+
 def notFound():
     return jsonify({
         'sucess': False,
@@ -35,7 +33,7 @@ def response(data):
     return jsonify(
         {
             'sucess': True,
-            'message': "Registrado Exitosamente",
+           'message': "Registrado Exitosamente",
             'data':  data
         }      
     ), 200
@@ -48,12 +46,15 @@ def delete():
         'code': 200
     }), 200
     
-def successfully(data):
-    return jsonify({
-        'sucess': True,
-        'data': data,
-        'code': 200        
-    }), 200
+def successfully(data=None, message="Operación exitosa", status_code=200):
+    response = {
+        "code": status_code,
+        "success": True,
+        "message": message
+    }
+    if data is not None:
+        response["data"] = data
+    return jsonify(response), status_code
     
 def update(data):
     return jsonify({
@@ -64,7 +65,7 @@ def update(data):
 
 def serverError(message="Error interno del servidor"):
     return jsonify({
-        "success": False,
         "code": 500,
+        "success": False,
         "message": message
     }), 500

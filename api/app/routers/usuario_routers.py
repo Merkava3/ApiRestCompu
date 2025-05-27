@@ -36,73 +36,59 @@ def get_usuarios():
 @usuario_routes.route('/usuario', methods=['POST'])
 def post_user():
     try:
-        json = request.get_json(force=True)
+        json = request.get_json()
         if not json:
             return badRequest("Datos JSON requeridos")
 
-        # Validación de tipos y conversión segura a strings
-        nombre = str(json.get("nombre_usuario", "")).strip()
-        email = str(json.get("email_usuario", "")).strip()
-        password = str(json.get("password", "")).strip()
-
-        # Validar campos obligatorios
-        if not all([nombre, email, password]):
-            return badRequest("Todos los campos son obligatorios y deben ser texto válido")
+        # Validación de campos
+        required_fields = {
+            "nombre_usuario": "Nombre de usuario es requerido",
+            "email_usuario": "Email es requerido",
+            "password": "Contraseña es requerida"
+        }
+        
+        missing_fields = [field for field, msg in required_fields.items() if not json.get(field)]
+        if missing_fields:
+            return badRequest(", ".join([required_fields[field] for field in missing_fields]))
 
         # Verificar si el usuario ya existe
-        if Usuario.get_user(email):
-            return badEquals()
+        if Usuario.get_user(json["email_usuario"]):
+            return badRequest("El email ya está registrado")
 
-        # Crear nuevo usuario con los datos ya validados
+        # Crear nuevo usuario
         user = Usuario.new(
-            nombre_usuario=nombre,
-            email_usuario=email
+            nombre_usuario=str(json["nombre_usuario"]).strip(),
+            email_usuario=str(json["email_usuario"]).strip()
         )
         
         # Validar y establecer contraseña
-        if not isinstance(password, str) or len(password) < 4:
-            return badRequest("La contraseña debe ser texto con al menos 4 caracteres")
+        password = str(json["password"]).strip()
+        if len(password) < 4:
+            return badRequest("La contraseña debe tener al menos 4 caracteres")
         user.set_password(password)
 
-        # Generar ID (asegurando que sea válido)
+        # Generar ID
         user = Help.generator_id(user, ID_USUARIO)
-        if not user.id_usuario:
-            return badRequest("Error generando ID de usuario")
-
-        # Generar token con validación adicional
-        try:
-            token = user.generate_auth_token()
-            if not isinstance(token, str):
-                raise ValueError("El token generado no es válido")
-        except Exception as token_error:
-            return serverError(f"Error generando token: {str(token_error)}")
-
-        # Guardar usuario con validación
-        if user.save():
-            # Asegurar que api_usuario.dump() devuelve datos válidos
-            usuario_data = api_usuario.dump(user)
-            if not usuario_data:
-                return serverError("Error serializando datos del usuario")
-
-            return successfully({
-                "code": 201,
-                "success": True,
-                "message": "Usuario registrado exitosamente",
-                "data": {
-                    "token": token,
-                    "expires_in": 3600,
-                    "token_type": "Bearer",
-                    "usuario": usuario_data
-                }
-            }, 201)
         
+        # Generar token
+        token = user.generate_auth_token()
+        if not isinstance(token, str):
+            return serverError("Error generando token de autenticación")
+
+        # Guardar usuario
+        if user.save():
+            return successfully({
+                "token": token,
+                "expires_in": 3600,
+                "token_type": "Bearer",
+                "usuario": api_usuario.dump(user)
+            }, "Usuario registrado exitosamente", 201)
+            
         return badRequest("Error al guardar el usuario en la base de datos")
         
     except Exception as e:
-        # Log del error completo para debugging
-        print(f"Error completo en registro: {str(e)}")
-        return serverError(f"Error en el servidor: Verifica los datos e intenta nuevamente")
-
+        print(f"Error en registro de usuario: {str(e)}")
+        return serverError("Error procesando la solicitud")
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()

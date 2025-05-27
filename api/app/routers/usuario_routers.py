@@ -5,7 +5,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
-from ..helpers.auth_decorator import token_required
+from ..models.auth_decorator import token_required
 from flask import g
 
 usuario_routes = Blueprint('usuarios_routes', __name__)

@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, g
 from datetime import datetime
-from ..models import Usuario
+from . import Usuario
 from . import db
 from ..helpers.response import unauthorized
 import logging

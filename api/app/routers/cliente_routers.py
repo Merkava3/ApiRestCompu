@@ -4,7 +4,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
-from ..helpers.auth_decorator import token_required
+from ..models.auth_decorator import token_required
 
 cliente_routes = Blueprint('cliente_routes', __name__)
 

@@ -65,18 +65,29 @@ def post_user():
         
         # Guardar usuario en la base de datos
         if user.save():
-            return successfully({
-                "mensaje": "Usuario registrado y autenticado exitosamente",
-                "token": token,
-                "expires_in": 3600,  # 1 hora
-                "token_type": "Bearer",
-                "usuario": api_usuario.dump(user)
-            }, 201)  # Código 201 para creación exitosa
+            # Construir respuesta manualmente para evitar problemas con la función successfully()
+            response_data = {
+                "code": 201,
+                "success": True,
+                "message": "Usuario registrado y autenticado exitosamente",
+                "data": {
+                    "token": token,
+                    "expires_in": 3600,
+                    "token_type": "Bearer",
+                    "usuario": api_usuario.dump(user)
+                }
+            }
+            return response_data, 201
         
         return badRequest("Error al guardar el usuario")
         
     except Exception as e:
-        return serverError(f"Error en el servidor: {str(e)}")
+        error_response = {
+            "code": 500,
+            "success": False,
+            "message": f"Error en el servidor: {str(e)}"
+        }
+        return error_response, 500
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()

@@ -2,47 +2,71 @@ from functools import wraps
 from flask import request, g
 from datetime import datetime
 from ..models import Usuario
+from . import db
 from ..helpers.response import unauthorized
-import jwt
-import os
+import logging
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 1. Obtener el token del header Authorization
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return unauthorized("Token de autenticación requerido")
-
-        # 2. Extraer el token (soporta 'Bearer token' o solo 'token')
         try:
-            token = auth_header.split(' ')[1] if 'Bearer ' in auth_header else auth_header
-        except IndexError:
-            return unauthorized("Formato de token inválido")
+            # 1. Obtener y validar el header Authorization
+            auth_header = request.headers.get('Authorization')
+            logger.debug(f"Header Authorization recibido: {auth_header}")
+            
+            if not auth_header:
+                logger.warning("No se encontró header Authorization")
+                return unauthorized("Token de autenticación requerido")
 
-        # 3. Verificar token en la base de datos
-        usuario = Usuario.query.filter_by(token=token).first()
-        if not usuario:
-            return unauthorized("Token no encontrado")
+            # 2. Extraer el token de manera segura
+            token_parts = auth_header.split()
+            if len(token_parts) == 2 and token_parts[0].lower() == 'bearer':
+                token = token_parts[1]
+            elif len(token_parts) == 1:
+                token = token_parts[0]
+            else:
+                logger.warning(f"Formato de token inválido: {auth_header}")
+                return unauthorized("Formato de token inválido. Use: Bearer <token> o <token>")
 
-        # 4. Verificar expiración
-        if usuario.token_expiration < datetime.utcnow():
-            return unauthorized("Token expirado")
+            logger.debug(f"Token extraído: {token[:10]}...")  # Log parcial por seguridad
 
-        # 5. Verificar estado de autenticación
-        if not usuario.autenticado:
-            return unauthorized("Usuario no autenticado")
+            # 3. Buscar usuario con token válido
+            usuario = Usuario.query.filter_by(token=token).first()
+            if not usuario:
+                logger.warning("Token no encontrado en base de datos")
+                return unauthorized("Token no válido")
 
-        # 6. Adjuntar usuario al contexto de Flask
-        g.current_user = usuario
+            # 4. Verificar expiración
+            if usuario.token_expiration < datetime.utcnow():
+                logger.warning(f"Token expirado para usuario {usuario.id_usuario}")
+                return unauthorized("Token expirado")
 
-        # 7. Actualizar última actividad (opcional)
-        usuario.ultima_autenticacion = datetime.utcnow()
-        try:
-            usuario.save()
+            # 5. Verificar estado de autenticación
+            if not usuario.autenticado:
+                logger.warning(f"Usuario {usuario.id_usuario} no está autenticado")
+                return unauthorized("Usuario no autenticado")
+
+            # 6. Adjuntar usuario al contexto
+            g.current_user = usuario
+            logger.debug(f"Usuario autenticado: {usuario.email_usuario}")
+
+            # 7. Actualizar última actividad (sin bloquear la respuesta si falla)
+            try:
+                usuario.ultima_autenticacion = datetime.utcnow()
+                db.session.commit()
+                logger.debug("Última autenticación actualizada")
+            except Exception as db_error:
+                db.session.rollback()
+                logger.error(f"Error actualizando última autenticación: {str(db_error)}")
+                # No retornamos error, solo lo registramos
+
+            return f(*args, **kwargs)
+
         except Exception as e:
-            print(f"Error actualizando última autenticación: {str(e)}")
+            logger.error(f"Error inesperado en token_required: {str(e)}", exc_info=True)
+            return unauthorized("Error validando autenticación")
 
-        return f(*args, **kwargs)
-    
     return decorated_function

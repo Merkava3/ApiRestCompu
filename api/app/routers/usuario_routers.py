@@ -35,40 +35,73 @@ def get_usuarios():
 
 @usuario_routes.route('/usuario', methods=['POST'])
 def post_user():
-    json = request.get_json(force=True)
-
-    # Validaciones existentes...
-    usuario_exist = Usuario.get_user(json.get(EMAIL_USUARIO))
-    if usuario_exist:
-        return badEquals()
-
-    required_fields = ["nombre_usuario", "email_usuario", "password"]
-    for field in required_fields:
-        if not json.get(field):
-            return badRequest(f"El campo '{field}' es obligatorio")
-
     try:
+        json = request.get_json(force=True)
+        if not json:
+            return badRequest("Datos JSON requeridos")
+
+        # Validación de tipos y conversión segura a strings
+        nombre = str(json.get("nombre_usuario", "")).strip()
+        email = str(json.get("email_usuario", "")).strip()
+        password = str(json.get("password", "")).strip()
+
+        # Validar campos obligatorios
+        if not all([nombre, email, password]):
+            return badRequest("Todos los campos son obligatorios y deben ser texto válido")
+
+        # Verificar si el usuario ya existe
+        if Usuario.get_user(email):
+            return badEquals()
+
+        # Crear nuevo usuario con los datos ya validados
         user = Usuario.new(
-            nombre_usuario=json.get("nombre_usuario"),
-            email_usuario=json.get("email_usuario")
+            nombre_usuario=nombre,
+            email_usuario=email
         )
-        user.set_password(json.get("password"))
+        
+        # Validar y establecer contraseña
+        if not isinstance(password, str) or len(password) < 4:
+            return badRequest("La contraseña debe ser texto con al menos 4 caracteres")
+        user.set_password(password)
+
+        # Generar ID (asegurando que sea válido)
         user = Help.generator_id(user, ID_USUARIO)
-        
-        # Generar token SOLO durante el registro
-        token = user.generate_auth_token()
-        
+        if not user.id_usuario:
+            return badRequest("Error generando ID de usuario")
+
+        # Generar token con validación adicional
+        try:
+            token = user.generate_auth_token()
+            if not isinstance(token, str):
+                raise ValueError("El token generado no es válido")
+        except Exception as token_error:
+            return serverError(f"Error generando token: {str(token_error)}")
+
+        # Guardar usuario con validación
         if user.save():
+            # Asegurar que api_usuario.dump() devuelve datos válidos
+            usuario_data = api_usuario.dump(user)
+            if not usuario_data:
+                return serverError("Error serializando datos del usuario")
+
             return successfully({
-                "mensaje": "Usuario registrado exitosamente",
-                "token": token,  # Token generado durante registro
-                "expires_in": 3600,
-                "token_type": "Bearer",
-                "usuario": api_usuario.dump(user)
+                "code": 201,
+                "success": True,
+                "message": "Usuario registrado exitosamente",
+                "data": {
+                    "token": token,
+                    "expires_in": 3600,
+                    "token_type": "Bearer",
+                    "usuario": usuario_data
+                }
             }, 201)
-        return badRequest("Error al guardar el usuario")
+        
+        return badRequest("Error al guardar el usuario en la base de datos")
+        
     except Exception as e:
-        return serverError(f"Error en el servidor: {str(e)}")
+        # Log del error completo para debugging
+        print(f"Error completo en registro: {str(e)}")
+        return serverError(f"Error en el servidor: Verifica los datos e intenta nuevamente")
 
 
 @usuario_routes.route('/usuario', methods=['GET'])

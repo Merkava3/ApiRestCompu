@@ -31,23 +31,21 @@ class Usuario(db.Model):
     facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
     
-    def generate_auth_token(self, expires_in=3600):
-        """Genera token SOLO durante el registro"""
-        token_payload = {
-            'sub': self.id_usuario,
-            'email': self.email_usuario,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + timedelta(seconds=expires_in)
-        }
-        
-        self.token = jwt.encode(
-            token_payload,
-            os.getenv('JWT_SECRET_KEY'),
-            algorithm='HS256'
-        )
-        self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
-        self.autenticado = True
-        return self.token
+    def generate_auth_token(self):
+        try:
+            payload = {
+                'sub': str(self.id_usuario),  # Asegurar string
+                'email': str(self.email_usuario),
+                'iat': datetime.utcnow(),
+                'exp': datetime.utcnow() + timedelta(seconds=3600)
+            }
+            return jwt.encode(
+                payload,
+                os.getenv('JWT_SECRET_KEY', 'fallback-secret'),  # Asegurar que existe
+                algorithm='HS256'
+            )
+        except Exception as e:
+            raise ValueError(f"Error generando token: {str(e)}")
     
     def revoke_token(self):
         """Invalida el token actual del usuario"""

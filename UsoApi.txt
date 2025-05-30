@@ -1,0 +1,1 @@
+https://5000-idx-apirestcompu-1745531506063.cluster-vyr53kd25jc2yvngldrwyq6zc4.cloudworkstations.dev/api/v1/inventarios

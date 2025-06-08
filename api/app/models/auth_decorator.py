@@ -3,6 +3,7 @@ from flask import request, g
 from datetime import datetime
 from . import Usuario
 from . import db
+from inspect import signature
 from ..helpers.response import unauthorized
 import logging
 
@@ -63,7 +64,14 @@ def token_required(f):
                 logger.error(f"Error actualizando última autenticación: {str(db_error)}")
                 # No retornamos error, solo lo registramos
 
-            return f(*args, **kwargs)
+            # Se valida si la funcion decorada acepta el argumento usuario para retornar el metodo modificado
+            sig = signature(f)
+            func_params = sig.parameters
+
+            if 'usuario' in func_params:
+                return f(*args, usuario=g.current_user, **kwargs)
+            else:
+                return f(*args, **kwargs)
 
         except Exception as e:
             logger.error(f"Error inesperado en token_required: {str(e)}", exc_info=True)

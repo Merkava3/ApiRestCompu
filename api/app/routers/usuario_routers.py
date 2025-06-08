@@ -190,6 +190,7 @@ def logout_usuario(usuario):
         return successfully({"mensaje": "Sesión cerrada correctamente"})
     return badRequest("Error al cerrar sesión")
 
+# validation 
 @usuario_routes.route('/usuario/me', methods=['GET'])
 @token_required
 def get_current_user(usuario):

@@ -1,2 +1,0 @@
-hay que entrar al enterno virtual carpeta  " cd env " luego "source bin/activate" 
-para ejecutar python -m api.main

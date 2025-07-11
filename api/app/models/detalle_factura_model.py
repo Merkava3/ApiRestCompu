@@ -41,3 +41,7 @@ class DetalleFactura(db.Model):
         except Exception as e:
             db.session.rollback()
             print(f"Error al eliminar detalle_factura: {e}")
+
+    @classmethod
+    def get_facturas_all():
+        return db.session.query()

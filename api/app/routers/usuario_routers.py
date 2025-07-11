@@ -200,6 +200,7 @@ def get_current_user(usuario):
         "is_authenticated": usuario.autenticado
     })
 
+
 @usuario_routes.route('/renovar-token', methods=['POST'])
 @token_required
 def renovar_token():

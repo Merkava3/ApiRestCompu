@@ -79,7 +79,7 @@ class Servicios(db.Model):
     @staticmethod
     def get_servicio_filter(cedula=None, numero_serie=None, id_servicio=None):
         """
-        Retorna los servicios con información del dispositivo, cliente y usuario.
+        Retorna el servicio más reciente con información del dispositivo, cliente y usuario.
         """        
         query = db.session.query(
             Servicios.id_servicio,
@@ -109,7 +109,9 @@ class Servicios(db.Model):
             query = query.filter(Dispositivo.numero_serie == numero_serie)
         if id_servicio:
             query = query.filter(Servicios.id_servicio == id_servicio)
-        resultado = query.first()
+        
+        # Ordenar por fecha de servicio descendente (más reciente primero) y tomar solo el primero
+        resultado = query.order_by(Servicios.fecha_servicio.desc()).first()
         return resultado
     
     @staticmethod

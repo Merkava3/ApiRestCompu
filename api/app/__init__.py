@@ -7,7 +7,8 @@ from flask_cors import CORS
 def create_app(enviroment):
     app = Flask(__name__)
     app.config.from_object(enviroment)
-    CORS(app)
+    #CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
     if 'api_v1' not in app.blueprints:
         app.register_blueprint(api_v1, url_prefix='/api/v1')
     with app.app_context():

@@ -40,9 +40,10 @@ def post_client():
         return response(api_servicio.dump(servicio))    
     return badRequest()
 
-@servicios_routes.route('/search/servicio', methods=['POST'])
+@servicios_routes.route('/search/servicio', methods=['GET'])
 @set_servicios_by()
 def get_servicio(servicio):
+    print("estamos aca buscar servicio")
     return response(api_servicio.dump(servicio))
 
 @servicios_routes.route('/servicio', methods=['PUT'])

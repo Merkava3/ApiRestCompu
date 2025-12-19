@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, or_
 from . import db
 from .dispositivo_model import Dispositivo
 from .cliente_model import Cliente
@@ -121,12 +121,20 @@ class Reparaciones(db.Model):
         ).all()
     
     @staticmethod
-    def get_reparacion_completa(id_reparacion):
+    def get_reparacion_completa(id_reparacion=None, cedula=None):
         """
-        Obtiene una reparación específica por ID con información completa del dispositivo y del cliente.
+        Obtiene reparaciones con información completa del dispositivo y del cliente.
+        Puede filtrar por id_reparacion O cedula del cliente.
         Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+        
+        Args:
+            id_reparacion: ID de la reparación (opcional)
+            cedula: Cédula del cliente (opcional)
+        
+        Returns:
+            Primera reparación que coincida con los filtros, o None si no se encuentra
         """
-        return db.session.query(
+        query = db.session.query(
             Reparaciones.id_reparacion,
             Cliente.nombre_cliente,
             Dispositivo.tipo,
@@ -141,6 +149,17 @@ class Reparaciones(db.Model):
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(
             Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente
-        ).filter(
-            Reparaciones.id_reparacion == id_reparacion
-        ).first()
+        )
+        
+        # Aplicar filtros: id_reparacion OR cedula
+        filters = []
+        if id_reparacion is not None:
+            filters.append(Reparaciones.id_reparacion == id_reparacion)
+        if cedula is not None:
+            filters.append(Cliente.cedula == cedula)
+        
+        if filters:
+            # Si hay filtros, usar OR entre ellos
+            query = query.filter(or_(*filters))
+        
+        return query.first()

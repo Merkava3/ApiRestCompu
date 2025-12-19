@@ -72,16 +72,23 @@ def get_reparaciones_completas():
 @reparacion_routes.route('/reparacion/completa', methods=['POST'])
 def get_reparacion_completa():
     """
-    Busca una reparación por ID con información completa:
+    Busca una reparación por ID o cédula del cliente con información completa:
     id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+    
+    Body JSON puede contener:
+    - id_reparacion: ID de la reparación
+    - cedula: Cédula del cliente
+    Se puede usar uno u otro, o ambos (buscará con OR)
     """
     json = request.get_json(force=True)
     id_reparacion = json.get(ID_REPARACION)
+    cedula = json.get(CEDULA_CLIENT)
     
-    if not id_reparacion:
+    # Al menos uno de los dos debe estar presente
+    if not id_reparacion and not cedula:
         return badRequest()
     
-    reparacion = Reparaciones.get_reparacion_completa(id_reparacion)
+    reparacion = Reparaciones.get_reparacion_completa(id_reparacion=id_reparacion, cedula=cedula)
     
     if not reparacion:
         return notFound()

@@ -64,7 +64,7 @@ def get_reparacion_cliente(reparacion):
 def get_reparaciones_completas():
     """
     Obtiene todas las reparaciones con información completa:
-    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion, fecha_entrega, fecha_ingreso
     """
     reparaciones = Reparaciones.get_reparaciones_completas()
     return successfully(api_reparaciones_completas.dump(reparaciones))
@@ -73,7 +73,7 @@ def get_reparaciones_completas():
 def get_reparacion_completa():
     """
     Busca una reparación por ID o cédula del cliente con información completa:
-    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion, fecha_entrega, fecha_ingreso
     
     Body JSON puede contener:
     - id_reparacion: ID de la reparación

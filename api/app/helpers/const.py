@@ -26,7 +26,9 @@ CAMPOS_REPARACIONES_COMPLETAS = (
     "numero_serie",
     "estado",
     "precio_reparacion",
-    "descripcion"
+    "descripcion",
+    "fecha_entrega",
+    "fecha_ingreso"
 )
 
 CAMPOS_USUARIO = ("id_usuario", "nombre_usuario", "email_usuario", "password", "autenticado", "ultima_autenticacion")

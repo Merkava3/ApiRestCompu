@@ -101,7 +101,7 @@ class Reparaciones(db.Model):
     def get_reparaciones_completas(cls):
         """
         Retorna todas las reparaciones con información completa del dispositivo y del cliente.
-        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion, fecha_entrega, fecha_ingreso
         """
         return db.session.query(
             Reparaciones.id_reparacion,
@@ -113,7 +113,9 @@ class Reparaciones(db.Model):
             Dispositivo.numero_serie,
             Reparaciones.estado,
             Reparaciones.precio_reparacion,
-            Reparaciones.descripcion
+            Reparaciones.descripcion,
+            Reparaciones.fecha_entrega,
+            Dispositivo.fecha_ingreso
         ).join(
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(
@@ -125,7 +127,7 @@ class Reparaciones(db.Model):
         """
         Obtiene reparaciones con información completa del dispositivo y del cliente.
         Puede filtrar por id_reparacion O cedula del cliente.
-        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion, fecha_entrega, fecha_ingreso
         
         Args:
             id_reparacion: ID de la reparación (opcional)
@@ -144,7 +146,9 @@ class Reparaciones(db.Model):
             Dispositivo.numero_serie,
             Reparaciones.estado,
             Reparaciones.precio_reparacion,
-            Reparaciones.descripcion
+            Reparaciones.descripcion,
+            Reparaciones.fecha_entrega,
+            Dispositivo.fecha_ingreso
         ).join(
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(

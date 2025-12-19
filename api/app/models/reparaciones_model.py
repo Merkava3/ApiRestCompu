@@ -96,3 +96,51 @@ class Reparaciones(db.Model):
             query = query.filter(Reparaciones.id_reparacion == id_reparacion)
 
         return query.first()
+    
+    @classmethod
+    def get_reparaciones_completas(cls):
+        """
+        Retorna todas las reparaciones con información completa del dispositivo y del cliente.
+        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+        """
+        return db.session.query(
+            Reparaciones.id_reparacion,
+            Cliente.nombre_cliente,
+            Dispositivo.tipo,
+            Dispositivo.marca,
+            Dispositivo.modelo,
+            Dispositivo.reporte,
+            Dispositivo.numero_serie,
+            Reparaciones.estado,
+            Reparaciones.precio_reparacion,
+            Reparaciones.descripcion
+        ).join(
+            Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
+        ).join(
+            Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente
+        ).all()
+    
+    @staticmethod
+    def get_reparacion_completa(id_reparacion):
+        """
+        Obtiene una reparación específica por ID con información completa del dispositivo y del cliente.
+        Incluye: id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+        """
+        return db.session.query(
+            Reparaciones.id_reparacion,
+            Cliente.nombre_cliente,
+            Dispositivo.tipo,
+            Dispositivo.marca,
+            Dispositivo.modelo,
+            Dispositivo.reporte,
+            Dispositivo.numero_serie,
+            Reparaciones.estado,
+            Reparaciones.precio_reparacion,
+            Reparaciones.descripcion
+        ).join(
+            Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
+        ).join(
+            Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente
+        ).filter(
+            Reparaciones.id_reparacion == id_reparacion
+        ).first()

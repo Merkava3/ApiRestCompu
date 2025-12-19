@@ -15,6 +15,10 @@ class ReparacionesSchemas(Schema):
     class Meta:
         fields = CAMPOS_REPARACIONES
 
+class ReparacionesCompletasSchemas(Schema):
+    class Meta:
+        fields = CAMPOS_REPARACIONES_COMPLETAS
+
 class ServiciosSchemas(Schema):
     class Meta:
         fields = CAMPOS_SERVICIOS
@@ -56,6 +60,8 @@ api_dispositivos = Dispostivoschemas(many=True)
 # --- serialization reparaciones ---
 api_reparacion = ReparacionesSchemas()
 api_reparaciones = ReparacionesSchemas(many=True)
+api_reparacion_completa = ReparacionesCompletasSchemas()
+api_reparaciones_completas = ReparacionesCompletasSchemas(many=True)
 
 # --- serialization servicios ---
 api_servicio = ServiciosSchemas()

@@ -59,4 +59,32 @@ def delete_reparacion(reparacion):
 @set_reparacion_by()
 def get_reparacion_cliente(reparacion):
     return successfully(api_servicio_cliente.dump([reparacion]))
+
+@reparacion_routes.route('/reparaciones/completas', methods=['GET'])
+def get_reparaciones_completas():
+    """
+    Obtiene todas las reparaciones con información completa:
+    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+    """
+    reparaciones = Reparaciones.get_reparaciones_completas()
+    return successfully(api_reparaciones_completas.dump(reparaciones))
+
+@reparacion_routes.route('/reparacion/completa', methods=['POST'])
+def get_reparacion_completa():
+    """
+    Busca una reparación por ID con información completa:
+    id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion
+    """
+    json = request.get_json(force=True)
+    id_reparacion = json.get(ID_REPARACION)
+    
+    if not id_reparacion:
+        return badRequest()
+    
+    reparacion = Reparaciones.get_reparacion_completa(id_reparacion)
+    
+    if not reparacion:
+        return notFound()
+    
+    return successfully(api_reparacion_completa.dump(reparacion))
     

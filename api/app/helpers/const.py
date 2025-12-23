@@ -8,9 +8,11 @@ CAMPOS_REPARACIONES  = (
     "nombre_cliente",
     "precio_reparacion", 
     "tipo",
-    "marca", 
-    "modelo",
+    "marca",
+    "modelo",    
     "numero_serie",
+    "reporte",
+    "descripcion",
     "estado",
     "fecha_ingreso",
     "fecha_entrega"

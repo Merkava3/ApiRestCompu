@@ -58,6 +58,8 @@ class Reparaciones(db.Model):
             Dispositivo.marca,
             Dispositivo.modelo,
             Dispositivo.numero_serie,
+            Dispositivo.reporte,
+            Reparaciones.descripcion,
             Reparaciones.estado,
             Dispositivo.fecha_ingreso,
             Reparaciones.fecha_entrega

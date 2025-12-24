@@ -71,3 +71,15 @@ def post_servicio_cliente():
     if Servicios.insertar_servicio(data):
         return response(SUCCESSFUL)        
     return badEquals()
+
+@servicios_routes.route('/servicio/ultimo', methods=['GET'])
+def get_ultimo_servicio():
+    """
+    Obtiene el último servicio insertado con información completa:
+    id_servicio, email_usuario, nombre_usuario, cedula, nombre_cliente, direccion, telefono_cliente,
+    marca, modelo, reporte, numero_serie, fecha_ingreso, fecha_servicio, tipo_dispositivo, tipo_servicio, pago, precio_servicio
+    """
+    servicio = Servicios.get_ultimo_servicio()
+    if not servicio:
+        return notFound()
+    return successfully(api_servicio.dump(servicio))

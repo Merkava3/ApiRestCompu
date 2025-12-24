@@ -5,7 +5,7 @@ from .cliente_model import Cliente
 from .usuario_model import Usuario
 from ..helpers.helpers import Help
 from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO
-from sqlalchemy import text
+from sqlalchemy import text, func
 
 
 class Servicios(db.Model):
@@ -111,6 +111,39 @@ class Servicios(db.Model):
             query = query.filter(Servicios.id_servicio == id_servicio)
         resultado = query.first()
         return resultado
+    
+    @staticmethod
+    def get_ultimo_servicio():
+        """
+        Retorna el último servicio insertado con información completa del dispositivo, cliente y usuario.
+        Ordenado por fecha_servicio descendente, limitado a 1 registro.
+        Incluye: id_servicio, email_usuario, nombre_usuario, cedula, nombre_cliente, direccion, telefono_cliente,
+                 marca, modelo, reporte, numero_serie, fecha_ingreso, fecha_servicio, tipo_dispositivo, tipo_servicio, pago, precio_servicio
+        """
+        return db.session.query(
+            Servicios.id_servicio,
+            Usuario.email_usuario,
+            Usuario.nombre_usuario,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
+            Dispositivo.marca,
+            Dispositivo.modelo,
+            Dispositivo.reporte,
+            Dispositivo.numero_serie,
+            func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso'),
+            func.to_char(Servicios.fecha_servicio, 'DD/MM/YYYY').label('fecha_servicio'),
+            Dispositivo.tipo.label("tipo_dispositivo"),
+            Servicios.tipo.label("tipo_servicio"),
+            Servicios.pago,
+            Servicios.precio_servicio
+        ).join(Usuario, Servicios.usuario_id_servicio == Usuario.id_usuario) \
+         .join(Cliente, Servicios.cliente_id_servicio == Cliente.id_cliente) \
+         .join(Dispositivo, Servicios.dispositivos_id_servicio == Dispositivo.id_dispositivo) \
+         .order_by(Servicios.fecha_servicio.desc()) \
+         .limit(1) \
+         .first()
     
     @staticmethod
     def insertar_servicio(data):

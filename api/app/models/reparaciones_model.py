@@ -115,9 +115,9 @@ class Reparaciones(db.Model):
             Dispositivo.numero_serie,
             Reparaciones.estado,
             Reparaciones.precio_reparacion,
-            Reparaciones.descripcion,
-            Reparaciones.fecha_entrega,
-            Dispositivo.fecha_ingreso
+            Reparaciones.descripcion,            
+            func.to_char(Reparaciones.fecha_entrega, 'DD/MM/YYYY').label('fecha_entrega'),
+            func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso'),
         ).join(
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(

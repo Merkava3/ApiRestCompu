@@ -56,8 +56,8 @@ class Inventario(db.Model):
             Productos.nombre_producto,
             Productos.precio,
             Productos.stock,
-            Inventario.cantidad,
-            Inventario.ultima_actualizacion
+            Inventario.cantidad,            
+            func.to_char(Inventario.ultima_actualizacion, 'DD/MM/YYYY').label('ultima_actualizacion'),
         ).join(Productos, Inventario.id_producto_inventario == Productos.id_producto) \
          .join(Proveedor, Inventario.id_proveedor_inventario == Proveedor.id_proveedor) \
          .order_by(Productos.stock.desc()).all()

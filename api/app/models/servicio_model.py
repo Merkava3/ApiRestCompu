@@ -116,7 +116,8 @@ class Servicios(db.Model):
     def get_ultimo_servicio():
         """
         Retorna el último servicio insertado con información completa del dispositivo, cliente y usuario.
-        Ordenado por fecha_servicio descendente, limitado a 1 registro.
+        Ordenado por fecha_servicio (con hora, minutos y segundos) descendente y por id_servicio descendente como respaldo.
+        Limitado a 1 registro.
         Incluye: id_servicio, email_usuario, nombre_usuario, cedula, nombre_cliente, direccion, telefono_cliente,
                  marca, modelo, reporte, numero_serie, fecha_ingreso, fecha_servicio, tipo_dispositivo, tipo_servicio, pago, precio_servicio
         """
@@ -133,7 +134,7 @@ class Servicios(db.Model):
             Dispositivo.reporte,
             Dispositivo.numero_serie,
             func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso'),
-            func.to_char(Servicios.fecha_servicio, 'DD/MM/YYYY').label('fecha_servicio'),
+            func.to_char(Servicios.fecha_servicio, 'DD/MM/YYYY HH24:MI:SS').label('fecha_servicio'),
             Dispositivo.tipo.label("tipo_dispositivo"),
             Servicios.tipo.label("tipo_servicio"),
             Servicios.pago,
@@ -141,7 +142,7 @@ class Servicios(db.Model):
         ).join(Usuario, Servicios.usuario_id_servicio == Usuario.id_usuario) \
          .join(Cliente, Servicios.cliente_id_servicio == Cliente.id_cliente) \
          .join(Dispositivo, Servicios.dispositivos_id_servicio == Dispositivo.id_dispositivo) \
-         .order_by(Servicios.fecha_servicio.desc()) \
+         .order_by(Servicios.fecha_servicio.desc(), Servicios.id_servicio.desc()) \
          .limit(1) \
          .first()
     

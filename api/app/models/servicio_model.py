@@ -152,7 +152,8 @@ class Servicios(db.Model):
         Llama al procedimiento almacenado usando extract_params para limpiar el código.
         """
         try:           
-            query_params = Help.extract_params_servicio(data, COLUMN_LIST_SERVICIO)            
+            query_params = Help.extract_params_servicio(data, COLUMN_LIST_SERVICIO)
+            #print(f"Parámetros enviados al procedimiento almacenado - id_servicio: {query_params.get('p_id_servicio')}")  # Debug
             query = text(INSERTAR_SERVICIO)
             db.session.execute(query, query_params)
             db.session.commit()
@@ -160,3 +161,4 @@ class Servicios(db.Model):
         except Exception as e:
             db.session.rollback()
             print(f"Error al insertar servicio: {e}")
+            return False

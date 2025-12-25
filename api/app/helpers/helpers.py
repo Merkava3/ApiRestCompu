@@ -125,6 +125,7 @@ class Help:
     def add_generated_id_to_data(data: dict, id_key: str) -> dict:
         """
         Genera un ID aleatorio y lo agrega al diccionario data si no existe o está vacío.
+        El ID se genera como string pero se convierte a entero para compatibilidad con PostgreSQL BIGINT.
         
         Args:
             data (dict): Diccionario al que se le agregará el ID generado.
@@ -134,7 +135,9 @@ class Help:
             dict: El diccionario modificado con el ID generado (si no existía).
         """
         if id_key not in data or not data.get(id_key):
-            data[id_key] = Help._generation_id()
+            # Generar ID como string y convertir a entero para PostgreSQL BIGINT
+            id_generado = Help._generation_id()
+            data[id_key] = int(id_generado)
         return data
        
 

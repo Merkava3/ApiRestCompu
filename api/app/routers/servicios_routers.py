@@ -70,6 +70,7 @@ def post_servicio_cliente():
         return badRequest(ERROR)
     # Generar id_servicio aleatorio y agregarlo al data si no existe
     Help.add_generated_id_to_data(data, ID_SERVICIO)
+    #print(f"ID generado para servicio: {data.get(ID_SERVICIO)}")  # Debug
     if Servicios.insertar_servicio(data):
         return response(SUCCESSFUL)        
     return badEquals()

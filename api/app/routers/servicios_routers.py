@@ -67,11 +67,14 @@ def delete_servicio(servicio):
 def post_servicio_cliente():
     data = request.get_json(force=True)    
     if not data:
-        return badRequest(ERROR)        
+        return badRequest(ERROR)
+    # Generar id_servicio aleatorio y agregarlo al data si no existe
+    Help.add_generated_id_to_data(data, ID_SERVICIO)
     if Servicios.insertar_servicio(data):
         return response(SUCCESSFUL)        
     return badEquals()
-
+    
+# microservicio para obtener el ultimo servicio insertado
 @servicios_routes.route('/servicio/ultimo', methods=['GET'])
 def get_ultimo_servicio():
     """

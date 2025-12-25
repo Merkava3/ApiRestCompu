@@ -120,6 +120,22 @@ class Help:
 
             extracted_data[f"p_{column}"] = value
         return extracted_data
+    
+    @staticmethod
+    def add_generated_id_to_data(data: dict, id_key: str) -> dict:
+        """
+        Genera un ID aleatorio y lo agrega al diccionario data si no existe o está vacío.
+        
+        Args:
+            data (dict): Diccionario al que se le agregará el ID generado.
+            id_key (str): Clave del diccionario donde se guardará el ID.
+        
+        Returns:
+            dict: El diccionario modificado con el ID generado (si no existía).
+        """
+        if id_key not in data or not data.get(id_key):
+            data[id_key] = Help._generation_id()
+        return data
        
 
                 

@@ -93,7 +93,7 @@ COLUMN_LIST_INVENTARIO = ["productos"]
 INSERTAR_CLIENTE_DISPOSITIVO = "SELECT  InsertarClienteYDispositivo(:p_cedula, :p_nombre_cliente, :p_direccion, :p_telefono_cliente, :p_tipo, :p_marca, :p_modelo, :p_reporte, :p_numero_serie)"
 COLUMN_LIST_CLIENTE_DISPOSITIVO = ["cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo", "marca", "modelo", "reporte", "numero_serie"]
 
-# --- procedimientos almacenados servicio---
+# --- procedimientos almacenados servicio ---
 INSERTAR_SERVICIO = """
     SELECT * FROM InsertarClienteYRelacionados(
         :p_cedula_cliente,

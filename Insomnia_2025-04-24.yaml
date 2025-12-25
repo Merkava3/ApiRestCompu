@@ -1,0 +1,2864 @@
+type: collection.insomnia.rest/5.0
+name: Api Compu
+meta:
+  id: wrk_f5697d14a1b74b7eb4be5ddd17827097
+  created: 1741640615472
+  modified: 1741640615472
+collection:
+  - name: cliente
+    meta:
+      id: fld_b5b1d910dee348b18061ac7a2974e045
+      created: 1741642076975
+      modified: 1741642076975
+      sortKey: -1741642076975
+    children:
+      - name: Cliente local
+        meta:
+          id: fld_1054de754404403c97610c224d8be218
+          created: 1741640634362
+          modified: 1741643569045
+          sortKey: -1741642146927
+        children:
+          - url: http://127.0.0.1:5000/api/v1/clientes/count
+            name: Total cliente
+            meta:
+              id: req_848bb937a6884c42b879f53ef3bf6d9c
+              created: 1741641934136
+              modified: 1741642185187
+              isPrivate: false
+              sortKey: -1741641934136
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/clientes
+            name: todos clientes
+            meta:
+              id: req_53fe39643e1c41a1854124d65a26b298
+              created: 1741642512337
+              modified: 1741642539735
+              isPrivate: false
+              sortKey: -1741642512337
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/cliente
+            name: Crear cliente
+            meta:
+              id: req_d62a545ec703469bb427b75d31471b85
+              created: 1741642559843
+              modified: 1741642595039
+              isPrivate: false
+              sortKey: -1741642559843
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+
+                    "cedula":"7832",
+                    "nombre_cliente": "bart",
+                    "direccion":"calle falsa 123",
+                    "telefono_cliente":"3445"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/cliente
+            name: Actualizar cliente
+            meta:
+              id: req_363c1335c79d4284adff50779dfa1156
+              created: 1741642697095
+              modified: 1741643018542
+              isPrivate: false
+              sortKey: -1741642697095
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                     "id_cliente":93733,
+                     "cedula":"123"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/cliente
+            name: Buscar cliente
+            meta:
+              id: req_df97f5903b854f13a7102938b28db21e
+              created: 1741642871983
+              modified: 1741643028204
+              isPrivate: false
+              sortKey: -1741642871983
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula":"123"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/cliente
+            name: Eliminar Cliente
+            meta:
+              id: req_28211579bb74400daf150aeeacd5a562
+              created: 1741643454080
+              modified: 1741643494087
+              isPrivate: false
+              sortKey: -1741643454080
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula":"123"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: cliente render
+        meta:
+          id: fld_f9c266b211cb45b18bd33d49a1c3c0db
+          created: 1741640646754
+          modified: 1741642146925
+          sortKey: -1741642146827
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/clientes
+            name: Todos los clientes
+            meta:
+              id: req_b27dedaada814fc09764b37e26b2f1c1
+              created: 1741640657005
+              modified: 1741641237322
+              isPrivate: false
+              sortKey: -1741640657006
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/cliente
+            name: Crear cliente
+            meta:
+              id: req_972cc2ed2cd04fcab9a732acc9764819
+              created: 1741640954103
+              modified: 1741718193288
+              isPrivate: false
+              sortKey: -1741640954103
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+
+                    "cedula":"11080789",
+                    "nombre_cliente": "bart",
+                    "direccion":"calle falsa 123",
+                    "telefono_cliente":"3445"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/clientes/count
+            name: Total de clientes
+            meta:
+              id: req_6a66b164a3d44854b9c17739894a8c1d
+              created: 1741641052470
+              modified: 1741641219265
+              isPrivate: false
+              sortKey: -1741641052470
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/clientes/ultimos
+            name: Ultimos 3 registros
+            meta:
+              id: req_b7ec1b20e25a4b9ab94fa848bed06df2
+              created: 1741641429935
+              modified: 1741643504948
+              isPrivate: false
+              sortKey: -1741641499113
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/cliente
+            name: Actualizar cliente
+            meta:
+              id: req_507f1d56cd6f438dbfad0e7e11e91afd
+              created: 1741641458982
+              modified: 1741641666323
+              isPrivate: false
+              sortKey: -1741641458982
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                     "id_cliente":66700,
+                     "telefono_cliente":"3005007400"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/cliente
+            name: Buscar cliente
+            meta:
+              id: req_864bc5dafaa047deb4a4be6865ce24a3
+              created: 1741641539244
+              modified: 1745013514542
+              isPrivate: false
+              sortKey: -1741641593160.5
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula":"11080789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/cliente
+            name: Eliminar cliente
+            meta:
+              id: req_f655a166800d48f9be07c9f2c0981ea8
+              created: 1741641835172
+              modified: 1741641896676
+              isPrivate: false
+              sortKey: -1741641835172
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula":"11080789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: dispositivo
+    meta:
+      id: fld_9738514fb71f4804a59bde72e5333453
+      created: 1741643589280
+      modified: 1741643589280
+      sortKey: -1741643589280
+    children:
+      - name: dispositivos local
+        meta:
+          id: fld_1decb0e18dc54d72bca786d26c4d9128
+          created: 1741644107957
+          modified: 1741644107957
+          sortKey: -1741644107957
+        children:
+          - url: http://127.0.0.1:5000/api/v1/dispositivos
+            name: Todos los dispositivos
+            meta:
+              id: req_f618f1b830db4518832ab8022699813a
+              created: 1741644049039
+              modified: 1741644116841
+              isPrivate: false
+              sortKey: -1741644116715
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/dispositivo
+            name: Crear dispositivo
+            meta:
+              id: req_1daf7907f7424eddb0f6a726390a4f11
+              created: 1741644124349
+              modified: 1741727867711
+              isPrivate: false
+              sortKey: -1741644124349
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                 "cliente_id_dispositivo":"759965",
+                 "tipo": "escritoio",
+                 "marca":"asus",
+                 "modelo":"aspiren",
+                "reporte": "daño en la board",
+                "numero_serie":"963789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/dispositivo
+            name: Buscar dispositivo
+            meta:
+              id: req_c986e84abae0491d8baaf43e9978c240
+              created: 1741727774554
+              modified: 1741736042069
+              isPrivate: false
+              sortKey: -1741727774554
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"numero_serie" : "963789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/IDdispositivo
+            name: Buscar por id dispositivo
+            meta:
+              id: req_e94973332a414301b9abba1a6c2864fd
+              created: 1741736067857
+              modified: 1741736413216
+              isPrivate: false
+              sortKey: -1741736067857
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo": 2212
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/dispositivo
+            name: Eliminar dispositivo
+            meta:
+              id: req_549c8f5b90454ba8882342044d9a68b2
+              created: 1741736644493
+              modified: 1741737383838
+              isPrivate: false
+              sortKey: -1741736067957
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo": 2212
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/dispositivo
+            name: Actualizar dispositivo
+            meta:
+              id: req_2df824449c5b4a0da6aec030ccac9264
+              created: 1741737439435
+              modified: 1741737936175
+              isPrivate: false
+              sortKey: -1741736068057
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo": 289979,
+                	"modelo":"compumax"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: dispositivos render
+        meta:
+          id: fld_4df33267b12d4a98a6f8b0d6e2f303de
+          created: 1741906732682
+          modified: 1741906738507
+          sortKey: -1741644108057
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivos
+            name: todos los dispositivos
+            meta:
+              id: req_c4b8e6f8ed7141e483a133b460cc6a10
+              created: 1741906743453
+              modified: 1741909966334
+              isPrivate: false
+              sortKey: -1741906759945
+            method: GET
+            body:
+              mimeType: application/json
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivo
+            name: Crear dispositivos
+            meta:
+              id: req_4d67ae080a9c4f20a4bef84db625ac53
+              created: 1741906776437
+              modified: 1743961115377
+              isPrivate: false
+              sortKey: -1741906776437
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                 "cliente_id_dispositivo":"368",
+                 "tipo": "escritoio",
+                 "marca":"asus",
+                 "modelo":"",
+                "reporte": "daño en la board",
+                "numero_serie":""
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivo
+            name: Eliminar dispositivos
+            meta:
+              id: req_a6f100f591e54958848536bc047ee480
+              created: 1741907369537
+              modified: 1741907558887
+              isPrivate: false
+              sortKey: -1741907369537
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo": 4027
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/IDdispositivo
+            name: Buscar dispositivo por id
+            meta:
+              id: req_2f68b64ccc4f4498a41511b35ca5076b
+              created: 1741909250251
+              modified: 1741910427020
+              isPrivate: false
+              sortKey: -1741909250251
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo":432779
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivo
+            name: "Buscar dispositivo "
+            meta:
+              id: req_4e92e3f3b542402ebbcdd7986808d517
+              created: 1741909980560
+              modified: 1741910246520
+              isPrivate: false
+              sortKey: -1741909980560
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"cedula" : "11080789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivo
+            name: Actualizar dispositivo
+            meta:
+              id: req_aedf6180955a492398ff224533d37444
+              created: 1741910273989
+              modified: 1741910380390
+              isPrivate: false
+              sortKey: -1741910273989
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_dispositivo": 432779,
+                	"modelo":"compumax"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/dispositivo/cliente
+            name: Insertar cliente dispositivo
+            meta:
+              id: req_258711dc1c7046b6a0939e26f3968aa1
+              created: 1745164567981
+              modified: 1745164652320
+              isPrivate: false
+              sortKey: -1745164567981
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {   
+                "cedula":"55677",
+                    "nombre_cliente":"Juan Pérez",
+                    "direccion":"Calle 123, Bogotá",
+                    "telefono_cliente":"3123456789",
+                    "tipo":"Teléfono",
+                    "marca":"Samsung",
+                    "modelo":"Galaxy S21",
+                    "reporte":"Pantalla dañada",
+                    "numero_serie":"SN145678903"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: Reparaciones
+    meta:
+      id: fld_967f7699e025448fa7c40cebea8cc74a
+      created: 1741910453938
+      modified: 1741910453938
+      sortKey: -1741910453939
+    children:
+      - name: reparaciones render
+        meta:
+          id: fld_a005a692777a44aba15bdcd776e94f5e
+          created: 1741925533157
+          modified: 1741925533157
+          sortKey: -1741925533157
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/reparaciones
+            name: Todas las reparaciones
+            meta:
+              id: req_79a4c20590e8433a80acbc53490f574f
+              created: 1743981520874
+              modified: 1745193830487
+              isPrivate: false
+              sortKey: -1743981520874
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/reparacion
+            name: Creacion de reparacion
+            meta:
+              id: req_70e71cc36d6c496aa735ee2d6eadf560
+              created: 1743981553471
+              modified: 1744826353531
+              isPrivate: false
+              sortKey: -1743982013196
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                "dispositivo_id_reparacion": 56750,
+                "estado": "reparacion",
+                "precio_reparacion":40000,
+                "descripcion": "hola mundo",
+                "fecha_entrega":"12-12-2025 10:10:20"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/reparacion
+            name: Actualizar reparacion
+            meta:
+              id: req_1279287f119b4a1b84610d277a02c345
+              created: 1743982472921
+              modified: 1743982664619
+              isPrivate: false
+              sortKey: -1743982472921
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":50718823,
+                	"estado":"entregado"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/reparacion
+            name: Eliminar reparaciones
+            meta:
+              id: req_e489d1cf1ec046feb11e23483519809d
+              created: 1743997932557
+              modified: 1743997986274
+              isPrivate: false
+              sortKey: -1743997932557
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":50718823
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/consulta/reparacion
+            name: Buscar reparaciones
+            meta:
+              id: req_284927861d1d47eaac807fd147b60a4b
+              created: 1745189496185
+              modified: 1745265416560
+              isPrivate: false
+              sortKey: -1745189496185
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":120
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: reparaciones local
+        meta:
+          id: fld_8dc4d287ee2f4fdc81ba96fa42c54457
+          created: 1741925553516
+          modified: 1741925553516
+          sortKey: -1741925553516
+        children:
+          - url: http://127.0.0.1:5000/api/v1/reparaciones
+            name: Todas las reparaciones
+            meta:
+              id: req_c9ee34cb25604e90ad647921811d1ad0
+              created: 1741975862920
+              modified: 1745269101626
+              isPrivate: false
+              sortKey: -1741975862920
+            method: GET
+            body:
+              mimeType: application/json
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/reparacion
+            name: crea reparacion
+            meta:
+              id: req_6173ea84586b485f8475695f29fefa36
+              created: 1741977396029
+              modified: 1741978576913
+              isPrivate: false
+              sortKey: -1741977396029
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                "dispositivo_id_reparacion": 1155,
+                "estado": "reparacion",
+                "precio_reparacion":40000,
+                "descripcion": "hola mundo",
+                "fecha_entrega":"12-12-2025 10:10:20"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/reparacion
+            name: Actualizar reparacion
+            meta:
+              id: req_6a1aadda4d9c46888ae9fb3914de8117
+              created: 1741986196407
+              modified: 1743982488293
+              isPrivate: false
+              sortKey: -1741986196407
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":77305809,
+                	"estado":"entregado"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/reparacion
+            name: Eliminar reparacion
+            meta:
+              id: req_27e949970e5b4d24a0a7f64cd23daa82
+              created: 1741988166752
+              modified: 1742161838720
+              isPrivate: false
+              sortKey: -1741988166752
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":77305809
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/consulta/reparacion
+            name: Buscara reparaciones
+            meta:
+              id: req_f09b365dca2d41ed80c314ff7540a547
+              created: 1745266508369
+              modified: 1745269090030
+              isPrivate: false
+              sortKey: -1745266508369
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_reparacion":9004094
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: usuarios
+    meta:
+      id: fld_fb3863b17e164304a8660054b0eb969e
+      created: 1742169645291
+      modified: 1742169645291
+      sortKey: -1742169645291
+    children:
+      - name: usuario local
+        meta:
+          id: fld_940f1d030974476b999784a51f3be90f
+          created: 1742169654470
+          modified: 1742169654470
+          sortKey: -1742169654470
+        children:
+          - url: http://127.0.0.1:5000/api/v1/usuarios
+            name: Todos los usuarios
+            meta:
+              id: req_17216d90a766454093723dca9f9dca27
+              created: 1742169708724
+              modified: 1742169860895
+              isPrivate: false
+              sortKey: -1742169708725
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/usuario
+            name: Crear usuario
+            meta:
+              id: req_de398623f60a4cf798102878d680e98e
+              created: 1742177792867
+              modified: 1742184311683
+              isPrivate: false
+              sortKey: -1742177792867
+            method: POST
+            body:
+              mimeType: application/json
+              text: |
+                {
+                    "nombre_usuario": "homero",
+                    "email_usuario": "homero@gmail.com",
+                    "password": "123",
+                    "autenticado": false
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/usuario
+            name: Buscar usuario
+            meta:
+              id: req_b475e0659c09465c9d068e625d2f7686
+              created: 1742178992313
+              modified: 1742180709730
+              isPrivate: false
+              sortKey: -1742178992313
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	 "email_usuario": "jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/usuario
+            name: Actualizar usuario
+            meta:
+              id: req_c064b03044c148db9fa53e62337e0528
+              created: 1742179772090
+              modified: 1742180163442
+              isPrivate: false
+              sortKey: -1742179772090
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_usuario":913,
+                	"email_usuario":"jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/usuario
+            name: Eliminar usuario
+            meta:
+              id: req_98b106a2aa944169972e87a8c7a4cde7
+              created: 1742181330489
+              modified: 1742181433813
+              isPrivate: false
+              sortKey: -1742179382201.5
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"email_usuario" : "jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario/auth
+            name: Actualizar autentificacion
+            meta:
+              id: req_63928cb80d6d42868ffe09fcfae2033e
+              created: 1742181463551
+              modified: 1744835541025
+              isPrivate: false
+              sortKey: -1742181463551
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |
+                	{
+                	
+                	"email_usuario":"luis@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: usuario render
+        meta:
+          id: fld_3fa5796e70ec451f82f75a2756575484
+          created: 1742169666333
+          modified: 1742616244312
+          sortKey: -1742169654570
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/usuarios
+            name: Todos los usuarios
+            meta:
+              id: req_1458b7d74b3f42f2abb37484d32eb4e3
+              created: 1743998533187
+              modified: 1743998829827
+              isPrivate: false
+              sortKey: -1743998533187
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario
+            name: Crear usuario
+            meta:
+              id: req_0d0cc980a95447f080fab8bcde2bb403
+              created: 1743998835552
+              modified: 1743998897678
+              isPrivate: false
+              sortKey: -1743998835552
+            method: POST
+            body:
+              mimeType: application/json
+              text: |
+                {
+                    "nombre_usuario": "homero",
+                    "email_usuario": "homero@gmail.com",
+                    "password": "123",
+                    "autenticado": false
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario
+            name: Actualizar usuario
+            meta:
+              id: req_510a547111234d11903846f41ed09752
+              created: 1744834779902
+              modified: 1744835579075
+              isPrivate: false
+              sortKey: -1744834779902
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_usuario":86559,
+                	"email_usuario":"jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario/auth
+            name: Actualizar autentificacion
+            meta:
+              id: req_43cab7b9a7e749d2aa13ec91bb01e9c7
+              created: 1744835159595
+              modified: 1744835559027
+              isPrivate: false
+              sortKey: -1744835159595
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |
+                	{
+                	
+                	"email_usuario":"jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario
+            name: Buscar usuario
+            meta:
+              id: req_17bb5a4366f5468599d0e11282db5772
+              created: 1744835436364
+              modified: 1744835605153
+              isPrivate: false
+              sortKey: -1744835436364
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	 "email_usuario": "jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/usuario
+            name: Eliminar usuario
+            meta:
+              id: req_df969303ada34f6182b9c1044ffef765
+              created: 1744835967496
+              modified: 1744836003109
+              isPrivate: false
+              sortKey: -1744835967496
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"email_usuario" : "jose@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: servicios
+    meta:
+      id: fld_d89e7970120944b29bea0420ee769636
+      created: 1742222857535
+      modified: 1742222857535
+      sortKey: -1742222857535
+    children:
+      - name: servicios local
+        meta:
+          id: fld_f8e3da5813a54987907ea5ac2d7a43fa
+          created: 1742222986434
+          modified: 1742223042518
+          sortKey: -1742222986434
+        children:
+          - url: http://127.0.0.1:5000/api/v1/servicios
+            name: Todos los servicios
+            meta:
+              id: req_77a408125228452ebc4618a2fc70dcd9
+              created: 1742223053544
+              modified: 1742230726469
+              isPrivate: false
+              sortKey: -1742223053544
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/servicio
+            name: crear servicio
+            meta:
+              id: req_f9baf0b7003d472c94997b0bd7ffc67b
+              created: 1742243631182
+              modified: 1742573551210
+              isPrivate: false
+              sortKey: -1742243631182
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"cliente_id_servicio":759965,
+                	"dispositivos_id_servicio":34602,
+                	"usuario_id_servicio":5824270,
+                	"tipo":"formatear",
+                	"estado": "pendiente", 
+                	"descripcion":"cambio de sistema operativo",
+                	"pago":6000,
+                	"precio_servicio":30000	
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/10.3.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/servicio
+            name: Buscar servicio
+            meta:
+              id: req_368942d2cf804f00b99ce07ac6cf26a2
+              created: 1742573664522
+              modified: 1742574970512
+              isPrivate: false
+              sortKey: -1742573664522
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"cedula":"554"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/servicio
+            name: Actualizar servicio
+            meta:
+              id: req_ea35cbafe87a433ebad419692b96f034
+              created: 1742574978752
+              modified: 1742601007926
+              isPrivate: false
+              sortKey: -1742574978752
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_servicio":60188,
+                	"estado":"entregado"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/servicio
+            name: Eliminar Servicio
+            meta:
+              id: req_ff45c91ed58f4ed8a4a0b23f61e63f66
+              created: 1742602551930
+              modified: 1742604002377
+              isPrivate: false
+              sortKey: -1742602551930
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_servicio": 67251
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: servicios render
+        meta:
+          id: fld_112a1602b85a43d5a18812e935db49a5
+          created: 1742223001012
+          modified: 1742223001012
+          sortKey: -1742223001012
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/servicios
+            name: Todos los servicios
+            meta:
+              id: req_e54ca1fb6b654118a1d7732dda6d9c8d
+              created: 1743998152109
+              modified: 1743998309857
+              isPrivate: false
+              sortKey: -1743998152109
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/servicio
+            name: crear servicios
+            meta:
+              id: req_33cd99cef6194fe9be87a8a9825891d8
+              created: 1743998340300
+              modified: 1745014488876
+              isPrivate: false
+              sortKey: -1743998340300
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"cliente_id_servicio":368,
+                	"dispositivos_id_servicio":56750,
+                	"usuario_id_servicio":628,
+                	"tipo":"formatear",
+                	"estado": "pendiente", 
+                	"descripcion":"cambio de sistema operativo",
+                	"pago":6000,
+                	"precio_servicio":30000	
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/servicio
+            name: Eliminar servicios
+            meta:
+              id: req_722efb9791e04328aaad849bddfe68f2
+              created: 1744754648531
+              modified: 1744754940575
+              isPrivate: false
+              sortKey: -1744754648532
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_servicio": 698042
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/servicio
+            name: Actualizar servicio
+            meta:
+              id: req_acd85b7978d7438e87990c4d7c22da22
+              created: 1744754945806
+              modified: 1744755179007
+              isPrivate: false
+              sortKey: -1744754945806
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_servicio":997055,
+                	"estado":"entregado"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/servicio
+            name: Buscar servicio
+            meta:
+              id: req_9ff0f017f66e4a34938f2eef8bc65af7
+              created: 1744755195250
+              modified: 1744755460286
+              isPrivate: false
+              sortKey: -1744755195250
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"cedula":"11080789"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/servicio/cliente
+            name: Servicio cliente
+            meta:
+              id: req_64f35f05898742ca8bd75190e7515c03
+              created: 1745187961324
+              modified: 1745188094817
+              isPrivate: false
+              sortKey: -1745187961324
+            method: POST
+            body:
+              mimeType: application/json
+              text: |
+                {
+                  "cedula_cliente": "123456789",
+                  "nombre_cliente": "Juan Pérez",
+                  "direccion_cliente": "Calle 123, Bogotá",
+                  "telefono_cliente": "3123456789",
+                  "tipo_dispositivo": "Celular",
+                  "marca_dispositivo": "Samsung",
+                  "modelo_dispositivo": "Galaxy S21",
+                  "reporte_dispositivo": "Pantalla rota",
+                  "numero_serie_dispositivo": "SN123456",
+                  "tipo_servicio": "Reparación",
+                  "descripcion_servicio": "Cambio de pantalla",
+                  "fecha_servicio": "2025-04-18T14:30:00",
+                  "pago_servicio": 50000.00,
+                  "precio_servicio": 120000.00,
+                  "correo_usuario": "homero@gmail.com"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: Productos
+    meta:
+      id: fld_96618c2bcb5c4d81b4f0cc65a8392593
+      created: 1742616118430
+      modified: 1743981423858
+      sortKey: -1742517803206.25
+    children:
+      - name: Productos local
+        meta:
+          id: fld_ace4b48acc8645b19b0b6e0ed564125f
+          created: 1742616196707
+          modified: 1742616196707
+          sortKey: -1742616196707
+        children:
+          - url: http://127.0.0.1:5000/api/v1/productos
+            name: todos los productos
+            meta:
+              id: req_19f51b42bd47474294b2d9b87decd087
+              created: 1742684686761
+              modified: 1742689440551
+              isPrivate: false
+              sortKey: -1742684686762
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/producto
+            name: Crear Producto
+            meta:
+              id: req_d9c0c2f6a8cb487b81baa7f635345ed3
+              created: 1742684980987
+              modified: 1742685550211
+              isPrivate: false
+              sortKey: -1742684980987
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nombre_producto":"teclado gamer",
+                	"descripcion":"teclado iluminado con colores",
+                	"precio": 30000,
+                	"stock":10
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/producto
+            name: Buscar producto
+            meta:
+              id: req_e02b4899dd1044b99cbbcd307cb3e2cc
+              created: 1742685686591
+              modified: 1742685730270
+              isPrivate: false
+              sortKey: -1742685686591
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":24681
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/producto
+            name: Actualizar producto
+            meta:
+              id: req_f455a5b0a5d749efaa1af0b414f926dc
+              created: 1742686003096
+              modified: 1742686066464
+              isPrivate: false
+              sortKey: -1742686003096
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                		"id_producto":24681,
+                	  "precio": 4000
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/producto
+            name: Eliminar producto
+            meta:
+              id: req_1272c64570324f99a742af669c403135
+              created: 1742686084876
+              modified: 1742688243526
+              isPrivate: false
+              sortKey: -1742686084876
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":31417
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Productos render
+        meta:
+          id: fld_e6cddf6ebf524f378bd6bb1aca0247bf
+          created: 1742616213927
+          modified: 1742616213927
+          sortKey: -1742616213927
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/productos
+            name: Todo los productos
+            meta:
+              id: req_62952af25c3a4d81b70d5faf126df5c9
+              created: 1744828141410
+              modified: 1744828157484
+              isPrivate: false
+              sortKey: -1744828141410
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/producto
+            name: Crear producto
+            meta:
+              id: req_7ddfab1d814b40e98eee012a9b3af2ca
+              created: 1744828473071
+              modified: 1744829548043
+              isPrivate: false
+              sortKey: -1744828473071
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nombre_producto":"teclado gamer",
+                	"descripcion":"teclado iluminado con colores",
+                	"precio": 30000,
+                	"stock":10
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/producto
+            name: Eliminar producto
+            meta:
+              id: req_3c5a07e73fda428b8f2133e09c05b291
+              created: 1744831514925
+              modified: 1744831811704
+              isPrivate: false
+              sortKey: -1744831514925
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":120946
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/producto
+            name: Actualizar producto
+            meta:
+              id: req_1340a8ca72ef49fc9026ca9264cbd5ff
+              created: 1744831907401
+              modified: 1744831976905
+              isPrivate: false
+              sortKey: -1744831907401
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                		"id_producto":934924,
+                	  "precio": 4000
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/producto
+            name: Buscar producto
+            meta:
+              id: req_bcb8e35173454aa4bac7341378e5a37c
+              created: 1744831991997
+              modified: 1744832048078
+              isPrivate: false
+              sortKey: -1744831991997
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":934924
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: proveedores
+    meta:
+      id: fld_5289fcf6f0644cb2aeb2ca3c82b082b3
+      created: 1742689262621
+      modified: 1744826419123
+      sortKey: -1742040049615
+    children:
+      - name: proveedores local
+        meta:
+          id: fld_c44bca3a6fa74a97bc8a44a2a9554386
+          created: 1742689321197
+          modified: 1742689321197
+          sortKey: -1742689321197
+        children:
+          - url: http://127.0.0.1:5000/api/v1/proveedores
+            name: Todos proveedores
+            meta:
+              id: req_a150b99813524ad59b7f63a9dca759ff
+              created: 1742689402266
+              modified: 1742705989679
+              isPrivate: false
+              sortKey: -1742689402266
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/proveedor
+            name: crear proveedor
+            meta:
+              id: req_3de54a305fc143c89f257a020e8e86dc
+              created: 1742689545598
+              modified: 1742689795953
+              isPrivate: false
+              sortKey: -1742689545598
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4",
+                	"nombre_proveedor":"system log",
+                	"informacion_contacto":"log@gmail.com - 3005007400"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/proveedor
+            name: buscar proveedor por nit
+            meta:
+              id: req_7e782bb1fa4a45b187a0c6a626b7b88b
+              created: 1742689826527
+              modified: 1742689983300
+              isPrivate: false
+              sortKey: -1742689826527
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/proveedor
+            name: Actualizar proveedor
+            meta:
+              id: req_3d098089574d4e6e8faad65e91fc38d0
+              created: 1742690077030
+              modified: 1742690244248
+              isPrivate: false
+              sortKey: -1742690077030
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_proveedor":451,
+                	"nombre_proveedor":"empresa gamer"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/proveedor
+            name: Eliminar proveedor
+            meta:
+              id: req_1388712f31d04d6bbf443bea5df26299
+              created: 1742690473108
+              modified: 1742690508913
+              isPrivate: false
+              sortKey: -1742690473108
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Proveedor render
+        meta:
+          id: fld_799624bf620347ffa4d4a54cddc0a5ad
+          created: 1742689332439
+          modified: 1742689332439
+          sortKey: -1742689332439
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/proveedores
+            name: Todos los proveedores
+            meta:
+              id: req_ae3afddc467b4153aeb56de6cf61cc94
+              created: 1744832105749
+              modified: 1744832409280
+              isPrivate: false
+              sortKey: -1744832105749
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/proveedor
+            name: Crear proveedor
+            meta:
+              id: req_c3753e077f484eebb0b13531e0b5c99b
+              created: 1744832417996
+              modified: 1744832465226
+              isPrivate: false
+              sortKey: -1744832417996
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4",
+                	"nombre_proveedor":"system log",
+                	"informacion_contacto":"log@gmail.com - 3005007400"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/proveedor
+            name: Eliminar proveedor
+            meta:
+              id: req_f0c9f7f50a2b4da284a68eea6efce7c4
+              created: 1744832504896
+              modified: 1744832794318
+              isPrivate: false
+              sortKey: -1744832504896
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/proveedor
+            name: Actualizar proveedor
+            meta:
+              id: req_7c751c2705774accb2167a128b5e498c
+              created: 1744832818135
+              modified: 1744832872822
+              isPrivate: false
+              sortKey: -1744832818135
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_proveedor":2109,
+                	"nombre_proveedor":"empresa gamer"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/proveedor
+            name: Buscar proveedor
+            meta:
+              id: req_5d7f6dc2fe124c558dcf9f2eaee0b3f8
+              created: 1744832909469
+              modified: 1744832960023
+              isPrivate: false
+              sortKey: -1744832909469
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"nit":"754323-4"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: inventarios
+    meta:
+      id: fld_115238fb36794301b0863c5b52ea1bef
+      created: 1742697187260
+      modified: 1742697187260
+      sortKey: -1742697187260
+    children:
+      - name: Inventario local
+        meta:
+          id: fld_d848e16926d54092a564a42c2d8bf622
+          created: 1742697201918
+          modified: 1742697201918
+          sortKey: -1742697201918
+        children:
+          - url: http://127.0.0.1:5000/api/v1/inventarios
+            name: todos los inventarios
+            meta:
+              id: req_0988fd5d20214ca1aec7d820627664e9
+              created: 1742697228211
+              modified: 1742706004898
+              isPrivate: false
+              sortKey: -1742697228211
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/inventario
+            name: Crear inventario
+            meta:
+              id: req_e82a9115078648d6afb49714f69ab5c2
+              created: 1742706938015
+              modified: 1742707345551
+              isPrivate: false
+              sortKey: -1742706938015
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto_inventario":48501,
+                	"id_proveedor_inventario":89303,
+                	"cantidad":20	
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/inventario
+            name: Buscar inventario
+            meta:
+              id: req_3c5592d7fbf24b5488f890dd06d2fef3
+              created: 1742707372394
+              modified: 1742744743367
+              isPrivate: false
+              sortKey: -1742707372394
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":48501
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/inventario
+            name: Actualizar inventario
+            meta:
+              id: req_442a82259595496d9081c66f45ec8acf
+              created: 1742708856346
+              modified: 1742750155915
+              isPrivate: false
+              sortKey: -1742708856346
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_inventario":562794,
+                	"cantidad":5
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/inventario
+            name: Eliminar inventario
+            meta:
+              id: req_c9f04b3f367c40c48bd9af6cbd855b62
+              created: 1742750185172
+              modified: 1742750555101
+              isPrivate: false
+              sortKey: -1742750185172
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_inventario":51930
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: inventario render
+        meta:
+          id: fld_e3d61ed7da2f4d4eb8e31d3bb497655e
+          created: 1742697223680
+          modified: 1742697223680
+          sortKey: -1742697223680
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/inventarios
+            name: Todos los inventarios
+            meta:
+              id: req_e99ff4c3015940219a69fe78284e74b0
+              created: 1744833065976
+              modified: 1744833102071
+              isPrivate: false
+              sortKey: -1744833065976
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/inventario
+            name: Crear inventario
+            meta:
+              id: req_4023469584564f4f915510119ec1515f
+              created: 1744833110468
+              modified: 1744833226446
+              isPrivate: false
+              sortKey: -1744833110468
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto_inventario":934924,
+                	"id_proveedor_inventario":2109,
+                	"cantidad":20	
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/inventario
+            name: Eliminar inventario
+            meta:
+              id: req_0d95115253e648bcbd51b291bfeb31a1
+              created: 1744833481254
+              modified: 1744833533462
+              isPrivate: false
+              sortKey: -1744833481254
+            method: DELETE
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_inventario":15131
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/inventario
+            name: Actualizar inventario
+            meta:
+              id: req_11d787f3e3e6407b8f1d388f767b4010
+              created: 1744833565687
+              modified: 1744833631903
+              isPrivate: false
+              sortKey: -1744833565687
+            method: PUT
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_inventario":9992452,
+                	"cantidad":5
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/inventario
+            name: Buscar inventario
+            meta:
+              id: req_11a6f82d0177434bbf76db76df38bff3
+              created: 1744833653293
+              modified: 1744833800830
+              isPrivate: false
+              sortKey: -1744833653293
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"id_producto":934924
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/inventarioproducto
+            name: insertar inventario producto
+            meta:
+              id: req_243ff381b62740ff92e34beaf9954fce
+              created: 1745034609180
+              modified: 1745038355663
+              isPrivate: false
+              sortKey: -1745034609180
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "productos": [
+                    { "id_producto": 934924, "cantidad": 2 }
+                  ]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: Facturas
+    meta:
+      id: fld_fd5f14b7d4834303bc22cfc368b8fc90
+      created: 1742751769643
+      modified: 1742751769643
+      sortKey: -1742751769643
+    children:
+      - name: Facturas local
+        meta:
+          id: fld_ec4ed6fa66c64c24a01de1fe20caedb3
+          created: 1742751780846
+          modified: 1742751780846
+          sortKey: -1742751780846
+        children:
+          - name: Todas las facturas
+            meta:
+              id: req_ea2af495eda44678b3ae5080f9d2c539
+              created: 1742763677412
+              modified: 1742789337530
+              isPrivate: false
+              sortKey: -1742763677412
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: http://127.0.0.1:5000/api/v1/factura
+            name: Crear factura
+            meta:
+              id: req_740db248c0b746ffbc5000d7d417648f
+              created: 1742837983258
+              modified: 1745164532488
+              isPrivate: false
+              sortKey: -1742800830335
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula": "7832",
+                    "pago": 20000,
+                    "id_usuario": 5824270,
+                    "productos": [
+                        {"id_producto": 48501, "cantidad": 2}       
+                    ]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.0
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Facturas render
+        meta:
+          id: fld_5225f2391ef1480098bfd666e6b8db65
+          created: 1742751791818
+          modified: 1742751791818
+          sortKey: -1742751791818
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/compras
+            name: Crear factura
+            meta:
+              id: req_a82061de914f4abd8521dfe3d721b2c2
+              created: 1744834523442
+              modified: 1745011779382
+              isPrivate: false
+              sortKey: -1744834523442
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                    "cedula": "7832",
+                    "pago": 20000,
+                    "id_usuario": 628,
+                    "productos": [
+                        {"id_producto": 934924, "cantidad": 2}       
+                    ],
+                	   "nombre_cliente":"Nuevo Cliente", 
+                    "direccion":"Calle Principal 123",
+                    "telefono_cliente":"555-1234"    
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: https://apirestcompu.onrender.com/api/v1/facturas
+            name: Todas las facturas
+            meta:
+              id: req_ccc870ca202f440ba66da67a3f1a4b93
+              created: 1745004896147
+              modified: 1745004922562
+              isPrivate: false
+              sortKey: -1745004896147
+            method: GET
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: detalles_factura
+    meta:
+      id: fld_a0cf17ece0f940f99e776b0ff8be1746
+      created: 1742829460950
+      modified: 1742829460950
+      sortKey: -1742829460950
+  - name: compras
+    meta:
+      id: fld_82bba9fb2363486a897d32102114a08d
+      created: 1743355329768
+      modified: 1743355329768
+      sortKey: -1743355329768
+    children:
+      - name: compras local
+        meta:
+          id: fld_4b16e9450d2f4098a314fed279c5367b
+          created: 1743355339097
+          modified: 1743355339097
+          sortKey: -1743355339097
+      - name: compras render
+        meta:
+          id: fld_125f2ea7444c4b159673be38fa9750fd
+          created: 1743355354064
+          modified: 1743355354064
+          sortKey: -1743355354064
+        children:
+          - url: https://apirestcompu.onrender.com/api/v1/compras
+            name: Crear Compras
+            meta:
+              id: req_0198acbead9641daac219e3240f41711
+              created: 1743356062468
+              modified: 1745011997130
+              isPrivate: false
+              sortKey: -1743356062468
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"email_usuario":"homero@gmail.com",
+                "nit":"754323-4",
+                "nombre_proveedor":"Proveedor Nuevo",
+                "informacion_contacto":"Dirección, Teléfono",
+                "metodo_pago":"Efectivo",
+                "productos":[
+                        {"id_producto": 934924, "cantidad": 2}       
+                    ]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+              - name: User-Agent
+                value: insomnia/11.0.1
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_cbe648335c22e61ec93007f6a8751875bad8cfe2
+    created: 1741640615479
+    modified: 1741640615479
+environments:
+  name: Base Environment
+  meta:
+    id: env_cbe648335c22e61ec93007f6a8751875bad8cfe2
+    created: 1741640615476
+    modified: 1741640615476
+    isPrivate: false

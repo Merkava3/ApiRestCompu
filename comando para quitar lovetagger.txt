@@ -1,0 +1,40 @@
+paso 1 : npm uninstall lovable-tagger
+luego : limpiar : rm -rf node_modules package-lock.json despues : npm install
+verificar : npm list --depth=0 que no este 
+
+
+paso 2:  eliminar el codigo que esta en vite.config.ts copiar este codigo :
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+
+// https://vitejs.dev/config/
+export default defineConfig(() => ({
+  server: {
+    host: "0.0.0.0",
+    port: 8080,
+  },
+  plugins: [
+    react(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+}));
+
+luego ejecutar : npm run dev para que no halla errores
+
+
+paso 3 : npx update-browserslist-db@latest o si es Si usas npm 7 o superior y tienes problemas de permisos, añade --save-dev : npx update-browserslist-db@latest --save-dev
+
+
+paso 4 : si aparece un error ingresa este comando : npm install caniuse-lite@latest --save-dev
+
+luego rm -rf %AppData%\npm-cache\_npx despues : npm update caniuse-lite browserslist --save-dev
+
+luego npm update caniuse-lite browserslist --save-dev despues rm -rf node_modules package-lock.json
+
+despues npm install

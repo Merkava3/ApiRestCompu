@@ -1,0 +1,267 @@
+disparador :
+
+CREATE OR REPLACE FUNCTION trigger_dispositivos_default_values()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.modelo IS NULL OR NEW.modelo = '' THEN
+    NEW.modelo := 'No Tiene Registro';
+  END IF;
+
+  IF NEW.numero_serie IS NULL OR NEW.numero_serie = '' THEN
+    NEW.numero_serie := 'No Tiene Registro';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_dispositivos_default_values
+BEFORE INSERT ON dispositivos
+FOR EACH ROW
+EXECUTE FUNCTION trigger_dispositivos_default_values();
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION trigger_dispositivos_default_values()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.modelo IS NULL OR NEW.modelo = '' THEN
+    NEW.modelo := 'No Tiene Registro';
+  END IF;
+
+  IF NEW.numero_serie IS NULL OR NEW.numero_serie = '' THEN
+    NEW.numero_serie := 'No Tiene Registro';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_dispositivos_default_values
+BEFORE INSERT ON dispositivos
+FOR EACH ROW
+EXECUTE FUNCTION trigger_dispositivos_default_values();
+
+
+/* ---------------------------------------------------------------------------------------------------------------- */
+
+CREATE OR REPLACE FUNCTION InsertarFactura(
+    p_cedula_cliente VARCHAR(20),
+    p_pago DECIMAL(10, 2),
+    p_id_usuario BIGINT,
+    p_productos JSON,
+    p_nombre_cliente VARCHAR(255) DEFAULT NULL,
+    p_direccion TEXT DEFAULT NULL,
+    p_telefono_cliente VARCHAR(50) DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_id_factura INTEGER;
+    v_id_cliente BIGINT;
+    v_product JSON;
+    v_id_producto BIGINT;
+    v_cantidad INTEGER;
+    v_precio DECIMAL(10, 2);
+    v_subtotal DECIMAL(10, 2) := 0;
+    v_total DECIMAL(10, 2) := 0;
+    v_product_count INTEGER := json_array_length(p_productos);
+    i INTEGER;
+BEGIN
+    -- Verificar y obtener/crear cliente
+    SELECT id_cliente INTO v_id_cliente FROM clientes WHERE cedula = p_cedula_cliente;
+    
+    IF v_id_cliente IS NULL THEN
+        IF p_nombre_cliente IS NULL OR p_direccion IS NULL OR p_telefono_cliente IS NULL THEN
+            RAISE EXCEPTION 'Para crear nuevo cliente se requieren nombre, dirección y teléfono';
+        END IF;
+        
+        INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+        VALUES (p_cedula_cliente, p_nombre_cliente, p_direccion, p_telefono_cliente)
+        RETURNING id_cliente INTO v_id_cliente;
+        
+        RAISE NOTICE 'Nuevo cliente creado: % (%)', p_nombre_cliente, p_cedula_cliente;
+    END IF;
+
+    -- Insertar factura con fecha actual
+    INSERT INTO facturas (
+        id_cliente_facturas, 
+        total, 
+        pago, 
+        factura_id_usuario,
+        fecha
+    ) VALUES (
+        v_id_cliente, 
+        0, 
+        p_pago, 
+        p_id_usuario,
+        CURRENT_DATE
+    ) RETURNING id_factura INTO v_id_factura;
+
+    -- Procesar productos
+    FOR i IN 0..v_product_count-1 LOOP
+        v_product := p_productos->i;
+        v_id_producto := (v_product->>'id_producto')::BIGINT;
+        v_cantidad := (v_product->>'cantidad')::INTEGER;
+
+        -- Verificar que el producto existe
+        PERFORM 1 FROM productos WHERE id_producto = v_id_producto;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Producto ID % no encontrado', v_id_producto;
+        END IF;
+        
+        -- Obtener precio
+        SELECT precio INTO v_precio FROM productos 
+        WHERE id_producto = v_id_producto
+        FOR UPDATE;
+        
+        -- Calcular subtotal
+        v_subtotal := v_precio * v_cantidad;
+        
+        -- Insertar detalle de factura
+        INSERT INTO detalle_factura (
+            factura_id_factura,
+            producto_id_producto,
+            cantidad_detalle, 
+            sub_total
+        ) VALUES (
+            v_id_factura, 
+            v_id_producto, 
+            v_cantidad, 
+            v_subtotal
+        );
+        
+        -- Actualizar stock (usando la columna correcta "stock" según tu estructura)
+        UPDATE productos 
+        SET stock = stock - v_cantidad  -- Cambiado de cantidad_stock a stock
+        WHERE id_producto = v_id_producto;
+        
+        v_total := v_total + v_subtotal;
+    END LOOP;
+
+    -- Actualizar total de factura
+    UPDATE facturas SET total = v_total WHERE id_factura = v_id_factura;
+    
+    RETURN v_id_factura;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from usuarios;
+select * from facturas;
+select * from clientes;
+select * from productos;
+
+SELECT InsertarFactura(
+    '123456789',     -- cédula
+    15000,           -- pago
+    99457088,             -- id_usuario
+    '[{"id_producto": 262, "cantidad": 1}]'::json,
+    'Nuevo Cliente', -- nombre
+    'Calle Principal 123', -- dirección
+    '555-1234'       -- teléfono
+);
+
+/*-----------------------------------------------------------------------------------------------------------------*/
+
+select * from productos;
+select * from compras;
+select * from detalles_compras;
+select * from usuarios;
+select * from proveedores;
+
+ALTER TABLE compras 
+RENAME COLUMN id_compra TO id_compras;
+
+ALTER TABLE compras 
+ALTER COLUMN fecha_compras SET DEFAULT CURRENT_DATE;
+
+
+CREATE OR REPLACE FUNCTION InsertarCompra(
+    p_email_usuario VARCHAR(255),  -- Correo del usuario
+    p_nit_proveedor VARCHAR(16),   -- NIT del proveedor
+    p_nombre_proveedor VARCHAR(255), -- Nombre del proveedor
+    p_info_contacto TEXT,          -- Información de contacto del proveedor
+    p_metodo_pago VARCHAR(45),     -- Método de pago
+    p_productos JSON               -- Lista de productos (formato JSON)
+)
+RETURNS VOID AS $$
+DECLARE
+    v_id_usuario BIGINT;
+    v_id_proveedor BIGINT;
+    v_id_compra BIGINT;
+    v_total DECIMAL(10, 2) := 0;
+    v_id_producto BIGINT;
+    v_cantidad INT;
+    v_precio DECIMAL(10, 2);
+    v_subtotal DECIMAL(10, 2);
+    v_product_count INT;
+    v_product_json JSON;
+BEGIN
+    -- Obtener el ID del usuario a partir del correo
+    SELECT id_usuario INTO v_id_usuario
+    FROM usuarios
+    WHERE email_usuario = p_email_usuario;
+
+    -- Validar que el usuario exista
+    IF v_id_usuario IS NULL THEN
+        RAISE EXCEPTION 'Usuario no encontrado';
+    END IF;
+
+    -- Verificar si el proveedor ya existe por NIT
+    SELECT id_proveedor INTO v_id_proveedor
+    FROM proveedores
+    WHERE nit = p_nit_proveedor;
+
+    -- Si el proveedor no existe, se crea
+    IF v_id_proveedor IS NULL THEN
+        INSERT INTO proveedores (nit, nombre, informacion_contacto)
+        VALUES (p_nit_proveedor, p_nombre_proveedor, p_info_contacto)
+        RETURNING id_proveedor INTO v_id_proveedor;
+    END IF;
+
+    -- Insertar en la tabla compras
+    INSERT INTO compras (total_compras, metodo_pago, id_proveedor_compras, id_usuario_compras)
+    VALUES (0, p_metodo_pago, v_id_proveedor, v_id_usuario)
+    RETURNING id_compras INTO v_id_compra;
+
+    -- Procesar los productos del JSON
+    v_product_count := json_array_length(p_productos);
+    
+    FOR i IN 0..v_product_count-1 LOOP
+        -- Extraer el producto actual
+        v_product_json := p_productos->i;
+        v_id_producto := (v_product_json->>'id_producto')::BIGINT;
+        v_cantidad := (v_product_json->>'cantidad')::INT;
+
+        -- Obtener el precio del producto
+        SELECT precio INTO v_precio
+        FROM productos
+        WHERE id_producto = v_id_producto;
+
+        -- Calcular el subtotal
+        v_subtotal := v_precio * v_cantidad;
+
+        -- Insertar en la tabla detalles_compras
+        INSERT INTO detalles_compras (cantidad, precio, id_compras_detalles, id_detalles_compras_productos)
+        VALUES (v_cantidad, v_precio, v_id_compra, v_id_producto);
+
+        -- Actualizar el total de la compra
+        v_total := v_total + v_subtotal;
+    END LOOP;
+
+    -- Actualizar el total en la tabla compras
+    UPDATE compras
+    SET total_compras = v_total
+    WHERE id_compras = v_id_compra;
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT InsertarCompra(
+    'homero@gmail.com', 
+    '754323-4', 
+     'Proveedor Nuevo', 
+	 'Dirección, Teléfono',
+	 'Efectivo',
+    '[{"id_producto": 262, "cantidad": 2}]'::json
+);
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,567 @@
+DROP PROCEDURE InsertarFactura();
+DROP FUNCTION IF EXISTS transferir_stock;
+
+select * from detalle_factura;
+select * from facturas;
+
+SELECT 
+    n.nspname as schema_name,
+    p.proname as function_name,
+    pg_get_function_arguments(p.oid) as arguments,
+    pg_get_function_result(p.oid) as return_type,
+    CASE 
+        WHEN p.prokind = 'f' THEN 'FUNCTION'
+        WHEN p.prokind = 'p' THEN 'PROCEDURE'
+        WHEN p.prokind = 'a' THEN 'AGGREGATE'
+        WHEN p.prokind = 'w' THEN 'WINDOW'
+    END as kind,
+    l.lanname as language
+FROM 
+    pg_proc p
+LEFT JOIN 
+    pg_namespace n ON p.pronamespace = n.oid
+LEFT JOIN 
+    pg_language l ON p.prolang = l.oid
+WHERE 
+    n.nspname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY 
+    schema_name, function_name;
+
+
+CREATE OR REPLACE FUNCTION InsertarFactura(
+    p_cedula_cliente VARCHAR(20),
+    p_pago DECIMAL(10, 2),
+    p_id_usuario BIGINT,
+    p_productos JSON,
+    p_nombre_cliente VARCHAR(255) DEFAULT NULL,
+    p_direccion TEXT DEFAULT NULL,
+    p_telefono_cliente VARCHAR(50) DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_id_factura INTEGER;
+    v_id_cliente BIGINT;
+    v_product JSON;
+    v_id_producto BIGINT;
+    v_cantidad INTEGER;
+    v_precio DECIMAL(10, 2);
+    v_subtotal DECIMAL(10, 2) := 0;
+    v_total DECIMAL(10, 2) := 0;
+    v_product_count INTEGER := json_array_length(p_productos);
+    i INTEGER;
+BEGIN
+    -- Verificar y obtener/crear cliente
+    SELECT id_cliente INTO v_id_cliente FROM clientes WHERE cedula = p_cedula_cliente;
+    
+    IF v_id_cliente IS NULL THEN
+        IF p_nombre_cliente IS NULL OR p_direccion IS NULL OR p_telefono_cliente IS NULL THEN
+            RAISE EXCEPTION 'Para crear nuevo cliente se requieren nombre, dirección y teléfono';
+        END IF;
+        
+        INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+        VALUES (p_cedula_cliente, p_nombre_cliente, p_direccion, p_telefono_cliente)
+        RETURNING id_cliente INTO v_id_cliente;
+        
+        RAISE NOTICE 'Nuevo cliente creado: % (%)', p_nombre_cliente, p_cedula_cliente;
+    END IF;
+
+    -- Insertar factura con fecha actual
+    INSERT INTO facturas (
+        id_cliente_facturas, 
+        total, 
+        pago, 
+        factura_id_usuario,
+        fecha
+    ) VALUES (
+        v_id_cliente, 
+        0, 
+        p_pago, 
+        p_id_usuario,
+        CURRENT_DATE
+    ) RETURNING id_factura INTO v_id_factura;
+
+    -- Procesar productos
+    FOR i IN 0..v_product_count-1 LOOP
+        v_product := p_productos->i;
+        v_id_producto := (v_product->>'id_producto')::BIGINT;
+        v_cantidad := (v_product->>'cantidad')::INTEGER;
+
+        -- Verificar que el producto existe
+        PERFORM 1 FROM productos WHERE id_producto = v_id_producto;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Producto ID % no encontrado', v_id_producto;
+        END IF;
+        
+        -- Obtener precio
+        SELECT precio INTO v_precio FROM productos 
+        WHERE id_producto = v_id_producto
+        FOR UPDATE;
+        
+        -- Calcular subtotal
+        v_subtotal := v_precio * v_cantidad;
+        
+        -- Insertar detalle de factura
+        INSERT INTO detalle_factura (
+            factura_id_factura,
+            producto_id_producto,
+            cantidad_detalle, 
+            sub_total
+        ) VALUES (
+            v_id_factura, 
+            v_id_producto, 
+            v_cantidad, 
+            v_subtotal
+        );
+        
+        -- Actualizar stock (usando la columna correcta "stock" según tu estructura)
+        UPDATE productos 
+        SET stock = stock - v_cantidad  -- Cambiado de cantidad_stock a stock
+        WHERE id_producto = v_id_producto;
+        
+        v_total := v_total + v_subtotal;
+    END LOOP;
+
+    -- Actualizar total de factura
+    UPDATE facturas SET total = v_total WHERE id_factura = v_id_factura;
+    
+    RETURN v_id_factura;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+ALTER TABLE facturas ALTER COLUMN fecha SET DEFAULT CURRENT_DATE;
+
+
+select * from usuarios;
+select * from facturas;
+select * from clientes;
+select * from productos;
+
+SELECT InsertarFactura(
+    '123456789',     -- cédula
+    15000,           -- pago
+    628,             -- id_usuario
+    '[{"id_producto": 934924, "cantidad": 1}]'::json,
+    'Nuevo Cliente', -- nombre
+    'Calle Principal 123', -- dirección
+    '555-1234'       -- teléfono
+);
+
+
+SELECT 
+    p.proname as function_name,
+    pg_get_function_arguments(p.oid) as arguments,
+    pg_get_function_result(p.oid) as return_type
+FROM 
+    pg_proc p
+WHERE 
+    p.proname LIKE '%factura%'
+ORDER BY 
+    p.proname;
+
+
+CREATE OR REPLACE FUNCTION InsertarCompra(
+    p_email_usuario VARCHAR(255),  -- Correo del usuario
+    p_nit_proveedor VARCHAR(16),   -- NIT del proveedor
+    p_nombre_proveedor VARCHAR(255), -- Nombre del proveedor
+    p_info_contacto TEXT,          -- Información de contacto del proveedor
+    p_metodo_pago VARCHAR(45),     -- Método de pago
+    p_productos JSON               -- Lista de productos (formato JSON)
+)
+RETURNS VOID AS $$
+DECLARE
+    v_id_usuario BIGINT;
+    v_id_proveedor BIGINT;
+    v_id_compra BIGINT;
+    v_total DECIMAL(10, 2) := 0;
+    v_id_producto BIGINT;
+    v_cantidad INT;
+    v_precio DECIMAL(10, 2);
+    v_subtotal DECIMAL(10, 2);
+    v_product_count INT;
+    v_product_json JSON;
+BEGIN
+    -- Obtener el ID del usuario a partir del correo
+    SELECT id_usuario INTO v_id_usuario
+    FROM usuarios
+    WHERE email_usuario = p_email_usuario;
+
+    -- Validar que el usuario exista
+    IF v_id_usuario IS NULL THEN
+        RAISE EXCEPTION 'Usuario no encontrado';
+    END IF;
+
+    -- Verificar si el proveedor ya existe por NIT
+    SELECT id_proveedor INTO v_id_proveedor
+    FROM proveedores
+    WHERE nit = p_nit_proveedor;
+
+    -- Si el proveedor no existe, se crea
+    IF v_id_proveedor IS NULL THEN
+        INSERT INTO proveedores (nit, nombre, informacion_contacto)
+        VALUES (p_nit_proveedor, p_nombre_proveedor, p_info_contacto)
+        RETURNING id_proveedor INTO v_id_proveedor;
+    END IF;
+
+    -- Insertar en la tabla compras
+    INSERT INTO compras (total_compras, metodo_pago, id_proveedor_compras, id_usuario_compras)
+    VALUES (0, p_metodo_pago, v_id_proveedor, v_id_usuario)
+    RETURNING id_compras INTO v_id_compra;
+
+    -- Procesar los productos del JSON
+    v_product_count := json_array_length(p_productos);
+    
+    FOR i IN 0..v_product_count-1 LOOP
+        -- Extraer el producto actual
+        v_product_json := p_productos->i;
+        v_id_producto := (v_product_json->>'id_producto')::BIGINT;
+        v_cantidad := (v_product_json->>'cantidad')::INT;
+
+        -- Obtener el precio del producto
+        SELECT precio INTO v_precio
+        FROM productos
+        WHERE id_producto = v_id_producto;
+
+        -- Calcular el subtotal
+        v_subtotal := v_precio * v_cantidad;
+
+        -- Insertar en la tabla detalles_compras
+        INSERT INTO detalles_compras (cantidad, precio, id_compras_detalles, id_detalles_compras_productos)
+        VALUES (v_cantidad, v_precio, v_id_compra, v_id_producto);
+
+        -- Actualizar el total de la compra
+        v_total := v_total + v_subtotal;
+    END LOOP;
+
+    -- Actualizar el total en la tabla compras
+    UPDATE compras
+    SET total_compras = v_total
+    WHERE id_compras = v_id_compra;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from productos;
+select * from usuarios;
+select * from compras;
+select * from servicios;
+select * from clientes;
+select * from dispositivos;
+select
+ALTER TABLE compras ALTER COLUMN fecha_compras SET DEFAULT NOW();
+
+SELECT InsertarCompra(
+    'homero@gmail.com', 
+    '754323-4', 
+     'Proveedor Nuevo', 
+	 'Dirección, Teléfono',
+	 'Efectivo',
+    '[{"id_producto": 934924, "cantidad": 2}]'::json
+);
+
+select * from productos;
+select * from inventario;
+
+-- Eliminar funciones existentes
+DROP FUNCTION IF EXISTS transferir_stock_json(JSON);
+DROP FUNCTION IF EXISTS transferir_stock(BIGINT, INTEGER);
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Función base simplificada
+CREATE OR REPLACE FUNCTION transferir_stock(
+    p_id_producto BIGINT,
+    p_cantidad_a_transferir INTEGER
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_inventario_actual INTEGER;
+BEGIN
+    -- Bloquear registros
+    PERFORM 1 FROM productos WHERE id_producto = p_id_producto FOR UPDATE;
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+    
+    PERFORM 1 FROM inventario WHERE id_producto_inventario = p_id_producto FOR UPDATE;
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Verificar stock disponible
+    SELECT cantidad INTO v_inventario_actual 
+    FROM inventario 
+    WHERE id_producto_inventario = p_id_producto;
+    
+    IF v_inventario_actual < p_cantidad_a_transferir THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Actualizar stock
+    UPDATE productos 
+    SET stock = stock + p_cantidad_a_transferir
+    WHERE id_producto = p_id_producto;
+    
+    -- Actualizar inventario
+    UPDATE inventario
+    SET cantidad = cantidad - p_cantidad_a_transferir,
+        ultima_actualizacion = NOW()
+    WHERE id_producto_inventario = p_id_producto;
+    
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Función JSON simplificada
+CREATE OR REPLACE FUNCTION transferir_stock_json(p_productos JSON)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_producto JSON;
+BEGIN
+    FOR v_producto IN SELECT * FROM json_array_elements(p_productos)
+    LOOP
+        IF NOT transferir_stock(
+            (v_producto->>'id_producto')::BIGINT,
+            (v_producto->>'cantidad')::INTEGER
+        ) THEN
+            RETURN FALSE;
+        END IF;
+    END LOOP;
+    
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from productos;
+select * from inventario;
+update inventario set cantidad = 10 where id_inventario = 9992452;
+DROP FUNCTION IF EXISTS transferir_stock_json;
+
+-- Forma correcta de llamar a la función:
+SELECT transferir_stock_json('[{"id_producto": 934924, "cantidad": 2}]'::json);
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+DROP FUNCTION IF EXISTS InsertarClienteYRelacionados;
+
+SELECT proname, proargtypes::regtype[] 
+FROM pg_proc 
+WHERE proname = 'insertarclienteyrelacionados';
+
+select * from clientes;
+
+CREATE OR REPLACE FUNCTION InsertarClienteYDispositivo(
+    p_cedula VARCHAR(16),
+    p_nombre_cliente VARCHAR(255),
+    p_direccion TEXT,
+    p_telefono_cliente VARCHAR(50),
+    p_tipo VARCHAR(255),
+    p_marca VARCHAR(255),
+    p_modelo VARCHAR(255),
+    p_reporte TEXT,
+    p_numero_serie VARCHAR(255)
+)
+RETURNS BIGINT AS $$
+DECLARE
+    v_cliente_id BIGINT;
+    v_existente_cliente RECORD;
+    v_existente_dispositivo RECORD;
+BEGIN
+    -- Verificar si el cliente ya existe por su cédula
+    SELECT id_cliente INTO v_existente_cliente
+    FROM clientes
+    WHERE cedula = p_cedula;
+
+    IF FOUND THEN
+        v_cliente_id := v_existente_cliente.id_cliente;
+    ELSE
+        -- Insertar nuevo cliente si no existe
+        INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+        VALUES (p_cedula, p_nombre_cliente, p_direccion, p_telefono_cliente)
+        RETURNING id_cliente INTO v_cliente_id;
+    END IF;
+
+    -- Verificar si ya existe el dispositivo por su número de serie
+    SELECT 1 INTO v_existente_dispositivo
+    FROM dispositivos
+    WHERE numero_serie = p_numero_serie;
+
+    IF NOT FOUND THEN
+        -- Insertar dispositivo si no existe
+        INSERT INTO dispositivos (cliente_id_dispositivo, tipo, marca, modelo, reporte, numero_serie)
+        VALUES (v_cliente_id, p_tipo, p_marca, p_modelo, p_reporte, p_numero_serie);
+    END IF;
+
+    RETURN v_cliente_id;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Error al insertar cliente y dispositivo: %', SQLERRM;
+        RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE dispositivos
+ALTER COLUMN fecha_ingreso SET DEFAULT NOW();
+
+select * from clientes;
+select * from dispositivos;
+
+SELECT * FROM InsertarClienteYDispositivo(
+    '55677',
+    'Juan Pérez',
+    'Calle 123, Bogotá',
+    '3123456789',
+    'Teléfono',
+    'Samsung',
+    'Galaxy S21',
+    'Pantalla dañada',
+    'SN145678903'
+);
+
+CREATE OR REPLACE FUNCTION InsertarClienteYRelacionados(
+    p_cedula_cliente VARCHAR(16),
+    p_nombre_cliente VARCHAR(255),
+    p_direccion_cliente TEXT,
+    p_telefono_cliente VARCHAR(50),
+    p_tipo_dispositivo VARCHAR(255),
+    p_marca_dispositivo VARCHAR(255),
+    p_modelo_dispositivo VARCHAR(255),
+    p_reporte_dispositivo TEXT,
+    p_numero_serie_dispositivo VARCHAR(255),
+    p_tipo_servicio VARCHAR(255),
+    p_descripcion_servicio TEXT,
+    p_fecha_servicio TIMESTAMP,
+    p_pago_servicio DECIMAL(10, 2),
+    p_precio_servicio DECIMAL(10, 2),
+    p_correo_usuario TEXT
+)
+RETURNS BIGINT AS $$
+DECLARE
+    v_cliente_id BIGINT;
+    v_usuario_id BIGINT;
+    v_dispositivo_id BIGINT;
+BEGIN
+    -- Validación de parámetros obligatorios
+    IF p_cedula_cliente IS NULL THEN
+        RAISE EXCEPTION 'La cédula del cliente es obligatoria';
+    END IF;
+    
+    IF p_nombre_cliente IS NULL THEN
+        RAISE EXCEPTION 'El nombre del cliente es obligatorio';
+    END IF;
+    
+    IF p_correo_usuario IS NULL THEN
+        RAISE EXCEPTION 'El correo del usuario es obligatorio';
+    END IF;
+
+    -- Bloqueo para evitar inserción duplicada de clientes
+    LOCK TABLE clientes IN EXCLUSIVE MODE;
+    
+    -- Buscar o insertar cliente
+    SELECT id_cliente INTO v_cliente_id
+    FROM clientes
+    WHERE cedula = p_cedula_cliente;
+
+    IF NOT FOUND THEN
+        INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+        VALUES (
+            p_cedula_cliente, 
+            p_nombre_cliente, 
+            COALESCE(p_direccion_cliente, 'No especificada'), 
+            COALESCE(p_telefono_cliente, 'No especificado')
+        )
+        RETURNING id_cliente INTO v_cliente_id;
+    END IF;
+
+    -- Validar y obtener usuario
+    SELECT id_usuario INTO v_usuario_id
+    FROM usuarios
+    WHERE email_usuario = p_correo_usuario;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Usuario con correo % no encontrado', p_correo_usuario;
+    END IF;
+
+    -- Validar montos positivos
+    IF p_pago_servicio < 0 OR p_precio_servicio < 0 THEN
+        RAISE EXCEPTION 'Los valores de pago y precio deben ser positivos';
+    END IF;
+
+    -- Insertar dispositivo con valores por defecto
+    INSERT INTO dispositivos (
+        cliente_id_dispositivo, 
+        tipo, 
+        marca, 
+        modelo, 
+        reporte, 
+        numero_serie, 
+        fecha_ingreso
+    ) VALUES (
+        v_cliente_id, 
+        COALESCE(p_tipo_dispositivo, 'No especificado'),
+        COALESCE(p_marca_dispositivo, 'No especificado'),
+        COALESCE(p_modelo_dispositivo, 'No tiene registro'),
+        COALESCE(p_reporte_dispositivo, 'Sin reporte'),
+        COALESCE(p_numero_serie_dispositivo, 'No tiene registro'),
+        NOW()
+    ) RETURNING id_dispositivo INTO v_dispositivo_id;
+
+    -- Insertar servicio con nombres de columnas exactos
+    INSERT INTO servicios (
+        cliente_id_servicio, 
+        dispositivos_id_servicio,  -- Nombre exacto de la columna
+        usuario_id_servicio,       -- Nombre exacto de la columna
+        tipo, 
+        descripcion, 
+        fecha_servicio, 
+        pago, 
+        precio_servicio,
+        estado
+    ) VALUES (
+        v_cliente_id, 
+        v_dispositivo_id, 
+        v_usuario_id, 
+        COALESCE(p_tipo_servicio, 'General'),
+        COALESCE(p_descripcion_servicio, 'Servicio estándar'),
+        COALESCE(p_fecha_servicio, NOW()),
+        p_pago_servicio, 
+        p_precio_servicio,
+        'Pendiente' -- Estado por defecto
+    );
+
+    RETURN v_cliente_id;
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'Error: Ya existe un registro con estos datos (posible duplicado de cédula o número de serie)';
+    WHEN foreign_key_violation THEN
+        RAISE EXCEPTION 'Error: Referencia inválida (cliente o usuario no existe)';
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Error al insertar cliente y relacionados: %', SQLERRM;
+        RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+
+select * from usuarios;
+
+
+SELECT * FROM InsertarClienteYRelacionados(
+    p_cedula_cliente => '123456789'::VARCHAR(16),
+    p_nombre_cliente => 'Juan Pérez'::VARCHAR(255),
+    p_direccion_cliente => 'Calle 123, Bogotá'::TEXT,
+    p_telefono_cliente => '3123456789'::VARCHAR(50),
+    p_tipo_dispositivo => 'Celular'::VARCHAR(255),
+    p_marca_dispositivo => 'Samsung'::VARCHAR(255),
+    p_modelo_dispositivo => 'Galaxy S21'::VARCHAR(255),
+    p_reporte_dispositivo => 'Pantalla rota'::TEXT,
+    p_numero_serie_dispositivo => 'SN123456'::VARCHAR(255),
+    p_tipo_servicio => 'Reparación'::VARCHAR(255),
+    p_descripcion_servicio => 'Cambio de pantalla'::TEXT,
+    p_fecha_servicio => NOW()::TIMESTAMP,
+    p_pago_servicio => 50000.00::DECIMAL(10,2),
+    p_precio_servicio => 120000.00::DECIMAL(10,2),
+    p_correo_usuario => 'homero@gmail.com'::TEXT
+);

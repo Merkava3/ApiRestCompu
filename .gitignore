@@ -2,3 +2,7 @@
 .vscode/settings.json
 *.pyo
 *.pyd
+
+# Archivos comprimidos pesados (para evitar el aviso de GitHub)
+*.rar
+*.zip

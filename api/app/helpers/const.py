@@ -96,6 +96,7 @@ COLUMN_LIST_CLIENTE_DISPOSITIVO = ["cedula", "nombre_cliente", "direccion", "tel
 # --- procedimientos almacenados servicio ---
 INSERTAR_SERVICIO = """
     SELECT * FROM InsertarClienteYRelacionados(
+        :p_id_servicio,
         :p_cedula_cliente,
         :p_nombre_cliente,
         :p_direccion_cliente,
@@ -117,7 +118,7 @@ INSERTAR_SERVICIO = """
 columns_servicio_cliente = ["cedula", "dispositivo_id_reparacion", "estado", "fecha_entrega", "fecha_ingreso", "id_reparacion", "marca", "modelo", "nombre_cliente", "numero_serie", "precio_reparacion", "tipo"]	
    
 
-COLUMN_LIST_SERVICIO = ["cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
+COLUMN_LIST_SERVICIO = ["id_servicio", "cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
 
 # ---- const successful ----
 

@@ -127,6 +127,7 @@ COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "nombre_cliente", "cedula_clie
 # ---- const successful ----
 
 SUCCESSFUL = {"mensaje": "Factura creada exitosamente"}
+SUCCESSFULSERVICIO = {"mensaje": "Servicio actualizado exitosamente"}
 
 # --- const error ----
 ERROR = "Datos inválidos o faltantes"

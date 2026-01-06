@@ -101,7 +101,7 @@ def post_servicio_cliente():
         Help.add_generated_id_to_data(data, ID_SERVICIO)
         if Servicios.insertar_servicio(data):
             print(f"✅ Servicio con cliente insertado exitosamente")
-            return response(SUCCESSFUL)        
+            return response(SUCCESSFULSERVICIO)        
         print(f"❌ Error al insertar servicio")
         return badEquals()
     except Exception as e:

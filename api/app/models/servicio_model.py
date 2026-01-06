@@ -4,7 +4,7 @@ from .dispositivo_model import Dispositivo
 from .cliente_model import Cliente
 from .usuario_model import Usuario
 from ..helpers.helpers import Help
-from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO
+from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO, ACTUALIZAR_SERVICIO_COMPLETO, COLUMN_LIST_ACTUALIZAR_SERVICIO
 from sqlalchemy import text, func
 
 
@@ -161,4 +161,23 @@ class Servicios(db.Model):
         except Exception as e:
             db.session.rollback()
             print(f"Error al insertar servicio: {e}")
+            return False
+
+    @classmethod
+    def actualizar_servicio_completo(cls, data):
+        """
+        Llama al procedimiento almacenado `actualizar_servicio_completo`.
+        Usa `Help.extract_params_servicio` con `COLUMN_LIST_ACTUALIZAR_SERVICIO` para
+        construir los parámetros nombrados esperados por el SQL definido en
+        `helpers.const.ACTUALIZAR_SERVICIO_COMPLETO`.
+        """
+        try:
+            query_params = Help.extract_params_servicio(data, COLUMN_LIST_ACTUALIZAR_SERVICIO)
+            query = text(ACTUALIZAR_SERVICIO_COMPLETO)
+            db.session.execute(query, query_params)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al actualizar servicio completo: {e}")
             return False

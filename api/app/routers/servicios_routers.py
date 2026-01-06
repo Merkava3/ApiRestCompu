@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from ..models import Servicios
+from ..models import Servicios, db
 from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
@@ -87,3 +87,40 @@ def get_ultimo_servicio():
     if not servicio:
         return notFound()
     return successfully(api_servicio.dump(servicio))
+
+
+@servicios_routes.route('/servicio/actualizar_completo', methods=['POST'])
+def actualizar_servicio_completo():
+    """Recibe JSON y actualiza un servicio completo.
+
+    Se acepta either:
+    - Un diccionario con las claves esperadas por el procedimiento, o
+    - Un array posicional en `params`/`parametros` en el mismo orden que
+      `COLUMN_LIST_ACTUALIZAR_SERVICIO`.
+    """
+    data = request.get_json(force=True) or {}
+    if not isinstance(data, dict):
+        return badRequest(ERROR)
+
+    params = data.get('params') or data.get('parametros')
+
+    def _map_positional(pos_list):
+        if len(pos_list) != len(COLUMN_LIST_ACTUALIZAR_SERVICIO):
+            return None
+        return {COLUMN_LIST_ACTUALIZAR_SERVICIO[i]: pos_list[i] for i in range(len(pos_list))}
+
+    if isinstance(params, list):
+        payload = _map_positional(params)
+        if payload is None:
+            return badRequest(ERROR)
+    else:
+        payload = data
+
+    try:
+        ok = Servicios.actualizar_servicio_completo(payload)
+    except Exception as e:
+        print(f"Error en router al actualizar servicio completo: {e}")
+        return badRequest()
+
+    return response(SUCCESSFUL) if ok else badEquals()
+    

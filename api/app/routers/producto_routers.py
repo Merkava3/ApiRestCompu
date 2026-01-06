@@ -4,6 +4,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
+from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 productos_routes = Blueprint('productos_routes', __name__)
 
@@ -23,18 +24,34 @@ def set_productos_by():
     return decorator
 
 @productos_routes.route('/productos', methods=['GET'])
+@handle_endpoint_errors
 def get_productos():
-    productos = Productos.get_productos()
-    return successfully(api_productos.dump(productos))
+    try:
+        productos = Productos.get_productos()
+        return successfully(api_productos.dump(productos))
+    except Exception as e:
+        print(f"❌ Error obteniendo productos: {str(e)}")
+        raise
 
 @productos_routes.route('/producto', methods=['POST'])
+@handle_endpoint_errors
+@log_operation("Crear Producto")
 def post_producto():
-    json = request.get_json(force=True)
-    producto = Productos.new(json)
-    producto = Help.generator_id(producto, ID_PRODUCTO)
-    if producto.save():
-        return response(api_producto.dump(producto))
-    return badRequest()
+    try:
+        json = request.get_json(force=True)
+        if not json:
+            print(f"❌ JSON vacío en POST producto")
+            return badRequest()
+        producto = Productos.new(json)
+        producto = Help.generator_id(producto, ID_PRODUCTO)
+        if producto.save():
+            print(f"✅ Producto creado con ID: {producto.id_producto}")
+            return response(api_producto.dump(producto))
+        print(f"❌ Error al guardar producto")
+        return badRequest()
+    except Exception as e:
+        print(f"❌ Error en POST producto: {str(e)}")
+        raise
 
 @productos_routes.route('/producto', methods=['GET'])
 @set_productos_by()
@@ -43,13 +60,21 @@ def get_producto(producto):
 
 @productos_routes.route('/producto', methods=['PUT'])
 @set_productos_by()
+@handle_endpoint_errors
+@log_operation("Actualizar Producto")
 def update_producto(producto):
-    json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(producto, key, value)
-    if producto.save():
-        return update(api_producto.dump(producto))
-    return badRequest()
+    try:
+        json = request.get_json(force=True)
+        for key, value in json.items():
+            setattr(producto, key, value)
+        if producto.save():
+            print(f"✅ Producto {producto.id_producto} actualizado")
+            return update(api_producto.dump(producto))
+        print(f"❌ Error al actualizar producto")
+        return badRequest()
+    except Exception as e:
+        print(f"❌ Error en PUT producto: {str(e)}")
+        raise
 
 @productos_routes.route('/producto', methods=['DELETE'])
 @set_productos_by()

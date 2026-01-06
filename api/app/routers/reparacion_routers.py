@@ -4,6 +4,7 @@ from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
+from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 reparacion_routes = Blueprint('reparacion_routes', __name__)
 
@@ -25,28 +26,52 @@ def set_reparacion_by():
     return decorator
 
 @reparacion_routes.route('/reparaciones', methods=['GET'])
+@handle_endpoint_errors
 def get_reparaciones():
-    reparaciones = Reparaciones.get_reparaciones_con_clientes()
-    return successfully(api_reparaciones.dump(reparaciones))
+    try:
+        reparaciones = Reparaciones.get_reparaciones_con_clientes()
+        return successfully(api_reparaciones.dump(reparaciones))
+    except Exception as e:
+        print(f"❌ Error obteniendo reparaciones: {str(e)}")
+        raise
 
 @reparacion_routes.route('/reparacion', methods=['POST'])
+@handle_endpoint_errors
+@log_operation("Crear Reparación")
 def post_reparacion():
-    json = request.get_json(force=True)
-    reparacion = Reparaciones.new(json)
-    reparacion = Help.generator_id(reparacion, ID_REPARACION)
-    if reparacion.save():
-        return response(api_reparacion.dump(reparacion))
-    return badRequest()
+    try:
+        json = request.get_json(force=True)
+        if not json:
+            print(f"❌ JSON vacío en POST reparación")
+            return badRequest()
+        reparacion = Reparaciones.new(json)
+        reparacion = Help.generator_id(reparacion, ID_REPARACION)
+        if reparacion.save():
+            print(f"✅ Reparación creada con ID: {reparacion.id_reparacion}")
+            return response(api_reparacion.dump(reparacion))
+        print(f"❌ Error al guardar reparación")
+        return badRequest()
+    except Exception as e:
+        print(f"❌ Error en POST reparación: {str(e)}")
+        raise
 
 @reparacion_routes.route('/reparacion', methods=['PUT'])
 @set_reparacion_by()
+@handle_endpoint_errors
+@log_operation("Actualizar Reparación")
 def put_reparacion(reparacion):
-    json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(reparacion, key, value)
-    if reparacion.save():
-        return update(api_cliente.dump(reparacion))      
-    return badRequest()
+    try:
+        json = request.get_json(force=True)
+        for key, value in json.items():
+            setattr(reparacion, key, value)
+        if reparacion.save():
+            print(f"✅ Reparación {reparacion.id_reparacion} actualizada")
+            return update(api_cliente.dump(reparacion))
+        print(f"❌ Error al actualizar reparación")
+        return badRequest()
+    except Exception as e:
+        print(f"❌ Error en PUT reparación: {str(e)}")
+        raise
 
 @reparacion_routes.route('/reparacion', methods=['DELETE'])
 @set_reparacion_by()
@@ -61,15 +86,21 @@ def get_reparacion_cliente(reparacion):
     return successfully(api_servicio_cliente.dump([reparacion]))
 
 @reparacion_routes.route('/reparaciones/completas', methods=['GET'])
+@handle_endpoint_errors
 def get_reparaciones_completas():
     """
     Obtiene todas las reparaciones con información completa:
     id_reparacion, nombre_cliente, tipo, marca, modelo, reporte, numero_serie, estado, precio_reparacion, descripcion, fecha_entrega, fecha_ingreso
     """
-    reparaciones = Reparaciones.get_reparaciones_completas()
-    return successfully(api_reparaciones_completas.dump(reparaciones))
+    try:
+        reparaciones = Reparaciones.get_reparaciones_completas()
+        return successfully(api_reparaciones_completas.dump(reparaciones))
+    except Exception as e:
+        print(f"❌ Error obteniendo reparaciones completas: {str(e)}")
+        raise
 
 @reparacion_routes.route('/reparacion/completa', methods=['POST'])
+@handle_endpoint_errors
 def get_reparacion_completa():
     """
     Busca una reparación por ID o cédula del cliente con información completa:
@@ -80,18 +111,24 @@ def get_reparacion_completa():
     - cedula: Cédula del cliente
     Se puede usar uno u otro, o ambos (buscará con OR)
     """
-    json = request.get_json(force=True)
-    id_reparacion = json.get(ID_REPARACION)
-    cedula = json.get(CEDULA_CLIENT)
-    
-    # Al menos uno de los dos debe estar presente
-    if not id_reparacion and not cedula:
-        return badRequest()
-    
-    reparacion = Reparaciones.get_reparacion_completa(id_reparacion=id_reparacion, cedula=cedula)
-    
-    if not reparacion:
-        return notFound()
-    
-    return successfully(api_reparacion_completa.dump(reparacion))
+    try:
+        json = request.get_json(force=True)
+        id_reparacion = json.get(ID_REPARACION)
+        cedula = json.get(CEDULA_CLIENT)
+        
+        # Al menos uno de los dos debe estar presente
+        if not id_reparacion and not cedula:
+            print(f"❌ Falta ID reparación o cédula en POST reparación/completa")
+            return badRequest()
+        
+        reparacion = Reparaciones.get_reparacion_completa(id_reparacion=id_reparacion, cedula=cedula)
+        
+        if not reparacion:
+            print(f"⚠️  Reparación no encontrada (ID: {id_reparacion}, Cédula: {cedula})")
+            return notFound()
+        
+        return successfully(api_reparacion_completa.dump(reparacion))
+    except Exception as e:
+        print(f"❌ Error en POST reparación/completa: {str(e)}")
+        raise
     

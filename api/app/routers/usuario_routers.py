@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 from ..models import Usuario
 from ..helpers.response import *
@@ -7,6 +7,7 @@ from ..helpers.helpers import Help
 from ..helpers.const import *
 from ..models.auth_decorator import token_required
 from flask import g
+from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 usuario_routes = Blueprint('usuarios_routes', __name__)
 
@@ -29,15 +30,23 @@ def set_usuarios_by():
     return decorator
 
 @usuario_routes.route('/usuarios', methods=['GET'])
+@handle_endpoint_errors
 def get_usuarios():
-    usuario = Usuario.query.all()
-    return successfully(api_usuarios.dump(usuario))
+    try:
+        usuario = Usuario.query.all()
+        return successfully(api_usuarios.dump(usuario))
+    except Exception as e:
+        print(f"❌ Error obteniendo usuarios: {str(e)}")
+        raise
 
 @usuario_routes.route('/usuario', methods=['POST'])
+@handle_endpoint_errors
+@log_operation("Registrar Usuario")
 def post_user():
     try:
         json = request.get_json()
         if not json:
+            print(f"❌ JSON requerido para registro de usuario")
             return badRequest("Datos JSON requeridos")
 
         # Validación de campos
@@ -49,6 +58,7 @@ def post_user():
         
         missing_fields = [field for field, msg in required_fields.items() if not json.get(field)]
         if missing_fields:
+            print(f"❌ Campos faltantes en POST usuario: {missing_fields}")
             return badRequest(", ".join([required_fields[field] for field in missing_fields]))
 
         # Normalización y limpieza
@@ -58,10 +68,12 @@ def post_user():
 
         # Verificar si el usuario ya existe
         if Usuario.get_user(email):
+            print(f"⚠️  Email {email} ya está registrado")
             return badRequest("El email ya está registrado")
 
         # Validar contraseña
         if len(password) < 8:
+            print(f"❌ Contraseña débil en POST usuario")
             return badRequest("La contraseña debe tener al menos 8 caracteres")
 
         # Crear nuevo usuario
@@ -79,20 +91,25 @@ def post_user():
         try:
             token = user.generate_auth_token()
             if not isinstance(token, str):
+                print(f"❌ Formato de token inválido")
                 return serverError("Formato de token inválido")
         except Exception as e:
+            print(f"❌ Error generando token: {str(e)}")
             return serverError(f"Error generando token: {str(e)}")
 
         # Guardar usando el método save() existente
         if not user.save():
+            print(f"❌ Error al guardar usuario en base de datos")
             return serverError("Error al guardar el usuario en la base de datos")
 
         # Serializar datos del usuario
         usuario_data = api_usuario.dump(user)
         if not usuario_data:
+            print(f"❌ Error serializando datos del usuario")
             return serverError("Error serializando datos del usuario")
 
         # Respuesta exitosa
+        print(f"✅ Usuario {email} registrado exitosamente")
         return jsonify({
             "code": 201,
             "success": True,
@@ -106,8 +123,8 @@ def post_user():
         }), 201
 
     except Exception as e:
-        print(f"Error inesperado en registro: {str(e)}")
-        return serverError("Error procesando la solicitud")
+        print(f"❌ Error inesperado en registro: {str(e)}")
+        raise
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()

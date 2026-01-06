@@ -121,7 +121,7 @@ columns_servicio_cliente = ["cedula", "dispositivo_id_reparacion", "estado", "fe
 COLUMN_LIST_SERVICIO = ["id_servicio", "cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
 
 # --- procedimiento para actualizar servicio completo (actualizar_servicio_completo)
-ACTUALIZAR_SERVICIO_COMPLETO = "SELECT actualizar_servicio_completo(:p_id_servicio, :p_nombre_cliente, :p_cedula_cliente, :p_direccion_cliente, :p_telefono_cliente, :p_tipo_dispositivo, :p_marca_dispositivo, :p_modelo_dispositivo, :p_reporte_dispositivo, :p_pago_servicio, :p_precio_servicio)"
+ACTUALIZAR_SERVICIO_COMPLETO = "CALL actualizar_servicio_completo(:p_id_servicio, :p_nombre_cliente, :p_cedula_cliente, :p_direccion_cliente, :p_telefono_cliente, :p_tipo_dispositivo, :p_marca_dispositivo, :p_modelo_dispositivo, :p_reporte_dispositivo, :p_pago_servicio, :p_precio_servicio)"
 COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "nombre_cliente", "cedula_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "pago_servicio", "precio_servicio"]
 
 # ---- const successful ----

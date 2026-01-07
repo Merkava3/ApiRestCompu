@@ -170,9 +170,39 @@ class Servicios(db.Model):
         Usa `Help.extract_params_servicio` con `COLUMN_LIST_ACTUALIZAR_SERVICIO` para
         construir los parámetros nombrados esperados por el SQL definido en
         `helpers.const.ACTUALIZAR_SERVICIO_COMPLETO`.
+        
+        Normaliza los nombres de campos para aceptar variantes comunes:
+        - "direccion" -> "direccion_cliente"
+        - "marca" -> "marca_dispositivo"
+        - "modelo" -> "modelo_dispositivo"
+        - "reporte" -> "reporte_dispositivo"
+        - "tipo_dispositivo" se mantiene igual
+        - "pago" -> "pago_servicio"
         """
         try:
-            query_params = Help.extract_params_servicio(data, COLUMN_LIST_ACTUALIZAR_SERVICIO)
+            # Normalizar nombres de campos para aceptar variantes
+            normalized_data = data.copy()
+            
+            # Mapeo de nombres alternativos a nombres esperados
+            field_mapping = {
+                'direccion': 'direccion_cliente',
+                'marca': 'marca_dispositivo',
+                'modelo': 'modelo_dispositivo',
+                'reporte': 'reporte_dispositivo',
+                'pago': 'pago_servicio'
+            }
+            
+            # Aplicar mapeo solo si el campo alternativo existe y el esperado no
+            for alt_name, expected_name in field_mapping.items():
+                if alt_name in normalized_data and expected_name not in normalized_data:
+                    normalized_data[expected_name] = normalized_data[alt_name]
+            
+            query_params = Help.extract_params_servicio(normalized_data, COLUMN_LIST_ACTUALIZAR_SERVICIO)
+            # Debug: verificar que p_direccion_cliente se está pasando correctamente
+            if 'p_direccion_cliente' in query_params:
+                print(f"✅ p_direccion_cliente = {query_params['p_direccion_cliente']}")
+            else:
+                print(f"⚠️ p_direccion_cliente no encontrado en query_params")
             query = text(ACTUALIZAR_SERVICIO_COMPLETO)
             db.session.execute(query, query_params)
             db.session.commit()

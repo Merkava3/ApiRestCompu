@@ -1,23 +1,88 @@
+"""
+Configuración de la aplicación usando patrones de diseño Factory.
+Soporta múltiples entornos y variables de entorno.
+"""
+import os
+from typing import Dict, Type
+
+
 class Config:
-    pass
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-    #'postgresql://postgres:Dimichev3.@localhost:5432/tecnoexpress'
-    #postgresql://tecnoexpress_user:z4V8ZmwzObW0J9odCXY69rFMYFKVGIoz@dpg-cv3ngj7noe9s738n58qg-a.oregon-postgres.render.com/tecnoexpress
-    # internal connection : postgresql://tecnoexpress_t9ja_user:NvvQL6uRAGCdwzNPzYSFJhgO9TIVQThX@dpg-cvnvbo3e5dus73e1t47g-a/tecnoexpress_t9ja
-    SQLALCHEMY_DATABASE_URI = 'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'   
-
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-class TestConfig(Config):
-    DEBUG = False  
-    TESTING = True  # Activa el modo de pruebas en Flask
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:Dimichev3.@localhost:5432/test"
+    """Configuración base con valores comunes a todos los entornos."""
+    DEBUG = False
+    TESTING = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Obtener configuración de variables de entorno o usar valores por defecto
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL',
+        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+    )
+    
+    # Configuración de CORS
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')
+    CORS_SUPPORTS_CREDENTIALS = os.getenv('CORS_SUPPORTS_CREDENTIALS', 'True').lower() == 'true'
+
+
+class DevelopmentConfig(Config):
+    """Configuración para el entorno de desarrollo."""
+    DEBUG = True
+    
+    # URL de base de datos para desarrollo (puede ser local o remota)
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DEV_DATABASE_URL',
+        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+    )
+
+
+class TestConfig(Config):
+    """Configuración para el entorno de pruebas."""
+    DEBUG = False
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'TEST_DATABASE_URL',
+        'postgresql://postgres:Dimichev3.@localhost:5432/test'
+    )
+
+
+class ProductionConfig(Config):
+    """Configuración para el entorno de producción."""
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL',
+        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+    )
+
+
+def get_config(environment: str = None) -> Type[Config]:
+    """
+    Factory function para obtener la configuración según el entorno.
+    
+    Args:
+        environment: Nombre del entorno ('development', 'test', 'production')
+                   Si es None, usa la variable de entorno FLASK_ENV
+    
+    Returns:
+        Clase de configuración correspondiente al entorno
+    """
+    if environment is None:
+        environment = os.getenv('FLASK_ENV', 'development')
+    
+    config_map: Dict[str, Type[Config]] = {
+        'development': DevelopmentConfig,
+        'dev': DevelopmentConfig,
+        'test': TestConfig,
+        'testing': TestConfig,
+        'production': ProductionConfig,
+        'prod': ProductionConfig
+    }
+    
+    return config_map.get(environment.lower(), DevelopmentConfig)
+
+
+# Mantener compatibilidad con código existente
 config = {
     'development': DevelopmentConfig,
     'default': DevelopmentConfig,
     'test': TestConfig,
+    'production': ProductionConfig
 }

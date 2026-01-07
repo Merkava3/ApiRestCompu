@@ -1,17 +1,34 @@
+"""
+Módulo de utilidades y helpers para la aplicación.
+Contiene funciones genéricas y reutilizables siguiendo principios DRY.
+"""
 import random
 import json
+import logging
+from typing import Any, Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
+
 
 class Help:
+    """Clase de utilidades con métodos estáticos para operaciones comunes."""
+    
     @staticmethod
-    def _generation_id() -> str:    
-        digitos: int  = random.randint(3, 8)
-        numero: int  = random.randint(10**(digitos-1), 10**digitos - 1)
+    def _generation_id() -> str:
+        """
+        Genera un ID numérico aleatorio.
+        
+        Returns:
+            str: ID generado como string
+        """
+        digitos: int = random.randint(3, 8)
+        numero: int = random.randint(10**(digitos-1), 10**digitos - 1)
         return str(numero)
 
     @staticmethod
-    def generator_id(objeto: any, atributo: str) -> any:
-
-        """Asigna un ID generado al atributo especificado de un objeto.
+    def generator_id(objeto: Any, atributo: str) -> Any:
+        """
+        Asigna un ID generado al atributo especificado de un objeto.
 
         Args:
             objeto (Any): El objeto al que se le asignará el ID.
@@ -23,122 +40,108 @@ class Help:
         Raises:
             AttributeError: Si el objeto no tiene el atributo especificado.
         """
-
-        if hasattr(objeto, atributo):  # Verifica si el objeto tiene el atributo
-            setattr(objeto, atributo, Help._generation_id())  # Asigna el nuevo ID
+        if hasattr(objeto, atributo):
+            setattr(objeto, atributo, Help._generation_id())
         else:
             raise AttributeError(f"El objeto no tiene el atributo '{atributo}'")
         return objeto
     
     @staticmethod
-    def extract_params_factura(data, column_list):
+    def extract_params(data: Dict[str, Any], column_list: List[str], 
+                      json_fields: Optional[List[str]] = None,
+                      prefix: str = "p_") -> Dict[str, Any]:
         """
-        Extrae los valores de un diccionario según una lista de claves.
-        Convierte listas o diccionarios en JSON si es necesario.
-        """
-        extracted_data = {}
-        
-        for column in column_list:
-            value = data.get(column)
-            
-            # Asegurar que productos se almacene como JSON correctamente
-            if column == "productos" and isinstance(value, list):
-                value = json.dumps(value, ensure_ascii=False)  # Convertir lista a JSON
-            
-            extracted_data[f"p_{column}"] = value
-        
-        return extracted_data
-    
-    @staticmethod
-    def extract_params_compra(data,  COLUMN_LIST_COMPRA):
-        """
-        Extrae los valores de un diccionario según una lista de claves.
-        Convierte listas o diccionarios en JSON si es necesario.
-        """
-        extracted_data = {}
-
-        for column in COLUMN_LIST_COMPRA:
-            value = data.get(column)
-            if column == "productos" and isinstance(value, list):
-                value = json.dumps(value, ensure_ascii=False)  # Convertir lista a JSON
-            
-            extracted_data[f"p_{column}"] = value
-
-        return extracted_data
-    
-    @staticmethod
-    def extract_params_inventario(data, column_list):
-        """
-        Extrae los valores de un diccionario según una lista de claves.
-        Convierte listas o diccionarios en JSON si es necesario.
-        """
-        extracted_data = {}
-        
-        for column in column_list:
-            value = data.get(column)
-            
-            # Asegurar que productos se almacene como JSON correctamente
-            if column == "productos" and isinstance(value, list):
-                value = json.dumps(value, ensure_ascii=False)  # Convertir lista a JSON
-            
-            extracted_data[f"p_{column}"] = value
-        
-        return extracted_data
-    
-    @staticmethod
-    def extract_params_cliente_dispositivo(data, column_list):
-        """
-        Extrae los valores de un diccionario según una lista de claves.
-        Convierte listas o diccionarios en JSON si es necesario.
-        """
-        extracted_data = {}
-
-        for column in column_list:
-            value = data.get(column)
-
-            # Si es una lista o diccionario, convertirlo a JSON
-            if isinstance(value, (list, dict)):
-                value = json.dumps(value, ensure_ascii=False)
-
-            extracted_data[f"p_{column}"] = value
-        return extracted_data
-    
-    @staticmethod
-    def extract_params_servicio(data, column_list):
-        """
-        Extrae los valores de un diccionario según una lista de claves.
-        Convierte listas o diccionarios en JSON si es necesario.
-        """
-        extracted_data = {}
-
-        for column in column_list:
-            value = data.get(column)
-
-            # Si es una lista o diccionario, convertirlo a JSON
-            if isinstance(value, (list, dict)):
-                value = json.dumps(value, ensure_ascii=False)
-
-            extracted_data[f"p_{column}"] = value
-        return extracted_data
-    
-    @staticmethod
-    def add_generated_id_to_data(data: dict, id_key: str) -> dict:
-        """
-        Genera un ID aleatorio y lo agrega al diccionario data si no existe o está vacío.
-        El ID se genera como string pero se convierte a entero para compatibilidad con PostgreSQL BIGINT.
+        Extrae y normaliza valores de un diccionario según una lista de claves.
+        Método genérico que reemplaza a extract_params_factura, extract_params_compra, etc.
         
         Args:
-            data (dict): Diccionario al que se le agregará el ID generado.
-            id_key (str): Clave del diccionario donde se guardará el ID.
+            data: Diccionario con los datos fuente
+            column_list: Lista de columnas a extraer
+            json_fields: Lista de campos que deben convertirse a JSON (opcional)
+            prefix: Prefijo para las claves del resultado (default: "p_")
         
         Returns:
-            dict: El diccionario modificado con el ID generado (si no existía).
+            Dict con los parámetros extraídos y prefijados
+        """
+        extracted_data = {}
+        json_fields = json_fields or []
+        
+        for column in column_list:
+            value = data.get(column)
+            
+            # Convertir a JSON si el campo está en la lista de campos JSON
+            if column in json_fields and isinstance(value, (list, dict)):
+                value = json.dumps(value, ensure_ascii=False)
+            
+            # Convertir listas/dicts a JSON por defecto si no se especificó json_fields
+            elif not json_fields and isinstance(value, (list, dict)):
+                value = json.dumps(value, ensure_ascii=False)
+            
+            extracted_data[f"{prefix}{column}"] = value
+        
+        return extracted_data
+    
+    # Métodos de compatibilidad que usan extract_params internamente
+    @staticmethod
+    def extract_params_factura(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para facturas (productos se convierte a JSON)."""
+        return Help.extract_params(data, column_list, json_fields=["productos"])
+    
+    @staticmethod
+    def extract_params_compra(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para compras (productos se convierte a JSON)."""
+        return Help.extract_params(data, column_list, json_fields=["productos"])
+    
+    @staticmethod
+    def extract_params_inventario(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para inventario (productos se convierte a JSON)."""
+        return Help.extract_params(data, column_list, json_fields=["productos"])
+    
+    @staticmethod
+    def extract_params_cliente_dispositivo(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para cliente_dispositivo."""
+        return Help.extract_params(data, column_list)
+    
+    @staticmethod
+    def extract_params_servicio(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para servicio."""
+        return Help.extract_params(data, column_list)
+    
+    @staticmethod
+    def normalize_field_names(data: Dict[str, Any], 
+                              field_mapping: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Normaliza nombres de campos en un diccionario usando un mapeo.
+        Útil para aceptar variantes de nombres de campos.
+        
+        Args:
+            data: Diccionario con los datos
+            field_mapping: Dict con mapeo {nombre_alternativo: nombre_esperado}
+        
+        Returns:
+            Dict con los nombres normalizados
+        """
+        normalized = data.copy()
+        
+        for alt_name, expected_name in field_mapping.items():
+            if alt_name in normalized and expected_name not in normalized:
+                normalized[expected_name] = normalized[alt_name]
+        
+        return normalized
+    
+    @staticmethod
+    def add_generated_id_to_data(data: Dict[str, Any], id_key: str) -> Dict[str, Any]:
+        """
+        Genera un ID aleatorio y lo agrega al diccionario si no existe o está vacío.
+        
+        Args:
+            data: Diccionario al que se le agregará el ID generado.
+            id_key: Clave del diccionario donde se guardará el ID.
+        
+        Returns:
+            Dict: El diccionario modificado con el ID generado (si no existía).
         """
         if id_key not in data or not data.get(id_key):
-            # Generar ID como string y convertir a entero para PostgreSQL BIGINT
             id_generado = Help._generation_id()
             data[id_key] = int(id_generado)
         return data
-       
-
-                

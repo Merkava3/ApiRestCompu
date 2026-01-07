@@ -1,9 +1,22 @@
+"""
+Punto de entrada principal de la aplicación.
+"""
 from api.app import create_app
-from api.config import config
+from api.config import get_config
 
-environment = config['development']
-app = create_app(environment)
+
+def create_application():
+    """
+    Factory function para crear la aplicación.
+    Obtiene la configuración según la variable de entorno FLASK_ENV.
+    """
+    environment = get_config()
+    return create_app(environment)
+
+
+# Crear la aplicación
+app = create_application()
+
+
 if __name__ == "__main__":
-    app.run()
-
-# https://www.warp.dev/ terminal de linux en mac
+    app.run(debug=app.config.get('DEBUG', False))

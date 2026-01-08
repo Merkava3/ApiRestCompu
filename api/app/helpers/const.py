@@ -125,7 +125,7 @@ ACTUALIZAR_SERVICIO_COMPLETO = "CALL actualizar_servicio_completo(:p_id_servicio
 COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "nombre_cliente", "cedula_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "pago_servicio", "precio_servicio"]
 
 # --- procedimientos almacenados reparación ---
-INSERTAR_REPARACION_COMPLETA = "SELECT insertar_reparacion_completa(:p_data::JSONB)"
+INSERTAR_REPARACION_COMPLETA = "SELECT insertar_reparacion_completa(CAST(:p_data AS jsonb))"
 
 COLUMN_LIST_REPARACION_COMPLETA = [
     "id_reparacion",

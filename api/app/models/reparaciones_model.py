@@ -183,7 +183,6 @@ class Reparaciones(BaseModelMixin, db.Model):
         - Campos de reparación: id_reparacion, estado, precio_reparacion, descripcion, fecha_entrega
         - Campos de dispositivo: numero_serie, tipo, marca, modelo, reporte, fecha_ingreso
         - Campos de cliente: cedula, nombre_cliente, direccion, telefono_cliente
-        - Opcional: dispositivo_id_reparacion (si ya existe el dispositivo)
         
         Args:
             data: Diccionario con los datos de la reparación completa
@@ -192,19 +191,11 @@ class Reparaciones(BaseModelMixin, db.Model):
             bool: True si se insertó exitosamente, False en caso contrario
         """
         try:
-            # Normalizar nombres de campos para aceptar variantes
-            field_mapping = {
-                # Campos que pueden venir con nombres alternativos
-            }
-            
-            normalized_data = Help.normalize_field_names(data, field_mapping)
-            query_params = Help.extract_params(normalized_data, COLUMN_LIST_REPARACION_COMPLETA)
-            
+            import json
             query = text(INSERTAR_REPARACION_COMPLETA)
-            db.session.execute(query, query_params)
+            db.session.execute(query, {"p_data": json.dumps(data)})
             db.session.commit()
             return True
         except Exception as e:
             db.session.rollback()
-            print(f"Error al insertar reparación completa: {e}")
-            return False
+            raise

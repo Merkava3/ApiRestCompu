@@ -2,163 +2,106 @@
 -- Maneja cliente, dispositivo y reparación en una sola transacción
 -- Alineado con el ORM y el JSON proporcionado
 
-CREATE OR REPLACE FUNCTION InsertarReparacionCompleta(
-    -- Reparación (requerido)
-    p_id_reparacion BIGINT,
-    p_estado VARCHAR(45),
-    p_precio_reparacion DOUBLE PRECISION,
-    p_descripcion TEXT,
-    p_fecha_entrega TIMESTAMP,
-    
-    -- Dispositivo (buscar por número de serie o crear)
-    p_numero_serie VARCHAR(255),
-    p_tipo VARCHAR(255) DEFAULT NULL,
-    p_marca VARCHAR(255) DEFAULT NULL,
-    p_modelo VARCHAR(255) DEFAULT NULL,
-    p_reporte TEXT DEFAULT NULL,
-    p_fecha_ingreso TIMESTAMP DEFAULT NULL,
-    
-    -- Cliente (buscar por cédula o crear)
-    p_cedula VARCHAR(16),
-    p_nombre_cliente VARCHAR(255) DEFAULT NULL,
-    p_direccion TEXT DEFAULT NULL,
-    p_telefono_cliente VARCHAR(50) DEFAULT NULL,
-    
-    -- Opciones
-    p_dispositivo_id_reparacion BIGINT DEFAULT NULL  -- Si se proporciona, usa este ID directamente
+CREATE OR REPLACE FUNCTION insertar_reparacion_completa(
+    p_data JSONB
 )
-RETURNS BIGINT AS $$
+RETURNS BIGINT
+LANGUAGE plpgsql
+AS $$
 DECLARE
     v_cliente_id BIGINT;
     v_dispositivo_id BIGINT;
     v_existing_reparacion BIGINT;
 BEGIN
     ------------------------------------------------------------------
-    -- Validación de parámetros requeridos
+    -- Validaciones mínimas
     ------------------------------------------------------------------
-    IF p_id_reparacion IS NULL THEN
-        RAISE EXCEPTION 'El ID de reparación es obligatorio';
+    IF p_data ->> 'id_reparacion' IS NULL THEN
+        RAISE EXCEPTION 'id_reparacion es obligatorio';
     END IF;
-    
-    IF p_cedula IS NULL THEN
-        RAISE EXCEPTION 'La cédula del cliente es obligatoria';
+
+    IF p_data ->> 'cedula' IS NULL THEN
+        RAISE EXCEPTION 'cedula es obligatoria';
     END IF;
-    
-    IF p_numero_serie IS NULL AND p_dispositivo_id_reparacion IS NULL THEN
-        RAISE EXCEPTION 'Debe proporcionarse número de serie o ID de dispositivo';
-    END IF;
-    
+
     ------------------------------------------------------------------
-    -- Bloqueo para evitar inserción duplicada
+    -- 1. CLIENTE
     ------------------------------------------------------------------
-    LOCK TABLE clientes IN EXCLUSIVE MODE;
-    LOCK TABLE dispositivos IN EXCLUSIVE MODE;
-    
-    ------------------------------------------------------------------
-    -- 1. Buscar o crear CLIENTE
-    ------------------------------------------------------------------
-    SELECT id_cliente INTO v_cliente_id
+    SELECT id_cliente
+    INTO v_cliente_id
     FROM clientes
-    WHERE cedula = p_cedula;
-    
+    WHERE cedula = p_data ->> 'cedula';
+
     IF v_cliente_id IS NULL THEN
-        -- Crear nuevo cliente
-        IF p_nombre_cliente IS NULL THEN
-            RAISE EXCEPTION 'Para crear nuevo cliente se requiere nombre_cliente';
-        END IF;
-        
-        INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
-        VALUES (
-            p_cedula,
-            p_nombre_cliente,
-            COALESCE(p_direccion, 'No especificada'),
-            COALESCE(p_telefono_cliente, 'No especificado')
+        INSERT INTO clientes (
+            cedula,
+            nombre_cliente,
+            direccion,
+            telefono_cliente
+        ) VALUES (
+            p_data ->> 'cedula',
+            p_data ->> 'nombre_cliente',
+            COALESCE(p_data ->> 'direccion', 'No especificada'),
+            COALESCE(p_data ->> 'telefono_cliente', 'No especificado')
         )
         RETURNING id_cliente INTO v_cliente_id;
-        
-        RAISE NOTICE 'Nuevo cliente creado: % (%)', p_nombre_cliente, p_cedula;
     END IF;
-    
+
     ------------------------------------------------------------------
-    -- 2. Buscar o crear DISPOSITIVO
+    -- 2. DISPOSITIVO
     ------------------------------------------------------------------
-    -- Si se proporciona dispositivo_id_reparacion, usarlo directamente
-    IF p_dispositivo_id_reparacion IS NOT NULL THEN
-        SELECT id_dispositivo INTO v_dispositivo_id
-        FROM dispositivos
-        WHERE id_dispositivo = p_dispositivo_id_reparacion;
-        
-        IF v_dispositivo_id IS NULL THEN
-            RAISE EXCEPTION 'Dispositivo con ID % no encontrado', p_dispositivo_id_reparacion;
-        END IF;
-    ELSIF p_numero_serie IS NOT NULL THEN
-        -- Buscar dispositivo por número de serie
-        SELECT id_dispositivo INTO v_dispositivo_id
-        FROM dispositivos
-        WHERE numero_serie = p_numero_serie;
-        
-        IF v_dispositivo_id IS NULL THEN
-            -- Crear nuevo dispositivo
-            IF p_tipo IS NULL OR p_marca IS NULL THEN
-                RAISE EXCEPTION 'Para crear nuevo dispositivo se requiere tipo y marca';
-            END IF;
-            
-            INSERT INTO dispositivos (
-                cliente_id_dispositivo,
-                tipo,
-                marca,
-                modelo,
-                reporte,
-                numero_serie,
-                fecha_ingreso
-            ) VALUES (
-                v_cliente_id,
-                p_tipo,
-                p_marca,
-                COALESCE(p_modelo, 'No especificado'),
-                COALESCE(p_reporte, 'Sin reporte'),
-                p_numero_serie,
-                COALESCE(p_fecha_ingreso, NOW())
+    SELECT id_dispositivo
+    INTO v_dispositivo_id
+    FROM dispositivos
+    WHERE numero_serie = p_data ->> 'numero_serie';
+
+    IF v_dispositivo_id IS NULL THEN
+        INSERT INTO dispositivos (
+            cliente_id_dispositivo,
+            tipo,
+            marca,
+            modelo,
+            reporte,
+            numero_serie,
+            fecha_ingreso
+        ) VALUES (
+            v_cliente_id,
+            p_data ->> 'tipo',
+            p_data ->> 'marca',
+            p_data ->> 'modelo',
+            p_data ->> 'reporte',
+            p_data ->> 'numero_serie',
+            COALESCE(
+                (p_data ->> 'fecha_ingreso')::TIMESTAMP,
+                NOW()
             )
-            RETURNING id_dispositivo INTO v_dispositivo_id;
-            
-            RAISE NOTICE 'Nuevo dispositivo creado: % - %', p_marca, p_numero_serie;
-        ELSE
-            -- Dispositivo existe, actualizar si se proporcionan nuevos datos
-            IF p_tipo IS NOT NULL OR p_marca IS NOT NULL OR p_modelo IS NOT NULL OR p_reporte IS NOT NULL THEN
-                UPDATE dispositivos
-                SET
-                    tipo = COALESCE(p_tipo, tipo),
-                    marca = COALESCE(p_marca, marca),
-                    modelo = COALESCE(p_modelo, modelo),
-                    reporte = COALESCE(p_reporte, reporte)
-                WHERE id_dispositivo = v_dispositivo_id;
-            END IF;
-        END IF;
+        )
+        RETURNING id_dispositivo INTO v_dispositivo_id;
     END IF;
-    
+
     ------------------------------------------------------------------
-    -- 3. Verificar si la reparación ya existe
+    -- 3. REPARACIÓN (UPSERT)
     ------------------------------------------------------------------
-    SELECT id_reparacion INTO v_existing_reparacion
+    SELECT id_reparacion
+    INTO v_existing_reparacion
     FROM reparaciones
-    WHERE id_reparacion = p_id_reparacion;
-    
+    WHERE id_reparacion = (p_data ->> 'id_reparacion')::BIGINT;
+
     IF v_existing_reparacion IS NOT NULL THEN
-        -- Actualizar reparación existente
         UPDATE reparaciones
         SET
-            dispositivo_id_reparacion = v_dispositivo_id,
-            estado = COALESCE(p_estado, estado),
-            precio_reparacion = COALESCE(p_precio_reparacion, precio_reparacion),
-            descripcion = COALESCE(p_descripcion, descripcion),
-            fecha_entrega = COALESCE(p_fecha_entrega, fecha_entrega)
-        WHERE id_reparacion = p_id_reparacion;
-        
-        RAISE NOTICE 'Reparación % actualizada', p_id_reparacion;
-        RETURN p_id_reparacion;
+            estado = COALESCE(p_data ->> 'estado', estado),
+            precio_reparacion = COALESCE(
+                (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
+                precio_reparacion
+            ),
+            descripcion = COALESCE(p_data ->> 'descripcion', descripcion),
+            fecha_entrega = COALESCE(
+                (p_data ->> 'fecha_entrega')::TIMESTAMP,
+                fecha_entrega
+            )
+        WHERE id_reparacion = v_existing_reparacion;
     ELSE
-        -- Insertar nueva reparación
         INSERT INTO reparaciones (
             id_reparacion,
             dispositivo_id_reparacion,
@@ -167,43 +110,40 @@ BEGIN
             descripcion,
             fecha_entrega
         ) VALUES (
-            p_id_reparacion,
+            (p_data ->> 'id_reparacion')::BIGINT,
             v_dispositivo_id,
-            COALESCE(p_estado, 'Pendiente'),
-            p_precio_reparacion,
-            COALESCE(p_descripcion, 'Sin descripción'),
-            COALESCE(p_fecha_entrega, NOW() + INTERVAL '7 days')
+            p_data ->> 'estado',
+            (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
+            p_data ->> 'descripcion',
+            (p_data ->> 'fecha_entrega')::TIMESTAMP
         );
-        
-        RAISE NOTICE 'Reparación % insertada exitosamente para dispositivo ID: %', p_id_reparacion, v_dispositivo_id;
-        RETURN p_id_reparacion;
     END IF;
-    
-EXCEPTION
-    WHEN unique_violation THEN
-        RAISE EXCEPTION 'Error: Ya existe un registro con estos datos (posible duplicado de ID de reparación)';
-    WHEN foreign_key_violation THEN
-        RAISE EXCEPTION 'Error: Referencia inválida (dispositivo o cliente no existe)';
-    WHEN OTHERS THEN
-        RAISE EXCEPTION 'Error al insertar reparación completa: %', SQLERRM;
-END;
-$$ LANGUAGE plpgsql;
 
--- Ejemplo de uso:
--- SELECT InsertarReparacionCompleta(
---     1,                              -- p_id_reparacion
---     'En proceso',                   -- p_estado
---     50000.0,                        -- p_precio_reparacion
---     'formateo del equipo',          -- p_descripcion
---     '2023-12-01 00:00:00'::TIMESTAMP, -- p_fecha_entrega
---     'SN123456',                     -- p_numero_serie
---     'Celular',                      -- p_tipo
---     'Samsung',                      -- p_marca
---     'Galaxy S21',                   -- p_modelo
---     'Pantalla rota',                -- p_reporte
---     '2025-06-15 22:18:14'::TIMESTAMP, -- p_fecha_ingreso
---     '123456789',                    -- p_cedula
---     'Juan Pérez',                   -- p_nombre_cliente
---     NULL,                           -- p_direccion (opcional)
---     NULL                            -- p_telefono_cliente (opcional)
--- );
+    RETURN (p_data ->> 'id_reparacion')::BIGINT;
+END;
+$$;
+
+-- Ejemplo de uso desde Python:
+-- data = {
+--     "id_reparacion": 1,
+--     "estado": "En proceso",
+--     "precio_reparacion": 50000.0,
+--     "descripcion": "Formateo del equipo",
+--     "fecha_entrega": "2025-12-01 00:00:00",
+--     "numero_serie": "SN123456",
+--     "tipo": "Celular",
+--     "marca": "Samsung",
+--     "modelo": "Galaxy S21",
+--     "reporte": "Pantalla rota",
+--     "fecha_ingreso": "2025-06-15 22:18:14",
+--     "cedula": "123456789",
+--     "nombre_cliente": "Juan Pérez",
+--     "direccion": "Calle Principal 123",
+--     "telefono_cliente": "+573001234567"
+-- }
+--
+-- cursor.execute(
+--     'SELECT insertar_reparacion_completa(%s::JSONB)',
+--     (json.dumps(data),)
+-- )
+-- resultado = cursor.fetchone()[0]

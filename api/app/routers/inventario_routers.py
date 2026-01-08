@@ -29,12 +29,8 @@ def set_inventario_by():
 @inventario_routes.route('/inventarios', methods=['GET'])
 @handle_endpoint_errors
 def get_inventarios():
-    try:
-        inventarios = Inventario.get_inventario_query()
-        return successfully(api_inventarios.dump(inventarios))
-    except Exception as e:
-        print(f"❌ Error obteniendo inventarios: {str(e)}")
-        raise
+    inventarios = Inventario.get_inventario_query()
+    return successfully(api_inventarios.dump(inventarios))
 
 @inventario_routes.route('/inventario', methods=['POST'])
 def post_inventario():
@@ -49,19 +45,12 @@ def post_inventario():
 @handle_endpoint_errors
 @log_operation("Insertar Inventario Producto")
 def post_inventario_producto():   
-    try:
-        data = request.get_json(force=True)    
-        if not data:
-            print(f"❌ Datos vacíos en POST inventarioproducto")
-            return badRequest(ERROR)        
-        if Inventario.insertar_inventario_producto(data):
-            print(f"✅ Inventario producto insertado exitosamente")
-            return response(SUCCESSFUL)        
-        print(f"❌ Error al insertar inventario")
-        return badEquals()
-    except Exception as e:
-        print(f"❌ Error en POST inventarioproducto: {str(e)}")
-        raise
+    data = request.get_json(force=True)    
+    if not data:
+        return badRequest(ERROR)        
+    if Inventario.insertar_inventario_producto(data):
+        return response(SUCCESSFUL)        
+    return badEquals()
    
 
 @inventario_routes.route('/inventario', methods=['GET'])

@@ -124,10 +124,51 @@ COLUMN_LIST_SERVICIO = ["id_servicio", "cedula_cliente", "nombre_cliente", "dire
 ACTUALIZAR_SERVICIO_COMPLETO = "CALL actualizar_servicio_completo(:p_id_servicio, :p_nombre_cliente, :p_cedula_cliente, :p_direccion_cliente, :p_telefono_cliente, :p_tipo_dispositivo, :p_marca_dispositivo, :p_modelo_dispositivo, :p_reporte_dispositivo, :p_pago_servicio, :p_precio_servicio)"
 COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "nombre_cliente", "cedula_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "pago_servicio", "precio_servicio"]
 
+# --- procedimientos almacenados reparación ---
+INSERTAR_REPARACION_COMPLETA = """
+    SELECT * FROM InsertarReparacionCompleta(
+        :p_id_reparacion,
+        :p_estado,
+        :p_precio_reparacion,
+        :p_descripcion,
+        :p_fecha_entrega,
+        :p_numero_serie,
+        :p_tipo,
+        :p_marca,
+        :p_modelo,
+        :p_reporte,
+        :p_fecha_ingreso,
+        :p_cedula,
+        :p_nombre_cliente,
+        :p_direccion,
+        :p_telefono_cliente,
+        :p_dispositivo_id_reparacion
+    )
+"""
+COLUMN_LIST_REPARACION_COMPLETA = [
+    "id_reparacion",
+    "estado",
+    "precio_reparacion",
+    "descripcion",
+    "fecha_entrega",
+    "numero_serie",
+    "tipo",
+    "marca",
+    "modelo",
+    "reporte",
+    "fecha_ingreso",
+    "cedula",
+    "nombre_cliente",
+    "direccion",
+    "telefono_cliente",
+    "dispositivo_id_reparacion"
+]
+
 # ---- const successful ----
 
 SUCCESSFUL = {"mensaje": "Factura creada exitosamente"}
 SUCCESSFULSERVICIO = {"mensaje": "Servicio actualizado exitosamente"}
+SUCCESSFULREPARACION = {"mensaje": "Reparación creada exitosamente"}
 
 # --- const error ----
 ERROR = "Datos inválidos o faltantes"

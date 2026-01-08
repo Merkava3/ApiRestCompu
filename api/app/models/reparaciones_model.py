@@ -1,9 +1,25 @@
-from sqlalchemy import DateTime, or_
+"""
+Modelo Reparaciones - Refactorizado usando BaseModelMixin.
+Elimina código duplicado en métodos save/delete usando herencia múltiple.
+"""
+from sqlalchemy import DateTime, or_, func
+from sqlalchemy import text
 from . import db
 from .dispositivo_model import Dispositivo
 from .cliente_model import Cliente
+from .base_model import BaseModelMixin
+from ..helpers.helpers import Help
+from ..helpers.const import (
+    INSERTAR_REPARACION_COMPLETA, 
+    COLUMN_LIST_REPARACION_COMPLETA
+)
 
-class Reparaciones(db.Model):
+
+class Reparaciones(BaseModelMixin, db.Model):
+    """
+    Modelo de Reparaciones con funcionalidad base proporcionada por BaseModelMixin.
+    Maneja reparaciones con información de dispositivos y clientes.
+    """
     __tablename__ = 'reparaciones'
 
     id_reparacion = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
@@ -13,35 +29,22 @@ class Reparaciones(db.Model):
     descripcion = db.Column(db.Text, nullable=False)
     fecha_entrega = db.Column(DateTime, nullable=False)
 
+    # Relación
     dispositivo = db.relationship('Dispositivo', back_populates='reparaciones')
 
+    # Métodos de consulta
     @staticmethod
     def get_reparacion(id_reparacion):
+        """Obtiene una reparación por su ID."""
         return Reparaciones.query.filter_by(id_reparacion=id_reparacion).first()
 
     @staticmethod
     def get_reparaciones():
+        """Obtiene todas las reparaciones."""
         return Reparaciones.query.all()
-        
-    @classmethod
-    def new(cls, data):
-        return cls(**data)
-
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except:
-            return False
+    
+    # Los métodos save(), delete(), new(), create_from_dict() y update_from_dict()
+    # son heredados de BaseModelMixin, eliminando código duplicado
         
     @classmethod
     def get_reparaciones_con_clientes(cls):
@@ -169,3 +172,39 @@ class Reparaciones(db.Model):
             query = query.filter(or_(*filters))
         
         return query.first()
+    
+    @classmethod
+    def insertar_reparacion_completa(cls, data: dict) -> bool:
+        """
+        Inserta una reparación completa usando el procedimiento almacenado.
+        Maneja cliente, dispositivo y reparación en una sola transacción.
+        
+        El JSON puede contener:
+        - Campos de reparación: id_reparacion, estado, precio_reparacion, descripcion, fecha_entrega
+        - Campos de dispositivo: numero_serie, tipo, marca, modelo, reporte, fecha_ingreso
+        - Campos de cliente: cedula, nombre_cliente, direccion, telefono_cliente
+        - Opcional: dispositivo_id_reparacion (si ya existe el dispositivo)
+        
+        Args:
+            data: Diccionario con los datos de la reparación completa
+        
+        Returns:
+            bool: True si se insertó exitosamente, False en caso contrario
+        """
+        try:
+            # Normalizar nombres de campos para aceptar variantes
+            field_mapping = {
+                # Campos que pueden venir con nombres alternativos
+            }
+            
+            normalized_data = Help.normalize_field_names(data, field_mapping)
+            query_params = Help.extract_params(normalized_data, COLUMN_LIST_REPARACION_COMPLETA)
+            
+            query = text(INSERTAR_REPARACION_COMPLETA)
+            db.session.execute(query, query_params)
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al insertar reparación completa: {e}")
+            return False

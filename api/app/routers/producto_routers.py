@@ -26,32 +26,21 @@ def set_productos_by():
 @productos_routes.route('/productos', methods=['GET'])
 @handle_endpoint_errors
 def get_productos():
-    try:
-        productos = Productos.get_productos()
-        return successfully(api_productos.dump(productos))
-    except Exception as e:
-        print(f"❌ Error obteniendo productos: {str(e)}")
-        raise
+    productos = Productos.get_productos()
+    return successfully(api_productos.dump(productos))
 
 @productos_routes.route('/producto', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Crear Producto")
 def post_producto():
-    try:
-        json = request.get_json(force=True)
-        if not json:
-            print(f"❌ JSON vacío en POST producto")
-            return badRequest()
-        producto = Productos.new(json)
-        producto = Help.generator_id(producto, ID_PRODUCTO)
-        if producto.save():
-            print(f"✅ Producto creado con ID: {producto.id_producto}")
-            return response(api_producto.dump(producto))
-        print(f"❌ Error al guardar producto")
+    json = request.get_json(force=True)
+    if not json:
         return badRequest()
-    except Exception as e:
-        print(f"❌ Error en POST producto: {str(e)}")
-        raise
+    producto = Productos.new(json)
+    producto = Help.generator_id(producto, ID_PRODUCTO)
+    if producto.save():
+        return response(api_producto.dump(producto))
+    return badRequest()
 
 @productos_routes.route('/producto', methods=['GET'])
 @set_productos_by()
@@ -63,18 +52,12 @@ def get_producto(producto):
 @handle_endpoint_errors
 @log_operation("Actualizar Producto")
 def update_producto(producto):
-    try:
-        json = request.get_json(force=True)
-        for key, value in json.items():
-            setattr(producto, key, value)
-        if producto.save():
-            print(f"✅ Producto {producto.id_producto} actualizado")
-            return update(api_producto.dump(producto))
-        print(f"❌ Error al actualizar producto")
-        return badRequest()
-    except Exception as e:
-        print(f"❌ Error en PUT producto: {str(e)}")
-        raise
+    json = request.get_json(force=True)
+    for key, value in json.items():
+        setattr(producto, key, value)
+    if producto.save():
+        return update(api_producto.dump(producto))
+    return badRequest()
 
 @productos_routes.route('/producto', methods=['DELETE'])
 @set_productos_by()

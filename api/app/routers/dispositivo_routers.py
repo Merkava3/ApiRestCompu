@@ -32,33 +32,22 @@ def set_dispositivo_by():
 @dispositivo_routes.route('/dispositivos', methods=['GET'])
 @handle_endpoint_errors
 def get_dispositivos():
-    try:
-        dispositivo = Dispositivo.get_dispositivos_con_clientes() 
-        return successfully(api_dispositivos.dump(dispositivo))
-    except Exception as e:
-        print(f"❌ Error obteniendo dispositivos: {str(e)}")
-        raise
+    dispositivo = Dispositivo.get_dispositivos_con_clientes() 
+    return successfully(api_dispositivos.dump(dispositivo))
 
 @dispositivo_routes.route('/dispositivo', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Crear Dispositivo")
 def post_dispositivo():
-    try:
-        json = request.get_json(force=True)
-        dispositivo_exist = Dispositivo.get_dispositivo(json.get(NUMERO_SERIE))
-        if dispositivo_exist:
-            print(f"⚠️  Dispositivo con número serie {json.get(NUMERO_SERIE)} ya existe")
-            return badEquals()
-        device = Dispositivo.new(json)
-        device = Help.generator_id(device, ID_DISPOSITIVO)        
-        if device.save():
-            print(f"✅ Dispositivo creado con ID: {device.id_dispositivo}")
-            return response(api_dispositivo.dump(device))
-        print(f"❌ Error al guardar dispositivo")
-        return badRequest()
-    except Exception as e:
-        print(f"❌ Error en POST dispositivo: {str(e)}")
-        raise
+    json = request.get_json(force=True)
+    dispositivo_exist = Dispositivo.get_dispositivo(json.get(NUMERO_SERIE))
+    if dispositivo_exist:
+        return badEquals()
+    device = Dispositivo.new(json)
+    device = Help.generator_id(device, ID_DISPOSITIVO)        
+    if device.save():
+        return response(api_dispositivo.dump(device))
+    return badRequest()
 
 @dispositivo_routes.route('/dispositivo', methods=['GET'])
 @set_dispositivo_by()
@@ -82,33 +71,20 @@ def delete_dispositivo(dispositivo):
 @handle_endpoint_errors
 @log_operation("Actualizar Dispositivo")
 def update_dispositivo(dispositivo):
-    try:
-        json = request.get_json(force=True)
-        for key, value in json.items():
-            setattr(dispositivo, key, value)
-        if dispositivo.save():
-            print(f"✅ Dispositivo {dispositivo.id_dispositivo} actualizado")
-            return update(api_dispositivo.dump(dispositivo))
-        print(f"❌ Error al actualizar dispositivo")
-        return badRequest()
-    except Exception as e:
-        print(f"❌ Error en PUT dispositivo: {str(e)}")
-        raise
+    json = request.get_json(force=True)
+    for key, value in json.items():
+        setattr(dispositivo, key, value)
+    if dispositivo.save():
+        return update(api_dispositivo.dump(dispositivo))
+    return badRequest()
 
 @dispositivo_routes.route('/dispositivo/cliente', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Insertar Dispositivo con Cliente")
 def post_cliente_dispositivo():
-    try:
-        data = request.get_json(force=True)    
-        if not data:
-            print(f"❌ Datos vacíos en POST dispositivo/cliente")
-            return badRequest(ERROR) 
-        if Dispositivo.insertar_dispositivo(data):
-            print(f"✅ Dispositivo con cliente insertado exitosamente")
-            return response(SUCCESSFUL)        
-        print(f"❌ Error al insertar dispositivo")
-        return badEquals()
-    except Exception as e:
-        print(f"❌ Error en POST dispositivo/cliente: {str(e)}")
-        raise
+    data = request.get_json(force=True)    
+    if not data:
+        return badRequest(ERROR) 
+    if Dispositivo.insertar_dispositivo(data):
+        return response(SUCCESSFUL)        
+    return badEquals()

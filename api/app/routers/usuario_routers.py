@@ -32,99 +32,78 @@ def set_usuarios_by():
 @usuario_routes.route('/usuarios', methods=['GET'])
 @handle_endpoint_errors
 def get_usuarios():
-    try:
-        usuario = Usuario.query.all()
-        return successfully(api_usuarios.dump(usuario))
-    except Exception as e:
-        print(f"❌ Error obteniendo usuarios: {str(e)}")
-        raise
+    usuario = Usuario.query.all()
+    return successfully(api_usuarios.dump(usuario))
 
 @usuario_routes.route('/usuario', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Registrar Usuario")
 def post_user():
-    try:
-        json = request.get_json()
-        if not json:
-            print(f"❌ JSON requerido para registro de usuario")
-            return badRequest("Datos JSON requeridos")
+    json = request.get_json()
+    if not json:
+        return badRequest("Datos JSON requeridos")
 
-        # Validación de campos
-        required_fields = {
-            "nombre_usuario": "Nombre de usuario es requerido",
-            "email_usuario": "Email es requerido",
-            "password": "Contraseña es requerida"
+    # Validación de campos
+    required_fields = {
+        "nombre_usuario": "Nombre de usuario es requerido",
+        "email_usuario": "Email es requerido",
+        "password": "Contraseña es requerida"
+    }
+    
+    missing_fields = [field for field, msg in required_fields.items() if not json.get(field)]
+    if missing_fields:
+        return badRequest(", ".join([required_fields[field] for field in missing_fields]))
+
+    # Normalización y limpieza
+    nombre = str(json["nombre_usuario"]).strip()
+    email = str(json["email_usuario"]).strip().lower()
+    password = str(json["password"]).strip()
+
+    # Verificar si el usuario ya existe
+    if Usuario.get_user(email):
+        return badRequest("El email ya está registrado")
+
+    # Validar contraseña
+    if len(password) < 8:
+        return badRequest("La contraseña debe tener al menos 8 caracteres")
+
+    # Crear nuevo usuario
+    user = Usuario(
+        nombre_usuario=nombre,
+        email_usuario=email
+    )
+    user.set_password(password)
+
+    # Generar ID (si es necesario, según tu implementación)
+    if hasattr(Help, 'generator_id'):
+        user = Help.generator_id(user, ID_USUARIO)
+
+    # Generar token JWT (esto actualiza user.token y user.token_expiration automáticamente)
+    token = user.generate_auth_token()
+    if not isinstance(token, str):
+        return serverError("Formato de token inválido")
+
+    # Guardar usando el método save() existente
+    if not user.save():
+        return serverError("Error al guardar el usuario en la base de datos")
+
+    # Serializar datos del usuario
+    usuario_data = api_usuario.dump(user)
+    if not usuario_data:
+        return serverError("Error serializando datos del usuario")
+
+    # Respuesta exitosa
+    return jsonify({
+        "code": 201,
+        "success": True,
+        "message": "Usuario registrado exitosamente",
+        "data": {
+            "token": token,
+            "expires_in": 3600,
+            "token_type": "Bearer",
+            "usuario": usuario_data
         }
-        
-        missing_fields = [field for field, msg in required_fields.items() if not json.get(field)]
-        if missing_fields:
-            print(f"❌ Campos faltantes en POST usuario: {missing_fields}")
-            return badRequest(", ".join([required_fields[field] for field in missing_fields]))
-
-        # Normalización y limpieza
-        nombre = str(json["nombre_usuario"]).strip()
-        email = str(json["email_usuario"]).strip().lower()
-        password = str(json["password"]).strip()
-
-        # Verificar si el usuario ya existe
-        if Usuario.get_user(email):
-            print(f"⚠️  Email {email} ya está registrado")
-            return badRequest("El email ya está registrado")
-
-        # Validar contraseña
-        if len(password) < 8:
-            print(f"❌ Contraseña débil en POST usuario")
-            return badRequest("La contraseña debe tener al menos 8 caracteres")
-
-        # Crear nuevo usuario
-        user = Usuario(
-            nombre_usuario=nombre,
-            email_usuario=email
-        )
-        user.set_password(password)
-
-        # Generar ID (si es necesario, según tu implementación)
-        if hasattr(Help, 'generator_id'):
-            user = Help.generator_id(user, ID_USUARIO)
-
-        # Generar token JWT (esto actualiza user.token y user.token_expiration automáticamente)
-        try:
-            token = user.generate_auth_token()
-            if not isinstance(token, str):
-                print(f"❌ Formato de token inválido")
-                return serverError("Formato de token inválido")
-        except Exception as e:
-            print(f"❌ Error generando token: {str(e)}")
-            return serverError(f"Error generando token: {str(e)}")
-
-        # Guardar usando el método save() existente
-        if not user.save():
-            print(f"❌ Error al guardar usuario en base de datos")
-            return serverError("Error al guardar el usuario en la base de datos")
-
-        # Serializar datos del usuario
-        usuario_data = api_usuario.dump(user)
-        if not usuario_data:
-            print(f"❌ Error serializando datos del usuario")
-            return serverError("Error serializando datos del usuario")
-
-        # Respuesta exitosa
-        print(f"✅ Usuario {email} registrado exitosamente")
-        return jsonify({
-            "code": 201,
-            "success": True,
-            "message": "Usuario registrado exitosamente",
-            "data": {
-                "token": token,
-                "expires_in": 3600,
-                "token_type": "Bearer",
-                "usuario": usuario_data
-            }
-        }), 201
-
-    except Exception as e:
-        print(f"❌ Error inesperado en registro: {str(e)}")
-        raise
+    }), 201
 
 @usuario_routes.route('/usuario', methods=['GET'])
 @set_usuarios_by()

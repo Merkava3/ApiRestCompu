@@ -145,3 +145,42 @@ class Help:
             id_generado = Help._generation_id()
             data[id_key] = int(id_generado)
         return data
+    
+    @staticmethod
+    def validate_required_fields(data: Dict[str, Any], 
+                                required_fields: List[str]) -> tuple[bool, Optional[List[str]]]:
+        """
+        Valida que todos los campos requeridos estén presentes y no sean None.
+        Patrón: Strategy Pattern para validación.
+        
+        Args:
+            data: Diccionario con los datos a validar
+            required_fields: Lista de campos que son obligatorios
+        
+        Returns:
+            Tupla (es_válido: bool, campos_faltantes: Optional[List[str]])
+        """
+        missing_fields = [field for field in required_fields 
+                         if field not in data or data[field] is None]
+        return (len(missing_fields) == 0, missing_fields if missing_fields else None)
+    
+    @staticmethod
+    def validate_at_least_one_field(data: Dict[str, Any], 
+                                   fields: List[str]) -> bool:
+        """
+        Valida que al menos uno de los campos especificados esté presente.
+        Patrón: Strategy Pattern para validación condicional.
+        
+        Args:
+            data: Diccionario con los datos
+            fields: Lista de campos (debe haber al menos uno)
+        
+        Returns:
+            bool: True si al menos uno está presente, False en caso contrario
+        """
+        return any(data.get(field) for field in fields)
+    
+    @staticmethod
+    def extract_params_reparacion(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
+        """Compatibilidad: Extrae parámetros para reparación."""
+        return Help.extract_params(data, column_list)

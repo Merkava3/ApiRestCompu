@@ -132,7 +132,6 @@ COLUMN_LIST_REPARACION_COMPLETA = [
     "estado",
     "precio_reparacion",
     "descripcion",
-    "fecha_entrega",
     "numero_serie",
     "tipo",
     "marca",

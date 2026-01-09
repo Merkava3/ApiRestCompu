@@ -180,7 +180,7 @@ class Reparaciones(BaseModelMixin, db.Model):
         Maneja cliente, dispositivo y reparación en una sola transacción.
         
         El JSON puede contener:
-        - Campos de reparación: id_reparacion, estado, precio_reparacion, descripcion, fecha_entrega
+        - Campos de reparación: id_reparacion, estado, precio_reparacion, descripcion
         - Campos de dispositivo: numero_serie, tipo, marca, modelo, reporte, fecha_ingreso
         - Campos de cliente: cedula, nombre_cliente, direccion, telefono_cliente
         
@@ -192,8 +192,17 @@ class Reparaciones(BaseModelMixin, db.Model):
         """
         try:
             import json
+            # Sanitizar strings para evitar caracteres de control
+            sanitized_data = {}
+            for key, value in data.items():
+                if isinstance(value, str):
+                    # Remover caracteres de control pero mantener espacios
+                    sanitized_data[key] = ''.join(char for char in value if ord(char) >= 32 or char in '\t')
+                else:
+                    sanitized_data[key] = value
+            
             query = text(INSERTAR_REPARACION_COMPLETA)
-            db.session.execute(query, {"p_data": json.dumps(data)})
+            db.session.execute(query, {"p_data": json.dumps(sanitized_data, ensure_ascii=False)})
             db.session.commit()
             return True
         except Exception as e:

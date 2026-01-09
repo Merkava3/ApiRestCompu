@@ -125,7 +125,18 @@ def post_reparacion_completa():
     
     Nota: id_reparacion se genera automáticamente. fecha_entrega no es requerida.
     """
-    data = request.get_json(force=True) or {}
+    try:
+        # Obtener JSON crudamente y sanitizarlo antes de procesarlo
+        import json
+        raw_data = request.get_data(as_text=True)
+        
+        # Sanitizar caracteres de control inválidos
+        sanitized_raw = ''.join(char for char in raw_data if ord(char) >= 32 or char in '\t\n\r')
+        
+        # Parsear el JSON sanitizado
+        data = json.loads(sanitized_raw) if sanitized_raw else {}
+    except (ValueError, json.JSONDecodeError) as e:
+        return badRequest(f"JSON inválido: {str(e)}")
     
     # Validar estructura de datos
     if not isinstance(data, dict):

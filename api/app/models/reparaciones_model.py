@@ -196,8 +196,11 @@ class Reparaciones(BaseModelMixin, db.Model):
             sanitized_data = {}
             for key, value in data.items():
                 if isinstance(value, str):
-                    # Remover caracteres de control pero mantener espacios
-                    sanitized_data[key] = ''.join(char for char in value if ord(char) >= 32 or char in '\t')
+                    # Solo mantener caracteres imprimibles ASCII (32-126) y espacios en blanco válidos
+                    sanitized_data[key] = ''.join(
+                        char if (32 <= ord(char) <= 126 or char in '\n\t\r') else ''
+                        for char in value
+                    )
                 else:
                     sanitized_data[key] = value
             

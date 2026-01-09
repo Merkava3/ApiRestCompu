@@ -126,12 +126,16 @@ def post_reparacion_completa():
     Nota: id_reparacion se genera automáticamente. fecha_entrega no es requerida.
     """
     try:
-        # Obtener JSON crudamente y sanitizarlo antes de procesarlo
         import json
+        # Obtener JSON crudamente y sanitizarlo antes de procesarlo
         raw_data = request.get_data(as_text=True)
         
-        # Sanitizar caracteres de control inválidos
-        sanitized_raw = ''.join(char for char in raw_data if ord(char) >= 32 or char in '\t\n\r')
+        # Sanitizar caracteres de control más agresivamente
+        # Solo mantener caracteres imprimibles ASCII (32-126) y espacios en blanco válidos
+        sanitized_raw = ''.join(
+            char if (32 <= ord(char) <= 126 or char in '\n\t\r') else ''
+            for char in raw_data
+        )
         
         # Parsear el JSON sanitizado
         data = json.loads(sanitized_raw) if sanitized_raw else {}

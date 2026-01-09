@@ -1,3 +1,5 @@
+import json
+import re
 from flask import Blueprint, request
 from ..models.reparaciones_model import Reparaciones
 from ..helpers.response import *
@@ -126,8 +128,7 @@ def post_reparacion_completa():
     Nota: id_reparacion se genera automáticamente. fecha_entrega no es requerida.
     """
     try:
-        import json
-        import re
+        
         
         # Obtener JSON crudamente
         raw_data = request.get_data(as_text=True)

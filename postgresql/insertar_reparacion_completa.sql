@@ -11,25 +11,17 @@ AS $$
 DECLARE
     v_cliente_id BIGINT;
     v_dispositivo_id BIGINT;
-    v_reparacion_id BIGINT;
+    v_existing_reparacion BIGINT;
 BEGIN
     ------------------------------------------------------------------
     -- Validaciones mínimas
     ------------------------------------------------------------------
+    IF p_data ->> 'id_reparacion' IS NULL THEN
+        RAISE EXCEPTION 'id_reparacion es obligatorio';
+    END IF;
+
     IF p_data ->> 'cedula' IS NULL THEN
         RAISE EXCEPTION 'cedula es obligatoria';
-    END IF;
-
-    IF p_data ->> 'estado' IS NULL THEN
-        RAISE EXCEPTION 'estado es obligatorio';
-    END IF;
-
-    IF p_data ->> 'precio_reparacion' IS NULL THEN
-        RAISE EXCEPTION 'precio_reparacion es obligatorio';
-    END IF;
-
-    IF p_data ->> 'descripcion' IS NULL THEN
-        RAISE EXCEPTION 'descripcion es obligatoria';
     END IF;
 
     ------------------------------------------------------------------
@@ -70,43 +62,53 @@ BEGIN
             marca,
             modelo,
             reporte,
-            numero_serie,
-            fecha_ingreso
+            numero_serie
         ) VALUES (
             v_cliente_id,
             p_data ->> 'tipo',
             p_data ->> 'marca',
             p_data ->> 'modelo',
             p_data ->> 'reporte',
-            p_data ->> 'numero_serie',
-            COALESCE(
-                (p_data ->> 'fecha_ingreso')::TIMESTAMP,
-                NOW()
-            )
+            p_data ->> 'numero_serie'
         )
         RETURNING id_dispositivo INTO v_dispositivo_id;
     END IF;
 
     ------------------------------------------------------------------
-    -- 3. REPARACIÓN (INSERT)
+    -- 3. REPARACIÓN (UPSERT)
     ------------------------------------------------------------------
-    v_reparacion_id := (p_data ->> 'id_reparacion')::BIGINT;
+    SELECT id_reparacion
+    INTO v_existing_reparacion
+    FROM reparaciones
+    WHERE id_reparacion = (p_data ->> 'id_reparacion')::BIGINT;
 
-    INSERT INTO reparaciones (
-        id_reparacion,
-        dispositivo_id_reparacion,
-        estado,
-        precio_reparacion,
-        descripcion
-    ) VALUES (
-        v_reparacion_id,
-        v_dispositivo_id,
-        p_data ->> 'estado',
-        (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
-        p_data ->> 'descripcion'
-    );
+    IF v_existing_reparacion IS NOT NULL THEN
+        UPDATE reparaciones
+        SET
+            estado = COALESCE(p_data ->> 'estado', estado),
+            precio_reparacion = COALESCE(
+                (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
+                precio_reparacion
+            ),
+            descripcion = COALESCE(p_data ->> 'descripcion', descripcion)
+        WHERE id_reparacion = v_existing_reparacion;
+    ELSE
+        INSERT INTO reparaciones (
+            id_reparacion,
+            dispositivo_id_reparacion,
+            estado,
+            precio_reparacion,
+            descripcion
+        ) VALUES (
+            (p_data ->> 'id_reparacion')::BIGINT,
+            v_dispositivo_id,
+            p_data ->> 'estado',
+            (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
+            p_data ->> 'descripcion'
+        );
+    END IF;
 
-    RETURN v_reparacion_id;
+    RETURN (p_data ->> 'id_reparacion')::BIGINT;
 END;
 $$;
 

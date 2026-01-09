@@ -11,17 +11,25 @@ AS $$
 DECLARE
     v_cliente_id BIGINT;
     v_dispositivo_id BIGINT;
-    v_existing_reparacion BIGINT;
+    v_reparacion_id BIGINT;
 BEGIN
     ------------------------------------------------------------------
     -- Validaciones mínimas
     ------------------------------------------------------------------
-    IF p_data ->> 'id_reparacion' IS NULL THEN
-        RAISE EXCEPTION 'id_reparacion es obligatorio';
-    END IF;
-
     IF p_data ->> 'cedula' IS NULL THEN
         RAISE EXCEPTION 'cedula es obligatoria';
+    END IF;
+
+    IF p_data ->> 'estado' IS NULL THEN
+        RAISE EXCEPTION 'estado es obligatorio';
+    END IF;
+
+    IF p_data ->> 'precio_reparacion' IS NULL THEN
+        RAISE EXCEPTION 'precio_reparacion es obligatorio';
+    END IF;
+
+    IF p_data ->> 'descripcion' IS NULL THEN
+        RAISE EXCEPTION 'descripcion es obligatoria';
     END IF;
 
     ------------------------------------------------------------------
@@ -80,56 +88,35 @@ BEGIN
     END IF;
 
     ------------------------------------------------------------------
-    -- 3. REPARACIÓN (UPSERT)
+    -- 3. REPARACIÓN (INSERT)
     ------------------------------------------------------------------
-    SELECT id_reparacion
-    INTO v_existing_reparacion
-    FROM reparaciones
-    WHERE id_reparacion = (p_data ->> 'id_reparacion')::BIGINT;
+    v_reparacion_id := (p_data ->> 'id_reparacion')::BIGINT;
 
-    IF v_existing_reparacion IS NOT NULL THEN
-        UPDATE reparaciones
-        SET
-            estado = COALESCE(p_data ->> 'estado', estado),
-            precio_reparacion = COALESCE(
-                (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
-                precio_reparacion
-            ),
-            descripcion = COALESCE(p_data ->> 'descripcion', descripcion),
-            fecha_entrega = COALESCE(
-                (p_data ->> 'fecha_entrega')::TIMESTAMP,
-                fecha_entrega
-            )
-        WHERE id_reparacion = v_existing_reparacion;
-    ELSE
-        INSERT INTO reparaciones (
-            id_reparacion,
-            dispositivo_id_reparacion,
-            estado,
-            precio_reparacion,
-            descripcion,
-            fecha_entrega
-        ) VALUES (
-            (p_data ->> 'id_reparacion')::BIGINT,
-            v_dispositivo_id,
-            p_data ->> 'estado',
-            (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
-            p_data ->> 'descripcion',
-            (p_data ->> 'fecha_entrega')::TIMESTAMP
-        );
-    END IF;
+    INSERT INTO reparaciones (
+        id_reparacion,
+        dispositivo_id_reparacion,
+        estado,
+        precio_reparacion,
+        descripcion
+    ) VALUES (
+        v_reparacion_id,
+        v_dispositivo_id,
+        p_data ->> 'estado',
+        (p_data ->> 'precio_reparacion')::DOUBLE PRECISION,
+        p_data ->> 'descripcion'
+    );
 
-    RETURN (p_data ->> 'id_reparacion')::BIGINT;
+    RETURN v_reparacion_id;
 END;
 $$;
 
 -- Ejemplo de uso desde Python:
+-- El id_reparacion se genera automáticamente en el endpoint
+-- La fecha_entrega ya no es requerida
 -- data = {
---     "id_reparacion": 1,
 --     "estado": "En proceso",
 --     "precio_reparacion": 50000.0,
 --     "descripcion": "Formateo del equipo",
---     "fecha_entrega": "2025-12-01 00:00:00",
 --     "numero_serie": "SN123456",
 --     "tipo": "Celular",
 --     "marca": "Samsung",

@@ -114,16 +114,16 @@ def post_reparacion_completa():
     Maneja cliente, dispositivo y reparación en una sola transacción.
     
     Body JSON debe contener:
-    - id_reparacion: ID de la reparación (se genera si no existe)
     - estado: Estado de la reparación (requerido)
     - precio_reparacion: Precio de la reparación (requerido)
     - descripcion: Descripción de la reparación (requerido)
-    - fecha_entrega: Fecha de entrega (requerido)
     - cedula: Cédula del cliente (requerido)
     - numero_serie o dispositivo_id_reparacion: ID del dispositivo (uno requerido)
     
     Campos opcionales: tipo, marca, modelo, reporte, fecha_ingreso, 
                       nombre_cliente, direccion, telefono_cliente
+    
+    Nota: id_reparacion se genera automáticamente. fecha_entrega no es requerida.
     """
     data = request.get_json(force=True) or {}
     
@@ -134,7 +134,7 @@ def post_reparacion_completa():
     # Validar campos requeridos usando patrón Strategy
     is_valid, missing = Help.validate_required_fields(
         data, 
-        ['id_reparacion', 'estado', 'precio_reparacion', 'descripcion', 'fecha_entrega', 'cedula']
+        ['estado', 'precio_reparacion', 'descripcion', 'cedula']
     )
     if not is_valid:
         msg = f"Campos requeridos faltantes: {', '.join(missing)}"
@@ -144,7 +144,7 @@ def post_reparacion_completa():
     if not Help.validate_at_least_one_field(data, ['numero_serie', 'dispositivo_id_reparacion']):
         return badRequest("Debe proporcionarse numero_serie o dispositivo_id_reparacion")
     
-    # Generar ID si no existe
+    # Generar ID automáticamente (nunca debe venir en el JSON)
     Help.add_generated_id_to_data(data, ID_REPARACION)
     
     # Ejecutar operación

@@ -127,14 +127,23 @@ def post_reparacion_completa():
     """
     try:
         import json
-        # Obtener JSON crudamente y sanitizarlo antes de procesarlo
+        import re
+        
+        # Obtener JSON crudamente
         raw_data = request.get_data(as_text=True)
         
-        # Sanitizar caracteres de control más agresivamente
-        # Solo mantener caracteres imprimibles ASCII (32-126) y espacios en blanco válidos
+        # Sanitizar: reemplazar newlines dentro de strings con espacios
+        # Esto es más agresivo pero maneja JSON con newlines literales en strings
+        sanitized_raw = re.sub(
+            r'(?<!\\)(?:\\\\)*[\n\r](?=[^"]*")',  # newlines antes de comillas
+            ' ',
+            raw_data
+        )
+        
+        # Remover caracteres de control que no sean espacios o tabulaciones
         sanitized_raw = ''.join(
-            char if (32 <= ord(char) <= 126 or char in '\n\t\r') else ''
-            for char in raw_data
+            char if (ord(char) >= 32 or char == '\t') else ''
+            for char in sanitized_raw
         )
         
         # Parsear el JSON sanitizado

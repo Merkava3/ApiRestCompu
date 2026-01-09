@@ -27,7 +27,7 @@ class Reparaciones(BaseModelMixin, db.Model):
     estado = db.Column(db.String(45), nullable=False)   
     precio_reparacion = db.Column(db.Float, nullable=False)
     descripcion = db.Column(db.Text, nullable=False)
-    fecha_entrega = db.Column(DateTime, nullable=False)
+    fecha_entrega = db.Column(DateTime, nullable=True)
 
     # Relación
     dispositivo = db.relationship('Dispositivo', back_populates='reparaciones')

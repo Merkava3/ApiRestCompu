@@ -19,7 +19,8 @@ def set_reparacion_by():
             cedula_cliente = json.get(CEDULA_CLIENT)
             reparacion = Reparaciones.get_reparacion(id_reparacion)
             if not reparacion:
-                reparacion = Reparaciones.get_reparaciones_filter(cedula=cedula_cliente, numero_serie=numero_serie)           
+                reparaciones = Reparaciones.get_reparaciones_filter(cedula=cedula_cliente, numero_serie=numero_serie)
+                reparacion = reparaciones[0] if reparaciones else None
             if not reparacion:
                 return notFound()
             return function(reparacion, *args, **kwargs)
@@ -66,9 +67,27 @@ def delete_reparacion(reparacion):
     return badRequest()
 
 @reparacion_routes.route('/consulta/reparacion', methods=['GET'])
-@set_reparacion_by()
-def get_reparacion_cliente(reparacion):
-    return successfully(api_servicio_cliente.dump([reparacion]))
+def get_reparacion_cliente():
+    """
+    Busca reparaciones por ID o cédula del cliente.
+    Retorna los datos detallados ordenados por fecha de ingreso (más reciente primero).
+    """
+    json_data = request.get_json(force=True)
+    id_reparacion = json_data.get(ID_REPARACION)
+    cedula_cliente = json_data.get(CEDULA_CLIENT)
+    numero_serie = json_data.get(NUMERO_SERIE)
+    
+    reparaciones = Reparaciones.get_reparaciones_filter(
+        cedula=cedula_cliente, 
+        numero_serie=numero_serie, 
+        id_reparacion=id_reparacion
+    )
+    
+    if not reparaciones:
+        return notFound()
+        
+    return successfully(api_reparaciones.dump(reparaciones))
+
 
 @reparacion_routes.route('/reparaciones/completas', methods=['GET'])
 @handle_endpoint_errors
@@ -125,4 +144,3 @@ def post_reparacion_completa():
         return successfully(api_reparacion_completa.dump(reparacion))
     
     return badRequest("Error al insertar reparación completa")
-    

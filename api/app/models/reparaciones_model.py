@@ -74,7 +74,7 @@ class Reparaciones(BaseModelMixin, db.Model):
     def get_reparaciones_filter(cedula=None, numero_serie=None, id_reparacion=None):
         """
         Obtiene reparaciones filtrando por cédula, número de serie o ID de reparación.
-        Si todos los valores son None, devuelve None.
+        Retorna una lista ordenada por fecha de ingreso descendente.
         """
         query = db.session.query(
             Reparaciones.id_reparacion,
@@ -86,6 +86,8 @@ class Reparaciones(BaseModelMixin, db.Model):
             Dispositivo.marca,
             Dispositivo.modelo,
             Dispositivo.numero_serie,
+            Dispositivo.reporte,
+            Reparaciones.descripcion,
             Reparaciones.estado,
             Dispositivo.fecha_ingreso,
             Reparaciones.fecha_entrega
@@ -93,15 +95,22 @@ class Reparaciones(BaseModelMixin, db.Model):
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(
             Cliente, Dispositivo.cliente_id_dispositivo == Cliente.id_cliente
-        )        
-        if cedula is not None:
-            query = query.filter(Cliente.cedula == cedula)
-        if numero_serie is not None:
-            query = query.filter(Dispositivo.numero_serie == numero_serie)
-        if id_reparacion is not None:
-            query = query.filter(Reparaciones.id_reparacion == id_reparacion)
+        )
+        
+        filters = []
+        if cedula:
+            filters.append(Cliente.cedula == cedula)
+        if numero_serie:
+            filters.append(Dispositivo.numero_serie == numero_serie)
+        if id_reparacion:
+            filters.append(Reparaciones.id_reparacion == id_reparacion)
 
-        return query.first()
+        if filters:
+            query = query.filter(or_(*filters))
+        
+        # Ordenar por fecha de ingreso descendente (más reciente primero)
+        return query.order_by(Dispositivo.fecha_ingreso.desc()).all()
+
     
     @classmethod
     def get_reparaciones_completas(cls):

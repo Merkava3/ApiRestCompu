@@ -2,6 +2,7 @@
 Modelo Reparaciones - Refactorizado usando BaseModelMixin.
 Elimina código duplicado en métodos save/delete usando herencia múltiple.
 """
+from typing import Any
 from sqlalchemy import DateTime, or_, func
 from sqlalchemy import text
 from . import db

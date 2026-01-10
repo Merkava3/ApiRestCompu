@@ -20,7 +20,10 @@ CAMPOS_REPARACIONES  = (
 
 CAMPOS_REPARACIONES_COMPLETAS = (
     "id_reparacion",
+    "cedula",
     "nombre_cliente",
+    "direccion",
+    "telefono_cliente",
     "tipo",
     "marca",
     "modelo",

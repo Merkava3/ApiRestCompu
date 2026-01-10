@@ -110,7 +110,10 @@ class Reparaciones(BaseModelMixin, db.Model):
         """
         return db.session.query(
             Reparaciones.id_reparacion,
+            Cliente.cedula,
             Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
             Dispositivo.tipo,
             Dispositivo.marca,
             Dispositivo.modelo,
@@ -143,7 +146,10 @@ class Reparaciones(BaseModelMixin, db.Model):
         """
         query = db.session.query(
             Reparaciones.id_reparacion,
+            Cliente.cedula,
             Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
             Dispositivo.tipo,
             Dispositivo.marca,
             Dispositivo.modelo,
@@ -152,8 +158,8 @@ class Reparaciones(BaseModelMixin, db.Model):
             Reparaciones.estado,
             Reparaciones.precio_reparacion,
             Reparaciones.descripcion,
-            Reparaciones.fecha_entrega,
-            Dispositivo.fecha_ingreso
+            func.to_char(Reparaciones.fecha_entrega, 'DD/MM/YYYY').label('fecha_entrega'),
+            func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso')
         ).join(
             Dispositivo, Reparaciones.dispositivo_id_reparacion == Dispositivo.id_dispositivo
         ).join(
@@ -174,40 +180,14 @@ class Reparaciones(BaseModelMixin, db.Model):
         return query.first()
     
     @classmethod
-    def insertar_reparacion_completa(cls, data: dict) -> bool:
-        """
-        Inserta una reparación completa usando el procedimiento almacenado.
-        Maneja cliente, dispositivo y reparación en una sola transacción.
-        
-        El JSON puede contener:
-        - Campos de reparación: id_reparacion, estado, precio_reparacion, descripcion
-        - Campos de dispositivo: numero_serie, tipo, marca, modelo, reporte, fecha_ingreso
-        - Campos de cliente: cedula, nombre_cliente, direccion, telefono_cliente
-        
-        Args:
-            data: Diccionario con los datos de la reparación completa
-        
-        Returns:
-            bool: True si se insertó exitosamente, False en caso contrario
-        """
+    def insertar_reparacion_completa(cls, data: dict) -> Any:
+        """Inserta una reparación completa usando el procedimiento almacenado."""
         try:
             import json
-            # Sanitizar strings para evitar caracteres de control
-            sanitized_data = {}
-            for key, value in data.items():
-                if isinstance(value, str):
-                    # Solo mantener caracteres imprimibles ASCII (32-126) y espacios en blanco válidos
-                    sanitized_data[key] = ''.join(
-                        char if (32 <= ord(char) <= 126 or char in '\n\t\r') else ''
-                        for char in value
-                    )
-                else:
-                    sanitized_data[key] = value
-            
             query = text(INSERTAR_REPARACION_COMPLETA)
-            db.session.execute(query, {"p_data": json.dumps(sanitized_data, ensure_ascii=False)})
+            result = db.session.execute(query, {"p_data": json.dumps(data, ensure_ascii=False)})
             db.session.commit()
-            return True
-        except Exception as e:
+            return result.scalar()
+        except Exception:
             db.session.rollback()
             raise

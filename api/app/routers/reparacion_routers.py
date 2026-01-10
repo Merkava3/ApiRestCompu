@@ -111,71 +111,18 @@ def get_reparacion_completa():
 @handle_endpoint_errors
 @log_operation("Insertar Reparación Completa")
 def post_reparacion_completa():
-    """
-    Inserta una reparación completa usando el procedimiento almacenado.
-    Maneja cliente, dispositivo y reparación en una sola transacción.
+    data = request.get_json(force=True)
     
-    Body JSON debe contener:
-    - estado: Estado de la reparación (requerido)
-    - precio_reparacion: Precio de la reparación (requerido)
-    - descripcion: Descripción de la reparación (requerido)
-    - cedula: Cédula del cliente (requerido)
-    - numero_serie o dispositivo_id_reparacion: ID del dispositivo (uno requerido)
-    
-    Campos opcionales: tipo, marca, modelo, reporte, fecha_ingreso, 
-                      nombre_cliente, direccion, telefono_cliente
-    
-    Nota: id_reparacion se genera automáticamente. fecha_entrega no es requerida.
-    """
-    try:
-        
-        
-        # Obtener JSON crudamente
-        raw_data = request.get_data(as_text=True)
-        
-        # Sanitizar: reemplazar newlines dentro de strings con espacios
-        # Esto es más agresivo pero maneja JSON con newlines literales en strings
-        sanitized_raw = re.sub(
-            r'(?<!\\)(?:\\\\)*[\n\r](?=[^"]*")',  # newlines antes de comillas
-            ' ',
-            raw_data
-        )
-        
-        # Remover caracteres de control que no sean espacios o tabulaciones
-        sanitized_raw = ''.join(
-            char if (ord(char) >= 32 or char == '\t') else ''
-            for char in sanitized_raw
-        )
-        
-        # Parsear el JSON sanitizado
-        data = json.loads(sanitized_raw) if sanitized_raw else {}
-    except (ValueError, json.JSONDecodeError) as e:
-        return badRequest(f"JSON inválido: {str(e)}")
-    
-    # Validar estructura de datos
-    if not isinstance(data, dict):
-        return badRequest(ERROR)
-    
-    # Validar campos requeridos usando patrón Strategy
-    is_valid, missing = Help.validate_required_fields(
-        data, 
-        ['estado', 'precio_reparacion', 'descripcion', 'cedula']
-    )
-    if not is_valid:
-        msg = f"Campos requeridos faltantes: {', '.join(missing)}"
-        return badRequest(msg)
-    
-    # Validar que tenga al menos uno: numero_serie o dispositivo_id_reparacion
-    if not Help.validate_at_least_one_field(data, ['numero_serie', 'dispositivo_id_reparacion']):
-        return badRequest("Debe proporcionarse numero_serie o dispositivo_id_reparacion")
-    
-    # Generar ID automáticamente (nunca debe venir en el JSON)
+    # Generar ID (Obligatorio para el SP)
     Help.add_generated_id_to_data(data, ID_REPARACION)
     
     # Ejecutar operación
-    success = Reparaciones.insertar_reparacion_completa(data)
-    if success:
-        return response(SUCCESSFULREPARACION)
+    id_reparacion = Reparaciones.insertar_reparacion_completa(data)
+    
+    if id_reparacion:
+        # Retornar la reparación completa (con fechas y datos generados por BD)
+        reparacion = Reparaciones.get_reparacion_completa(id_reparacion=id_reparacion)
+        return successfully(api_reparacion_completa.dump(reparacion))
     
     return badRequest("Error al insertar reparación completa")
     

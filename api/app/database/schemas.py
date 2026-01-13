@@ -27,10 +27,11 @@ class ServiciosSchemas(Schema):
     class Meta:
         fields = CAMPOS_SERVICIOS
 
-# Registro dinámico de aplanamiento basado en MAPEO_ATRIBUTOS_SERVICIO para reducir código (DRY)
+# Registro de campos dinámicos para aplanamiento (DRY)
+# Se añaden a _declared_fields para que Marshmallow los reconozca al instanciar
 for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
     if 'fecha' not in field_name:
-        setattr(ServiciosSchemas, field_name, serializacion.Str(attribute=attr_path))
+        ServiciosSchemas._declared_fields[field_name] = serializacion.Str(attribute=attr_path)
         
 class UsuarioSchemas(Schema):
     class Meta:
@@ -53,9 +54,14 @@ class ServicioClientesSchemas(Schema):
 
 class SearchSchema(Schema):
     """Esquema para extraer criterios de búsqueda de las peticiones JSON."""
+    id_servicio = serializacion.Raw(allow_none=True)
+    id_reparacion = serializacion.Raw(allow_none=True)
+    numero_serie = serializacion.Str(allow_none=True)
+    cedula = serializacion.Str(allow_none=True)
+    
     class Meta:
         fields = CAMPOS_BUSQUEDA
-        unknown = EXCLUDE    
+        unknown = EXCLUDE
 
 # --- serialization cliente ----- 
 api_cliente  = ClienteSchemas()

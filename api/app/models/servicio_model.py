@@ -53,97 +53,48 @@ class Servicios(db.Model):
             
     @staticmethod
     def get_servicio_all():
-        return db.session.query(
-            Servicios.id_servicio,
-            Usuario.email_usuario,
-            Usuario.nombre_usuario,
-            Cliente.cedula,
-            Cliente.nombre_cliente,
-            Cliente.direccion,
-            Cliente.telefono_cliente,
-            Dispositivo.marca,
-            Dispositivo.modelo,
-            Dispositivo.reporte,
-            Dispositivo.numero_serie,
-            func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso'),
-            func.to_char(Servicios.fecha_servicio, 'DD/MM/YYYY').label('fecha_servicio'),
-            Dispositivo.tipo.label("tipo_dispositivo"),
-            Servicios.tipo.label("tipo_servicio"),
-            Servicios.pago,
-            Servicios.precio_servicio
-        ).join(Usuario, Servicios.usuario_id_servicio == Usuario.id_usuario) \
-         .join(Cliente, Servicios.cliente_id_servicio == Cliente.id_cliente) \
-         .join(Dispositivo, Servicios.dispositivos_id_servicio == Dispositivo.id_dispositivo) \
-         .all()
+        """
+        Retorna todos los servicios con información de dispositivo, cliente y usuario pre-cargada.
+        """
+        from sqlalchemy.orm import joinedload
+        return Servicios.query.options(
+            joinedload(Servicios.cliente),
+            joinedload(Servicios.dispositivos),
+            joinedload(Servicios.usuario)
+        ).all()
     
     @staticmethod
     def get_servicio_filter(cedula=None, numero_serie=None, id_servicio=None):
         """
-        Retorna los servicios con información del dispositivo, cliente y usuario.
+        Retorna un objeto Servicio con información del dispositivo, cliente y usuario pre-cargada.
         """        
-        query = db.session.query(
-            Servicios.id_servicio,
-            Servicios.estado,
-            Usuario.email_usuario,
-            Usuario.nombre_usuario,
-            Cliente.cedula,
-            Cliente.nombre_cliente,
-            Cliente.direccion,
-            Cliente.telefono_cliente,
-            Dispositivo.marca,
-            Dispositivo.modelo,
-            Dispositivo.reporte,
-            Dispositivo.numero_serie,
-            Dispositivo.fecha_ingreso,
-            Servicios.fecha_servicio,
-            Dispositivo.tipo.label("tipo_dispositivo"),
-            Servicios.tipo.label("tipo_servicio"),
-            Servicios.pago,
-            Servicios.precio_servicio
-        ).join(Usuario, Servicios.usuario_id_servicio == Usuario.id_usuario) \
-         .join(Cliente, Servicios.cliente_id_servicio == Cliente.id_cliente) \
-         .join(Dispositivo, Servicios.dispositivos_id_servicio == Dispositivo.id_dispositivo)
-        if cedula:
-            query = query.filter(Cliente.cedula == cedula)
-        if numero_serie:
-            query = query.filter(Dispositivo.numero_serie == numero_serie)
+        from sqlalchemy.orm import joinedload
+        query = Servicios.query.options(
+            joinedload(Servicios.cliente),
+            joinedload(Servicios.dispositivos),
+            joinedload(Servicios.usuario)
+        )
+
         if id_servicio:
             query = query.filter(Servicios.id_servicio == id_servicio)
-        resultado = query.first()
-        return resultado
+        elif cedula:
+            query = query.join(Cliente).filter(Cliente.cedula == cedula)
+        elif numero_serie:
+            query = query.join(Dispositivo).filter(Dispositivo.numero_serie == numero_serie)
+        
+        return query.first()
     
     @staticmethod
     def get_ultimo_servicio():
         """
-        Retorna el último servicio insertado con información completa del dispositivo, cliente y usuario.
-        Ordenado por fecha_servicio (con hora, minutos y segundos) descendente y por id_servicio descendente como respaldo.
-        Limitado a 1 registro.
-        Incluye: id_servicio, email_usuario, nombre_usuario, cedula, nombre_cliente, direccion, telefono_cliente,
-                 marca, modelo, reporte, numero_serie, fecha_ingreso, fecha_servicio, tipo_dispositivo, tipo_servicio, pago, precio_servicio
+        Retorna el último servicio insertado con información completa pre-cargada.
         """
-        return db.session.query(
-            Servicios.id_servicio,
-            Usuario.email_usuario,
-            Usuario.nombre_usuario,
-            Cliente.cedula,
-            Cliente.nombre_cliente,
-            Cliente.direccion,
-            Cliente.telefono_cliente,
-            Dispositivo.marca,
-            Dispositivo.modelo,
-            Dispositivo.reporte,
-            Dispositivo.numero_serie,
-            func.to_char(Dispositivo.fecha_ingreso, 'DD/MM/YYYY').label('fecha_ingreso'),
-            func.to_char(Servicios.fecha_servicio, 'DD/MM/YYYY HH24:MI:SS').label('fecha_servicio'),
-            Dispositivo.tipo.label("tipo_dispositivo"),
-            Servicios.tipo.label("tipo_servicio"),
-            Servicios.pago,
-            Servicios.precio_servicio
-        ).join(Usuario, Servicios.usuario_id_servicio == Usuario.id_usuario) \
-         .join(Cliente, Servicios.cliente_id_servicio == Cliente.id_cliente) \
-         .join(Dispositivo, Servicios.dispositivos_id_servicio == Dispositivo.id_dispositivo) \
-         .order_by(Servicios.fecha_servicio.desc(), Servicios.id_servicio.desc()) \
-         .limit(1) \
+        from sqlalchemy.orm import joinedload
+        return Servicios.query.options(
+            joinedload(Servicios.cliente),
+            joinedload(Servicios.dispositivos),
+            joinedload(Servicios.usuario)
+        ).order_by(Servicios.fecha_servicio.desc(), Servicios.id_servicio.desc()) \
          .first()
     
     @staticmethod

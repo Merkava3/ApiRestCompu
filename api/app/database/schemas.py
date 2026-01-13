@@ -1,4 +1,4 @@
-from marshmallow import Schema, post_dump
+from marshmallow import Schema, post_dump, EXCLUDE
 from marshmallow import fields as serializacion
 from ..helpers.const import *
 
@@ -20,8 +20,17 @@ class ReparacionesCompletasSchemas(Schema):
         fields = CAMPOS_REPARACIONES_COMPLETAS
 
 class ServiciosSchemas(Schema):
+    # Fechas formateadas (Lógica especial)
+    fecha_ingreso = serializacion.Function(lambda obj: obj.dispositivos.fecha_ingreso.strftime('%d/%m/%Y') if hasattr(obj, 'dispositivos') and obj.dispositivos and obj.dispositivos.fecha_ingreso else (obj.fecha_ingreso if hasattr(obj, 'fecha_ingreso') else None))
+    fecha_servicio = serializacion.Function(lambda obj: obj.fecha_servicio.strftime('%d/%m/%Y') if hasattr(obj, 'fecha_servicio') and obj.fecha_servicio and not isinstance(obj.fecha_servicio, str) else (obj.fecha_servicio if hasattr(obj, 'fecha_servicio') else None))
+
     class Meta:
         fields = CAMPOS_SERVICIOS
+
+# Registro dinámico de aplanamiento basado en MAPEO_ATRIBUTOS_SERVICIO para reducir código (DRY)
+for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
+    if 'fecha' not in field_name:
+        setattr(ServiciosSchemas, field_name, serializacion.Str(attribute=attr_path))
         
 class UsuarioSchemas(Schema):
     class Meta:
@@ -39,15 +48,14 @@ class InventarioSchemas(Schema):
         fields = CAMPOS_INVENTARIO
 
 class ServicioClientesSchemas(Schema):
-    cliente = serializacion.Nested(ClienteSchemas)
-    dispostivos = serializacion.Nested(Dispostivoschemas)
-    servicio = serializacion.Nested(ServiciosSchemas)
-    usuario = serializacion.Nested(UsuarioSchemas)
     class Meta:
         fields = columns_servicio_cliente 
-    
-    
-    
+
+class SearchSchema(Schema):
+    """Esquema para extraer criterios de búsqueda de las peticiones JSON."""
+    class Meta:
+        fields = CAMPOS_BUSQUEDA
+        unknown = EXCLUDE    
 
 # --- serialization cliente ----- 
 api_cliente  = ClienteSchemas()
@@ -83,3 +91,6 @@ api_proveedores = ProveedorSchemas(many=True)
 # --- serialization inventario ---
 api_inventario = InventarioSchemas()
 api_inventarios = InventarioSchemas(many=True)
+
+# --- search schema ---
+api_search = SearchSchema()

@@ -147,6 +147,25 @@ COLUMN_LIST_REPARACION_COMPLETA = [
     "telefono_cliente"
 ]
 
+CAMPOS_BUSQUEDA = (ID_SERVICIO, ID_REPARACION, NUMERO_SERIE, CEDULA_CLIENT)
+
+MAPEO_ATRIBUTOS_SERVICIO = {
+    "email_usuario": "usuario.email_usuario",
+    "nombre_usuario": "usuario.nombre_usuario",
+    "cedula": "cliente.cedula",
+    "nombre_cliente": "cliente.nombre_cliente",
+    "direccion": "cliente.direccion",
+    "telefono_cliente": "cliente.telefono_cliente",
+    "marca": "dispositivos.marca",
+    "modelo": "dispositivos.modelo",
+    "reporte": "dispositivos.reporte",
+    "numero_serie": "dispositivos.numero_serie",
+    "tipo_dispositivo": "dispositivos.tipo",
+    "tipo_servicio": "tipo",
+    "fecha_ingreso": "dispositivos.fecha_ingreso",
+    "fecha_servicio": "fecha_servicio"
+}
+
 # ---- const successful ----
 
 SUCCESSFUL = {"mensaje": "Factura creada exitosamente"}

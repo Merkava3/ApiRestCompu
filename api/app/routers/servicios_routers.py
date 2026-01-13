@@ -9,23 +9,8 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 servicios_routes = Blueprint('servicios_routes', __name__)
 
 def set_servicios_by():
-    def decorator(function):
-        def wrap(*args, **kwargs):
-            json = request.get_json(force=True)
-            id_servicio = json.get(ID_SERVICIO)
-            numero_serie = json.get(NUMERO_SERIE)
-            cedula_cliente = json.get(CEDULA_CLIENT)          
-            # Buscar primero por ID, luego por Número de Serie o Cédula           
-            if id_servicio:                              
-                servicio = Servicios.get_servicio(id_servicio)
-            else:                                 
-                servicio = Servicios.get_servicio_filter(cedula=cedula_cliente, numero_serie=numero_serie)               
-            if not servicio:
-                return notFound()            
-            return function(servicio, *args, **kwargs)
-        wrap.__name__ = function.__name__
-        return wrap
-    return decorator
+    """Decorador para inyectar un servicio buscado por diversos criterios."""
+    return Help.set_resource(Servicios.get_servicio_filter)
 
 @servicios_routes.route('/servicios', methods=['GET'])
 @handle_endpoint_errors

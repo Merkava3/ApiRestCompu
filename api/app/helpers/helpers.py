@@ -184,3 +184,40 @@ class Help:
     def extract_params_reparacion(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
         """Compatibilidad: Extrae parámetros para reparación."""
         return Help.extract_params(data, column_list)
+
+    @staticmethod
+    def set_resource(model_method: Any) -> Any:
+        """
+        Decorador genérico para buscar y asignar un recurso (Servicio, Reparación, etc.)
+        basado en los identificadores enviados en el JSON de la petición.
+        Aplica principios DRY y Clean Code.
+        """
+        from functools import wraps
+        from flask import request
+        from ..database.schemas import api_search
+        from ..helpers.response import notFound
+        import inspect
+
+        def decorator(f):
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                json_data = request.get_json(force=True) or {}
+                # Extraer criterios de búsqueda usando el esquema centralizado
+                params = api_search.load(json_data)
+                
+                # Identificar dinámicamente qué parámetros acepta el método del modelo
+                sig = inspect.signature(model_method)
+                search_args = {
+                    k: v for k, v in params.items() 
+                    if k in sig.parameters and v is not None
+                }
+                
+                # Ejecutar búsqueda
+                resource = model_method(**search_args)
+                
+                if not resource:
+                    return notFound()
+                    
+                return f(resource, *args, **kwargs)
+            return wrapper
+        return decorator

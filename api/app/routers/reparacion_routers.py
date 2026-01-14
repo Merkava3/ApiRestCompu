@@ -66,7 +66,8 @@ def delete_reparacion(reparacion):
         return delete()
     return badRequest()
 
-@reparacion_routes.route('/consulta/reparacion', methods=['GET'])
+@reparacion_routes.route('/consulta/reparacion', methods=['POST'])
+@handle_endpoint_errors
 def get_reparacion_cliente():
     """
     Busca reparaciones por ID o cédula del cliente.
@@ -75,16 +76,17 @@ def get_reparacion_cliente():
     json_data = request.get_json(force=True)
     id_reparacion = json_data.get(ID_REPARACION)
     cedula_cliente = json_data.get(CEDULA_CLIENT)
-    numero_serie = json_data.get(NUMERO_SERIE)
+    
+    if not id_reparacion and not cedula_cliente:
+        return badRequest("Debe proporcionar ID de reparación o cédula del cliente")
     
     reparaciones = Reparaciones.get_reparaciones_filter(
         cedula=cedula_cliente, 
-        numero_serie=numero_serie, 
         id_reparacion=id_reparacion
     )
     
     if not reparaciones:
-        return notFound()
+        return notFound("No se encontraron reparaciones")
         
     return successfully(api_reparaciones.dump(reparaciones))
 

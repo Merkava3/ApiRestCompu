@@ -1,12 +1,13 @@
 from . import db
 from datetime import datetime
-from  .producto_model import Productos
-from .prooveedor_model  import Proveedor
-from  ..helpers.const import INSERTAR_INVENTARIO, COLUMN_LIST_INVENTARIO
+from .producto_model import Productos
+from .prooveedor_model import Proveedor
+from .base_model import BaseModelMixin
+from ..helpers.const import INSERTAR_INVENTARIO, COLUMN_LIST_INVENTARIO
 from ..helpers.helpers import Help
-from sqlalchemy import text
+from sqlalchemy import text, func
 
-class Inventario(db.Model):
+class Inventario(BaseModelMixin, db.Model):
     __tablename__ = 'inventario'
     id_inventario = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     id_producto_inventario = db.Column(db.BigInteger, db.ForeignKey('productos.id_producto'), nullable=False)
@@ -24,27 +25,6 @@ class Inventario(db.Model):
     @staticmethod
     def get_inventarios():
         return Inventario.query.all()
-    
-    @classmethod
-    def new(cls, kwargs):
-        return Inventario(**kwargs)
-    
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-    
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al eliminar inventario: {e}")  # Para depuración
 
     @staticmethod
     def get_inventario_query():
@@ -92,6 +72,3 @@ class Inventario(db.Model):
         except Exception as e:
             db.session.rollback()
             print(f"Error al insertar inventario: {e}")  # Para depuración
-
-    
- 

@@ -8,21 +8,6 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 productos_routes = Blueprint('productos_routes', __name__)
 
-def set_productos_by():
-    def decorator(function):
-        def wrap(*args, **kwargs):
-            json = request.get_json(force=True)
-            id_producto = json.get(ID_PRODUCTO)           
-            # Buscar primero por ID, luego por Número de Serie o Cédula
-            if id_producto:
-                producto = Productos.get_producto(id_producto)           
-            if not producto:
-                return notFound()
-            return function(producto, *args, **kwargs)
-        wrap.__name__ = function.__name__
-        return wrap
-    return decorator
-
 @productos_routes.route('/productos', methods=['GET'])
 @handle_endpoint_errors
 def get_productos():
@@ -43,25 +28,24 @@ def post_producto():
     return badRequest()
 
 @productos_routes.route('/producto', methods=['GET'])
-@set_productos_by()
+@Help.set_resource(Productos.get_producto)
 def get_producto(producto):
     return successfully(api_producto.dump(producto))
 
 @productos_routes.route('/producto', methods=['PUT'])
-@set_productos_by()
+@Help.set_resource(Productos.get_producto)
 @handle_endpoint_errors
 @log_operation("Actualizar Producto")
 def update_producto(producto):
     json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(producto, key, value)
+    producto.update_from_dict(json)
     if producto.save():
-        return update(api_producto.dump(producto))
+        return successfully(api_producto.dump(producto), "Registro Actualizado")
     return badRequest()
 
 @productos_routes.route('/producto', methods=['DELETE'])
-@set_productos_by()
+@Help.set_resource(Productos.get_producto)
 def delete_servicio(producto):
     if producto.delete():
-        return delete()
-    return badRequest()   
+        return successfully(message="Registro eliminado")
+    return badRequest()

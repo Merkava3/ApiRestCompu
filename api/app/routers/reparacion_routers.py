@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 from flask import Blueprint, request
 from ..models.reparaciones_model import Reparaciones
 from ..helpers.response import *
@@ -9,24 +10,6 @@ from ..helpers.const import *
 from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 reparacion_routes = Blueprint('reparacion_routes', __name__)
-
-def set_reparacion_by():
-    def decorator(function):
-        def wrap(*args, **kwargs):
-            json = request.get_json(force=True)
-            id_reparacion = json.get(ID_REPARACION)
-            numero_serie = json.get(NUMERO_SERIE)
-            cedula_cliente = json.get(CEDULA_CLIENT)
-            reparacion = Reparaciones.get_reparacion(id_reparacion)
-            if not reparacion:
-                reparaciones = Reparaciones.get_reparaciones_filter(cedula=cedula_cliente, numero_serie=numero_serie)
-                reparacion = reparaciones[0] if reparaciones else None
-            if not reparacion:
-                return notFound()
-            return function(reparacion, *args, **kwargs)
-        wrap.__name__ = function.__name__
-        return wrap
-    return decorator
 
 @reparacion_routes.route('/reparaciones', methods=['GET'])
 @handle_endpoint_errors
@@ -48,22 +31,28 @@ def post_reparacion():
     return badRequest()
 
 @reparacion_routes.route('/reparacion', methods=['PUT'])
-@set_reparacion_by()
+@Help.set_resource(Reparaciones.get_reparacion)
 @handle_endpoint_errors
 @log_operation("Actualizar Reparación")
 def put_reparacion(reparacion):
-    json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(reparacion, key, value)
+    json_data = request.get_json(force=True)
+    
+    # Actualizar campos dinámicamente
+    reparacion.update_from_dict(json_data)
+            
+    # Si el estado es 'entregado' y no se pasó fecha_entrega, asignar la actual
+    if json_data.get('estado') == 'entregado' and not json_data.get('fecha_entrega'):
+        reparacion.fecha_entrega = datetime.now()
+
     if reparacion.save():
-        return update(api_cliente.dump(reparacion))
+        return successfully(api_reparacion.dump(reparacion), "Registro Actualizado")
     return badRequest()
 
 @reparacion_routes.route('/reparacion', methods=['DELETE'])
-@set_reparacion_by()
+@Help.set_resource(Reparaciones.get_reparacion)
 def delete_reparacion(reparacion):
     if reparacion.delete():
-        return delete()
+        return successfully(message="Registro eliminado")
     return badRequest()
 
 @reparacion_routes.route('/consulta/reparacion', methods=['POST'])

@@ -8,10 +8,6 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 servicios_routes = Blueprint('servicios_routes', __name__)
 
-def set_servicios_by():
-    """Decorador para inyectar un servicio buscado por diversos criterios."""
-    return Help.set_resource(Servicios.get_servicio_filter)
-
 @servicios_routes.route('/servicios', methods=['GET'])
 @handle_endpoint_errors
 def get_servicios():
@@ -32,28 +28,26 @@ def post_client():
     return badRequest()
 
 @servicios_routes.route('/search/servicio', methods=['POST'])
-@set_servicios_by()
+@Help.set_resource(Servicios.get_servicio_filter)
 def get_servicio(servicio):
-    print("estamos aca buscar servicio")
-    return response(api_servicio.dump(servicio))
+    return successfully(api_servicio.dump(servicio))
 
 @servicios_routes.route('/servicio', methods=['PUT'])
-@set_servicios_by()
+@Help.set_resource(Servicios.get_servicio_filter)
 @handle_endpoint_errors
 @log_operation("Actualizar Servicio")
 def update_servicio(servicio):
     json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(servicio, key, value)
+    servicio.update_from_dict(json)
     if servicio.save():
-        return update(api_dispositivo.dump(servicio))
+        return successfully(api_servicio.dump(servicio), "Registro Actualizado")
     return badRequest()
 
 @servicios_routes.route('/servicio', methods=['DELETE'])
-@set_servicios_by()
+@Help.set_resource(Servicios.get_servicio_filter)
 def delete_servicio(servicio):
     if servicio.delete():
-        return delete()
+        return successfully(message="Registro eliminado")
     return badRequest()
 
 @servicios_routes.route('/servicio/cliente', methods=['POST'])
@@ -116,4 +110,3 @@ def actualizar_servicio_completo():
     if ok:
         return response(SUCCESSFUL)
     return badEquals()
-    

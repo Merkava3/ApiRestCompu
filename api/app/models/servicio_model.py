@@ -3,12 +3,13 @@ from . import db
 from .dispositivo_model import Dispositivo
 from .cliente_model import Cliente
 from .usuario_model import Usuario
+from .base_model import BaseModelMixin
 from ..helpers.helpers import Help
 from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO, ACTUALIZAR_SERVICIO_COMPLETO, COLUMN_LIST_ACTUALIZAR_SERVICIO
 from sqlalchemy import text, func
 
 
-class Servicios(db.Model):
+class Servicios(BaseModelMixin, db.Model):
     __tablename__ = 'servicios'  # Nombre de la tabla
     id_servicio = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     cliente_id_servicio = db.Column(db.BigInteger, db.ForeignKey('clientes.id_cliente'), nullable=False)
@@ -29,28 +30,6 @@ class Servicios(db.Model):
     def get_servicio(id_servicio):
         return Servicios.query.filter_by(id_servicio=id_servicio).first()
 
-    @classmethod
-    def new(cls, kwargs):  # Convierte un diccionario en un objeto Servicios
-        return Servicios(**kwargs)
-    
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-    
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al eliminar servicio: {e}")  # Para depuración
-            return False
-            
     @staticmethod
     def get_servicio_all():
         """

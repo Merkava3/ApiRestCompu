@@ -9,23 +9,6 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 
 cliente_routes = Blueprint('cliente_routes', __name__)
 
-def set_client_by(field):
-    def decorator(function):
-        def wrap(*args, **kwargs):
-            json = request.get_json(force=True)
-            value = json.get(field, None)
-            if value is None:
-                return notFound()
-            cliente = (
-                Cliente.get_cliente(value) if field == CEDULA_CLIENT else Cliente.get_id_client(value)
-            )
-            if cliente is None:
-                return notFound()
-            return function(cliente, *args, **kwargs)
-        wrap.__name__ = function.__name__
-        return wrap
-    return decorator
-
 @cliente_routes.route('/clientes', methods=['GET'])
 @token_required
 @handle_endpoint_errors
@@ -34,7 +17,7 @@ def get_clients():
     return successfully(api_clientes.dump(clientes))
    
 @cliente_routes.route('/cliente', methods=['GET'])
-@set_client_by(CEDULA_CLIENT)
+@Help.set_resource(Cliente.get_cliente)
 def get_client(cliente):
     return successfully(api_cliente.dump(cliente))
 
@@ -55,24 +38,23 @@ def post_client():
     return badRequest()  
 
 @cliente_routes.route('/cliente', methods=['PUT'])
-@set_client_by(ID_CLIENTE)
+@Help.set_resource(Cliente.get_id_client)
 @handle_endpoint_errors
 @log_operation("Actualizar Cliente")
 def update_client(cliente):
     json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(cliente, key, value)
+    cliente.update_from_dict(json)
     if cliente.save():
-        return update(api_cliente.dump(cliente))
+        return successfully(api_cliente.dump(cliente), "Registro Actualizado")
     return badRequest()
 
 @cliente_routes.route('/cliente', methods=['DELETE'])
-@set_client_by(CEDULA_CLIENT)
+@Help.set_resource(Cliente.get_cliente)
 @handle_endpoint_errors
 @log_operation("Eliminar Cliente")
 def delete_client(cliente):
     if cliente.delete():
-        return delete()
+        return successfully(message="Registro eliminado")
     return badRequest()
 
 @cliente_routes.route('/clientes/count', methods=['GET'])

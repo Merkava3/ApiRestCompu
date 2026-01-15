@@ -1,6 +1,7 @@
 from . import db
+from .base_model import BaseModelMixin
 
-class Productos(db.Model):
+class Productos(BaseModelMixin, db.Model):
     __tablename__ = 'productos'
     id_producto = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     nombre_producto = db.Column(db.String(255), nullable=False)
@@ -18,26 +19,4 @@ class Productos(db.Model):
 
     @staticmethod
     def get_productos():
-        return Productos.query.all()    
-    
-    @classmethod
-    def new(cls, kwargs):
-        return Productos(**kwargs)
-    
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-    
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al eliminar producto: {e}")  # Para depuración
-            return False
+        return Productos.query.all()

@@ -27,6 +27,10 @@ class ServiciosSchemas(Schema):
     class Meta:
         fields = CAMPOS_SERVICIOS
 
+class ServiciosUpdateSchemas(ServiciosSchemas):
+    class Meta:
+        fields = CAMPOS_SERVICIO_UPDATE
+
 # Registro de campos dinámicos para aplanamiento (DRY)
 # Se añaden a _declared_fields para que Marshmallow los reconozca al instanciar
 for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
@@ -80,6 +84,7 @@ api_reparaciones_completas = ReparacionesCompletasSchemas(many=True)
 # --- serialization servicios ---
 api_servicio = ServiciosSchemas()
 api_servicios = ServiciosSchemas(many=True)
+api_servicio_update = ServiciosUpdateSchemas()
 api_servicio_cliente = ServicioClientesSchemas(many=True)
 
 # --- serialization usuario ---

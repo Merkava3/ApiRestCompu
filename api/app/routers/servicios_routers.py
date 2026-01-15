@@ -45,7 +45,7 @@ def update_servicio(servicio):
         servicio.fecha_servicio = json['fecha_servicio']
 
     if servicio.save():
-        return successfully(api_servicio.dump(servicio), "Registro Actualizado")
+        return successfully(api_servicio_update.dump(servicio), "Registro Actualizado")
     return badRequest()
 
 @servicios_routes.route('/servicio', methods=['DELETE'])

@@ -38,7 +38,12 @@ def get_servicio(servicio):
 @log_operation("Actualizar Servicio")
 def update_servicio(servicio):
     json = request.get_json(force=True)
-    servicio.update_from_dict(json)
+    # Se aplican actualizaciones específicamente para estado y fecha_servicio
+    if 'estado' in json:
+        servicio.estado = json['estado']
+    if 'fecha_servicio' in json:
+        servicio.fecha_servicio = json['fecha_servicio']
+
     if servicio.save():
         return successfully(api_servicio.dump(servicio), "Registro Actualizado")
     return badRequest()

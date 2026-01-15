@@ -28,9 +28,9 @@ def post_client():
     return badRequest()
 
 @servicios_routes.route('/search/servicio', methods=['POST'])
-@Help.set_resource(Servicios.get_servicio_filter)
-def get_servicio(servicio):
-    return successfully(api_servicio.dump(servicio))
+@Help.set_resource(Servicios.get_servicio_filter, many=True)
+def get_servicio(servicios):
+    return successfully(api_servicios.dump(servicios))
 
 @servicios_routes.route('/servicio', methods=['PUT'])
 @Help.set_resource(Servicios.get_servicio_filter)

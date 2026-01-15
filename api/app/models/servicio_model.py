@@ -43,9 +43,9 @@ class Servicios(BaseModelMixin, db.Model):
         ).all()
     
     @staticmethod
-    def get_servicio_filter(cedula=None, numero_serie=None, id_servicio=None):
+    def get_servicio_filter(cedula=None, numero_serie=None, id_servicio=None, many=False):
         """
-        Retorna un objeto Servicio con información del dispositivo, cliente y usuario pre-cargada.
+        Retorna uno o varios objetos Servicio con información del dispositivo, cliente y usuario pre-cargada.
         """        
         from sqlalchemy.orm import joinedload
         query = Servicios.query.options(
@@ -61,6 +61,11 @@ class Servicios(BaseModelMixin, db.Model):
         elif numero_serie:
             query = query.join(Dispositivo).filter(Dispositivo.numero_serie == numero_serie)
         
+        # Ordenar por fecha_servicio descendente (más nuevo primero)
+        query = query.order_by(Servicios.fecha_servicio.desc())
+        
+        if many:
+            return query.all()
         return query.first()
     
     @staticmethod

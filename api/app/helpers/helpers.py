@@ -186,9 +186,9 @@ class Help:
         return Help.extract_params(data, column_list)
 
     @staticmethod
-    def set_resource(model_method: Any) -> Any:
+    def set_resource(model_method: Any, many: bool = False) -> Any:
         """
-        Decorador genérico para buscar y asignar un recurso (Servicio, Reparación, etc.)
+        Decorador genérico para buscar y asignar uno o varios recursos (Servicio, Reparación, etc.)
         basado en los identificadores enviados en el JSON de la petición.
         Aplica principios DRY y Clean Code.
         """
@@ -211,6 +211,10 @@ class Help:
                     k: v for k, v in params.items() 
                     if k in sig.parameters and v is not None
                 }
+                
+                # Si el método acepta 'many', pasarlo
+                if 'many' in sig.parameters:
+                    search_args['many'] = many
                 
                 # Ejecutar búsqueda
                 resource = model_method(**search_args)

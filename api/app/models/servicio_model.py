@@ -101,18 +101,7 @@ class Servicios(BaseModelMixin, db.Model):
     @classmethod
     def actualizar_servicio_completo(cls, data):
         """
-        Llama al procedimiento almacenado `actualizar_servicio_completo`.
-        Usa `Help.extract_params_servicio` con `COLUMN_LIST_ACTUALIZAR_SERVICIO` para
-        construir los parámetros nombrados esperados por el SQL definido en
-        `helpers.const.ACTUALIZAR_SERVICIO_COMPLETO`.
-        
-        Normaliza los nombres de campos para aceptar variantes comunes:
-        - "direccion" -> "direccion_cliente"
-        - "marca" -> "marca_dispositivo"
-        - "modelo" -> "modelo_dispositivo"
-        - "reporte" -> "reporte_dispositivo"
-        - "tipo_dispositivo" se mantiene igual
-        - "pago" -> "pago_servicio"
+        Llama al procedimiento almacenado `actualizar_servicio_completo_json`.
         """
         try:
             # Mapeo de nombres alternativos a nombres esperados
@@ -121,15 +110,32 @@ class Servicios(BaseModelMixin, db.Model):
                 'marca': 'marca_dispositivo',
                 'modelo': 'modelo_dispositivo',
                 'reporte': 'reporte_dispositivo',
-                'pago': 'pago_servicio'
+                'pago': 'pago_servicio',
+                'precio': 'precio_servicio',
+                'tipo': 'tipo_dispositivo',
+                'cedula': 'cedula_cliente'
             }
             
-            # Normalizar nombres de campos usando el helper genérico
+            # Normalizar nombres de campos
             normalized_data = Help.normalize_field_names(data, field_mapping)
-            query_params = Help.extract_params_servicio(normalized_data, COLUMN_LIST_ACTUALIZAR_SERVICIO)
+            
+            # Extraer id_servicio
+            id_servicio = normalized_data.get('id_servicio')
+            if not id_servicio:
+                # Intentar buscarlo en el payload original si no fue normalizado
+                id_servicio = data.get('id_servicio')
+            
+            if not id_servicio:
+                print("Error: id_servicio no proporcionado")
+                return False
+
+            # Preparar el JSON de datos (excluyendo id_servicio si se desea, 
+            # aunque el procedimiento puede ignorarlo o usarlo)
+            import json
+            p_data = json.dumps(normalized_data)
             
             query = text(ACTUALIZAR_SERVICIO_COMPLETO)
-            db.session.execute(query, query_params)
+            db.session.execute(query, {"p_id_servicio": id_servicio, "p_data": p_data})
             db.session.commit()
             return True
         except Exception as e:

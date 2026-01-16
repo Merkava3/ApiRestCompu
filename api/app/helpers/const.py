@@ -37,7 +37,7 @@ CAMPOS_REPARACIONES_COMPLETAS = (
 )
 
 CAMPOS_USUARIO = ("id_usuario", "nombre_usuario", "email_usuario", "password", "autenticado", "ultima_autenticacion")
-CAMPOS_SERVICIOS = ("estado","id_servicio","email_usuario","nombre_usuario","cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "modelo", "reporte", "numero_serie", "fecha_ingreso", "fecha_servicio", "tipo_dispositivo", "tipo_servicio", "pago", "precio_servicio", "descripcion")
+CAMPOS_SERVICIOS = ("estado","id_servicio","email_usuario","nombre_usuario","cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "modelo", "reporte", "numero_serie", "fecha_ingreso", "fecha_servicio", "tipo_dispositivo", "tipo_servicio", "pago", "precio_servicio")
 CAMPOS_SERVICIO_UPDATE = ("fecha_ingreso", "estado", "precio_servicio")
 
 
@@ -126,8 +126,8 @@ columns_servicio_cliente = ["cedula", "dispositivo_id_reparacion", "estado", "fe
 COLUMN_LIST_SERVICIO = ["id_servicio", "cedula_cliente", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "numero_serie_dispositivo", "tipo_servicio", "descripcion_servicio", "fecha_servicio", "pago_servicio", "precio_servicio", "correo_usuario"]
 
 # --- procedimiento para actualizar servicio completo (actualizar_servicio_completo)
-ACTUALIZAR_SERVICIO_COMPLETO = "CALL actualizar_servicio_completo(:p_id_servicio, :p_nombre_cliente, :p_cedula_cliente, :p_direccion_cliente, :p_telefono_cliente, :p_tipo_dispositivo, :p_marca_dispositivo, :p_modelo_dispositivo, :p_reporte_dispositivo, :p_pago_servicio, :p_precio_servicio)"
-COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "nombre_cliente", "cedula_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo", "pago_servicio", "precio_servicio"]
+ACTUALIZAR_SERVICIO_COMPLETO = "CALL actualizar_servicio_completo_json(:p_id_servicio, CAST(:p_data AS jsonb))"
+COLUMN_LIST_ACTUALIZAR_SERVICIO = ["id_servicio", "estado", "pago_servicio", "precio_servicio", "nombre_cliente", "direccion_cliente", "telefono_cliente", "tipo_dispositivo", "marca_dispositivo", "modelo_dispositivo", "reporte_dispositivo"]
 
 # --- procedimientos almacenados reparación ---
 INSERTAR_REPARACION_COMPLETA = "SELECT insertar_reparacion_completa(CAST(:p_data AS jsonb))"
@@ -165,9 +165,7 @@ MAPEO_ATRIBUTOS_SERVICIO = {
     "tipo_dispositivo": "dispositivos.tipo",
     "tipo_servicio": "tipo",
     "fecha_ingreso": "dispositivos.fecha_ingreso",
-    "fecha_servicio": "fecha_servicio",
-    "estado": "estado",
-    "descripcion": "descripcion"
+    "fecha_servicio": "fecha_servicio"
 }
 
 # ---- const successful ----

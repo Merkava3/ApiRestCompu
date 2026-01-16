@@ -113,5 +113,5 @@ def actualizar_servicio_completo():
 
     ok = Servicios.actualizar_servicio_completo(payload)
     if ok:
-        return response(SUCCESSFUL)
+        return response(SUCCESSFULSERVICIO)
     return badEquals()

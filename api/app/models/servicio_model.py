@@ -129,6 +129,10 @@ class Servicios(BaseModelMixin, db.Model):
                 print("Error: id_servicio no proporcionado")
                 return False
 
+            # Eliminar campos que no se deben enviar al SP según requerimiento
+            normalized_data.pop('fecha_ingreso', None)
+            normalized_data.pop('fecha_servicio', None)
+
             # Preparar el JSON de datos (excluyendo id_servicio si se desea, 
             # aunque el procedimiento puede ignorarlo o usarlo)
             import json

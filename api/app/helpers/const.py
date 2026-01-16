@@ -38,7 +38,7 @@ CAMPOS_REPARACIONES_COMPLETAS = (
 
 CAMPOS_USUARIO = ("id_usuario", "nombre_usuario", "email_usuario", "password", "autenticado", "ultima_autenticacion")
 CAMPOS_SERVICIOS = ("estado","id_servicio","email_usuario","nombre_usuario","cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "modelo", "reporte", "numero_serie", "fecha_ingreso", "fecha_servicio", "tipo_dispositivo", "tipo_servicio", "pago", "precio_servicio")
-CAMPOS_SERVICIO_UPDATE = ("fecha_ingreso", "estado", "precio_servicio")
+CAMPOS_SERVICIO_UPDATE = ("estado", "precio_servicio")
 
 
 CAMPOS_PRODUCTOS = ("id_producto", "nombre_producto", "descripcion","precio", "stock")

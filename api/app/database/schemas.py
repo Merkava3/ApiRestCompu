@@ -105,3 +105,10 @@ api_inventarios = InventarioSchemas(many=True)
 
 # --- search schema ---
 api_search = SearchSchema()
+
+class ServicioConsultaSchemas(Schema):
+    fecha_ingreso = serializacion.Function(lambda obj: obj.fecha_ingreso.strftime('%d/%m/%Y') if obj.fecha_ingreso else None)
+    class Meta:
+        fields = CAMPOS_CONSULTA_SERVICIO
+
+api_servicio_consulta = ServicioConsultaSchemas(many=True)

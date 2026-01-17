@@ -143,6 +143,32 @@ class Servicios(BaseModelMixin, db.Model):
             db.session.commit()
             return True
         except Exception as e:
-            db.session.rollback()
             print(f"Error al actualizar servicio completo: {e}")
             return False
+
+    @staticmethod
+    def get_all_servicios_custom():
+        """
+        Ejecuta la consulta personalizada para obtener servicios con detalles específicos.
+        """
+        query_sql = """
+            select 
+                s.id_servicio,
+                c.cedula,
+                c.nombre_cliente,
+                c.telefono_cliente,
+                d.reporte,
+                d.tipo,
+                d.fecha_ingreso	 	
+            from servicios as s 
+                inner join dispositivos as d 
+                    on d.id_dispositivo=s.dispositivos_id_servicio 
+                inner join clientes as c 
+                    on c.id_cliente = s.cliente_id_servicio;
+        """
+        try:
+            result = db.session.execute(text(query_sql))
+            return result.fetchall()
+        except Exception as e:
+            print(f"Error al ejecutar consulta personalizada: {e}")
+            return []

@@ -115,3 +115,12 @@ def actualizar_servicio_completo():
     if ok:
         return response(SUCCESSFULSERVICIO)
     return badEquals()
+
+@servicios_routes.route('/servicio/consulta_personalizada', methods=['GET'])
+@handle_endpoint_errors
+def get_servicios_custom():
+    """
+    Endpoint para obtener datos específicos de servicios usando una consulta personalizada.
+    """
+    servicios = Servicios.get_all_servicios_custom()
+    return successfully(api_servicio_consulta.dump(servicios))

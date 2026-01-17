@@ -116,7 +116,7 @@ def actualizar_servicio_completo():
         return response(SUCCESSFULSERVICIO)
     return badEquals()
 
-@servicios_routes.route('/servicio/consulta_personalizada', methods=['GET'])
+@servicios_routes.route('/servicio/reporte', methods=['GET'])
 @handle_endpoint_errors
 def get_servicios_custom():
     """

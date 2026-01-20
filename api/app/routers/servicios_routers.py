@@ -128,3 +128,18 @@ def actualizar_fecha_entrega():
     
     return badRequest(ERROR_NO_ENCONTRADO)
 
+
+@servicios_routes.route('/search/servicio/cedula', methods=['POST'])
+@handle_endpoint_errors
+def get_servicio_por_cedula():
+    """
+    Obtiene el último servicio asociado a una cédula.
+    """
+    data = request.get_json(force=True)
+    if not data or 'cedula' not in data:
+        return badRequest(ERROR)
+    
+    servicio = Servicios.get_servicio_by_cedula(data['cedula'])
+    if servicio:
+        return successfully(api_servicio_completo.dump(servicio))
+    return notFound(ERROR_NO_ENCONTRADO)

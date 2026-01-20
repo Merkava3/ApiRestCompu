@@ -47,6 +47,7 @@ class Servicios(BaseModelMixin, db.Model):
             Servicios.descripcion,
             Dispositivo.marca,
             Dispositivo.modelo,
+            Dispositivo.tipo,
             Dispositivo.numero_serie,
             Servicios.estado_servicio,
             Dispositivo.reporte,
@@ -108,6 +109,24 @@ class Servicios(BaseModelMixin, db.Model):
         results = query.all()
         mapped_results = Help.map_query_results(results, CAMPOS_SERVICIOS_COMPLETOS)
         return mapped_results
+
+    @staticmethod
+    def get_servicio_by_cedula(cedula):
+        """
+        Obtiene el último servicio de un cliente por su cédula.
+        Recrea la consulta SQL:
+        SELECT ... FROM servicios ... WHERE cl.cedula = :cedula ORDER BY d.fecha_ingreso DESC LIMIT 1
+        """
+        query = Servicios._get_detailed_query().filter(Cliente.cedula == cedula)\
+            .order_by(Dispositivo.fecha_ingreso.desc()).limit(1)
+        
+        result = query.first()
+        # map_query_results espera una lista, pero aqui es un solo resultado row.
+        # Si map_query_results maneja lista, pasamos [result] y tomamos el primero.
+        if result:
+            mapped = Help.map_query_results([result], CAMPOS_SERVICIOS_COMPLETOS)
+            return mapped[0]
+        return None
     
     @staticmethod
     def get_servicio_orm(id_servicio=None, cedula=None):

@@ -108,6 +108,15 @@ class Help:
         return Help.extract_params(data, column_list)
     
     @staticmethod
+    def extract_params_servicio_json(data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extrae y limpia los parámetros para el procedimiento de guardar servicio (JSON).
+        No usa prefijo porque las claves van dentro de un objeto JSON.
+        """
+        from .const import CAMPOS_SERVICIO_JSON
+        return Help.extract_params(data, list(CAMPOS_SERVICIO_JSON), prefix="")
+    
+    @staticmethod
     def normalize_field_names(data: Dict[str, Any], 
                               field_mapping: Dict[str, str]) -> Dict[str, Any]:
         """
@@ -179,16 +188,32 @@ class Help:
             bool: True si al menos uno está presente, False en caso contrario
         """
         return any(data.get(field) for field in fields)
-    
+
     @staticmethod
-    def extract_params_reparacion(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para reparación."""
-        return Help.extract_params(data, column_list)
+    def map_query_results(results: list, column_list: tuple) -> list[dict]:
+        """
+        Mapea los resultados de una consulta SQLAlchemy a una lista de diccionarios.
+        
+        Args:
+            results: Lista de resultados de la consulta (tuplas o filas)
+            column_list: Tupla/Lista con los nombres de las columnas en orden
+            
+        Returns:
+            Lista de diccionarios mapeados
+        """
+        mapped_list = []
+        for row in results:
+            item_dict = {
+                campo: row[i] for i, campo in enumerate(column_list)
+            }
+            mapped_list.append(item_dict)
+        return mapped_list
 
     @staticmethod
     def set_resource(model_method: Any, many: bool = False) -> Any:
+        # ... (rest of the method remains valid, but since I am replacing until end of file or just adding, I need to be careful with context)
         """
-        Decorador genérico para buscar y asignar uno o varios recursos (Servicio, Reparación, etc.)
+        Decorador genérico para buscar y asignar uno o varios recursos (Servicio, etc.)
         basado en los identificadores enviados en el JSON de la petición.
         Aplica principios DRY y Clean Code.
         """

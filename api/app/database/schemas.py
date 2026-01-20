@@ -1,4 +1,4 @@
-from marshmallow import Schema, post_dump, EXCLUDE
+from marshmallow import Schema, EXCLUDE
 from marshmallow import fields as serializacion
 from ..helpers.const import *
 
@@ -11,17 +11,9 @@ class Dispostivoschemas(Schema):
     class Meta:
         fields = CAMPOS_DISPOSITIVO_CON_CLIENTE
 
-class ReparacionesSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_REPARACIONES
-
-class ReparacionesCompletasSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_REPARACIONES_COMPLETAS
-
 class ServiciosSchemas(Schema):
     # Fechas formateadas (Lógica especial)
-    fecha_ingreso = serializacion.Function(lambda obj: obj.dispositivos.fecha_ingreso.strftime('%d/%m/%Y') if hasattr(obj, 'dispositivos') and obj.dispositivos and obj.dispositivos.fecha_ingreso else (obj.fecha_ingreso if hasattr(obj, 'fecha_ingreso') else None))
+    fecha_ingreso = serializacion.Function(lambda obj: obj.dispositivo.fecha_ingreso.strftime('%d/%m/%Y') if hasattr(obj, 'dispositivo') and obj.dispositivo and obj.dispositivo.fecha_ingreso else (obj.fecha_ingreso if hasattr(obj, 'fecha_ingreso') else None))
     fecha_servicio = serializacion.Function(lambda obj: obj.fecha_servicio.strftime('%d/%m/%Y') if hasattr(obj, 'fecha_servicio') and obj.fecha_servicio and not isinstance(obj.fecha_servicio, str) else (obj.fecha_servicio if hasattr(obj, 'fecha_servicio') else None))
 
     class Meta:
@@ -30,6 +22,11 @@ class ServiciosSchemas(Schema):
 class ServiciosUpdateSchemas(ServiciosSchemas):
     class Meta:
         fields = CAMPOS_SERVICIO_UPDATE
+
+class ServiciosCompletosSchemas(Schema):
+    """Esquema para servicios con consulta personalizada que incluye info de clientes, dispositivos y usuarios."""
+    class Meta:
+        fields = CAMPOS_SERVICIOS_COMPLETOS
 
 # Registro de campos dinámicos para aplanamiento (DRY)
 # Se añaden a _declared_fields para que Marshmallow los reconozca al instanciar
@@ -52,20 +49,32 @@ class InventarioSchemas(Schema):
     class Meta:
         fields = CAMPOS_INVENTARIO
 
-class ServicioClientesSchemas(Schema):
-    class Meta:
-        fields = columns_servicio_cliente 
-
 class SearchSchema(Schema):
     """Esquema para extraer criterios de búsqueda de las peticiones JSON."""
-    id_servicio = serializacion.Raw(allow_none=True)
-    id_reparacion = serializacion.Raw(allow_none=True)
-    numero_serie = serializacion.Str(allow_none=True)
+    id_servicio = serializacion.Raw(allow_none=True)   
     cedula = serializacion.Str(allow_none=True)
     
     class Meta:
-        fields = CAMPOS_BUSQUEDA
         unknown = EXCLUDE
+
+class FacturasSchemas(Schema):
+    class Meta:
+        fields = CAMPOS_FACTURAS
+
+class DetalleFacturaSchemas(Schema):
+    class Meta:
+        fields = CAMPOS_DETALLE_FACTURA
+
+class ComprasSchemas(Schema):
+    class Meta:
+        fields = CAMPOS_COMPRAS
+
+class DetalleCompraSchemas(Schema):
+    class Meta:
+        fields = CAMPOS_DETALLE_COMPRA
+
+# --- search schema ---
+api_search = SearchSchema()
 
 # --- serialization cliente ----- 
 api_cliente  = ClienteSchemas()
@@ -75,17 +84,12 @@ api_clientes = ClienteSchemas(many=True)
 api_dispositivo  = Dispostivoschemas()
 api_dispositivos = Dispostivoschemas(many=True)
 
-# --- serialization reparaciones ---
-api_reparacion = ReparacionesSchemas()
-api_reparaciones = ReparacionesSchemas(many=True)
-api_reparacion_completa = ReparacionesCompletasSchemas()
-api_reparaciones_completas = ReparacionesCompletasSchemas(many=True)
-
 # --- serialization servicios ---
 api_servicio = ServiciosSchemas()
 api_servicios = ServiciosSchemas(many=True)
 api_servicio_update = ServiciosUpdateSchemas()
-api_servicio_cliente = ServicioClientesSchemas(many=True)
+api_servicios_completos = ServiciosCompletosSchemas(many=True)
+api_servicio_completo = ServiciosCompletosSchemas()
 
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()
@@ -102,13 +106,3 @@ api_proveedores = ProveedorSchemas(many=True)
 # --- serialization inventario ---
 api_inventario = InventarioSchemas()
 api_inventarios = InventarioSchemas(many=True)
-
-# --- search schema ---
-api_search = SearchSchema()
-
-class ServicioConsultaSchemas(Schema):
-    fecha_ingreso = serializacion.Function(lambda obj: obj.fecha_ingreso.strftime('%d/%m/%Y') if obj.fecha_ingreso else None)
-    class Meta:
-        fields = CAMPOS_CONSULTA_SERVICIO
-
-api_servicio_consulta = ServicioConsultaSchemas(many=True)

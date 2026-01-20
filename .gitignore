@@ -6,3 +6,4 @@
 # Archivos comprimidos pesados (para evitar el aviso de GitHub)
 *.rar
 *.zip
+*.rar

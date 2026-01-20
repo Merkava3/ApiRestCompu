@@ -1,7 +1,6 @@
 from flask import Blueprint
 from .routers.cliente_routers import cliente_routes
 from .routers.dispositivo_routers import dispositivo_routes
-from .routers.reparacion_routers import reparacion_routes
 from .routers.usuario_routers import usuario_routes
 from .routers.servicios_routers import servicios_routes
 from .routers.producto_routers import productos_routes
@@ -16,9 +15,6 @@ api_v1.register_blueprint(cliente_routes)
 
 # ------------------------ Ruta Dispositivo ----------------------------------
 api_v1.register_blueprint(dispositivo_routes)
-
-# ------------------------ Ruta Reparaciones ---------------------------------
-api_v1.register_blueprint(reparacion_routes)
 
 # ------------------------ Ruta Servicios ------------------------------------
 api_v1.register_blueprint(servicios_routes)

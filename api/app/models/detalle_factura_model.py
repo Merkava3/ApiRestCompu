@@ -1,47 +1,35 @@
+from sqlalchemy import Column, Integer, ForeignKey, Numeric, UniqueConstraint
 from . import db
+from .base_model import BaseModelMixin
 
-class DetalleFactura(db.Model):
-    
+
+class DetalleFactura(BaseModelMixin, db.Model):
     __tablename__ = 'detalle_factura'
-    id_detalle_factura = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    factura_id_factura = db.Column(db.BigInteger, db.ForeignKey('facturas.id_factura'), nullable=False)
-    producto_id_producto = db.Column(db.BigInteger, db.ForeignKey('productos.id_producto'), nullable=False)
-    cantidad_detalle = db.Column(db.Integer, nullable=False)
-    sub_total = db.Column(db.Float, nullable=False)    
     
-    factura = db.relationship('Facturas', back_populates='detalle_facturas')
+    id_detalle = Column(Integer, primary_key=True, autoincrement=True)
+    factura_id_detalle = Column(Integer, ForeignKey('facturas.id_factura', ondelete='CASCADE'), nullable=False)
+    producto_id_detalle = Column(Integer, ForeignKey('productos.id_producto', ondelete='RESTRICT'), nullable=False)
+    cantidad_detalle = Column(Integer, nullable=False)
+    subtotal = Column(Numeric(10, 2), nullable=False)
+    
+    # Constraint único
+    __table_args__ = (UniqueConstraint('factura_id_detalle', 'producto_id_detalle', name='uq_factura_producto'),)
+    
+    # Relaciones
+    factura = db.relationship('Facturas', back_populates='detalle_factura')
     producto = db.relationship('Productos', back_populates='detalle_factura')
-    
 
     @staticmethod
-    def get_detalle_factura(id_detalle_factura):
-        return DetalleFactura.query.filter_by(id_detalle_factura=id_detalle_factura).first()
+    def get_detalle_factura(id_detalle):
+        """Obtiene un detalle de factura por su ID."""
+        return DetalleFactura.query.filter_by(id_detalle=id_detalle).first()
     
     @staticmethod
     def get_detalle_facturas():
+        """Obtiene todos los detalles de factura."""
         return DetalleFactura.query.all()
     
-    @classmethod
-    def new(cls, kwargs):
-        return DetalleFactura(**kwargs)
-    
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-    
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al eliminar detalle_factura: {e}")
-
-    @classmethod
-    def get_facturas_all():
-        return db.session.query()
+    @staticmethod
+    def get_detalle_facturas_by_factura(factura_id):
+        """Obtiene todos los detalles de una factura específica."""
+        return DetalleFactura.query.filter_by(factura_id_detalle=factura_id).all()

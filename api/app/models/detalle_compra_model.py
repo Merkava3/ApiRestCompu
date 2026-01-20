@@ -1,42 +1,35 @@
+from sqlalchemy import Column, Integer, ForeignKey, Numeric, UniqueConstraint
 from . import db
-class DetalleCompra(db.Model):
-    __tablename__ = 'detalles_compras'
-    id_detalle_compra = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    cantidad = db.Column(db.Integer, nullable=False)
-    id_compras_detalles = db.Column(db.BigInteger, db.ForeignKey('compras.id_compras'), nullable=False)
-    precio = db.Column(db.Float, nullable=False)
-    id_detalles_compras_productos = db.Column(db.BigInteger, db.ForeignKey('productos.id_producto'), nullable=False)
+from .base_model import BaseModelMixin
 
+
+class DetalleCompra(BaseModelMixin, db.Model):
+    __tablename__ = 'detalles_compras'
+    
+    id_detalles_compras = Column(Integer, primary_key=True, autoincrement=True)
+    compras_id_detalles = Column(Integer, ForeignKey('compras.id_compras', ondelete='CASCADE'), nullable=False)
+    producto_id_detalles = Column(Integer, ForeignKey('productos.id_producto', ondelete='RESTRICT'), nullable=False)
+    cantidad = Column(Integer, nullable=False)
+    precio = Column(Numeric(10, 2), nullable=False)
+    
+    # Constraint único
+    __table_args__ = (UniqueConstraint('compras_id_detalles', 'producto_id_detalles', name='uq_compra_producto'),)
+
+    # Relaciones
     compras = db.relationship('Compras', back_populates='detalle_compra')
     producto = db.relationship('Productos', back_populates='detalle_compra')
-    
 
     @staticmethod
     def get_detalle_compra(id_detalle_compra):
-        return DetalleCompra.query.filter_by(id_detalle_compra=id_detalle_compra).first()
+        """Obtiene un detalle de compra por su ID."""
+        return DetalleCompra.query.filter_by(id_detalles_compras=id_detalle_compra).first()
     
     @staticmethod
     def get_detalle_compras():
+        """Obtiene todos los detalles de compra."""
         return DetalleCompra.query.all()
     
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except:
-            return False
-    
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al eliminar detalle_compra: {e}")
-            return False
-    
-    @classmethod
-    def new(cls, kwargs):
-        return DetalleCompra(**kwargs)
+    @staticmethod
+    def get_detalle_compras_by_compra(compra_id):
+        """Obtiene todos los detalles de una compra específica."""
+        return DetalleCompra.query.filter_by(compras_id_detalles=compra_id).all()

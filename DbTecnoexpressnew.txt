@@ -1,0 +1,820 @@
+================================================================================
+                    DBMACROCOMPUTEC - SCHEMA POSTGRESQL
+            Base de datos para Sistema de Gestión Técnica Informática
+================================================================================
+
+-- ======================== CREAR EXTENSIONES ========================
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ======================== CREAR TIPOS ENUM ========================
+CREATE TYPE rol_enum AS ENUM ('admin', 'tecnico', 'vendedor');
+CREATE TYPE estado_servicio_enum AS ENUM ('recibido', 'en_proceso', 'finalizado', 'entregado');
+CREATE TYPE metodo_pago_enum AS ENUM ('efectivo', 'tarjeta', 'transferencia', 'credito');
+
+-- ======================== TABLA: USUARIOS ========================
+CREATE TABLE usuarios (
+    id_usuario UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre_usuario VARCHAR(255) NOT NULL,
+    email_usuario VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    rol rol_enum NOT NULL DEFAULT 'vendedor',
+    autenticado BOOLEAN DEFAULT FALSE,
+    ultima_autenticacion TIMESTAMP NULL,
+    token VARCHAR(255) NULL,
+    token_expiration TIMESTAMP NULL,    
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE INDEX idx_usuarios_email ON usuarios(email_usuario);
+CREATE INDEX idx_usuarios_rol ON usuarios(rol);
+CREATE INDEX idx_usuarios_activo ON usuarios(activo);
+
+-- ======================== TABLA: CLIENTES ========================
+CREATE TABLE clientes (
+    id_cliente UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cedula VARCHAR(16) UNIQUE NOT NULL,
+    nombre_cliente VARCHAR(255) NOT NULL,
+    direccion TEXT NULL,
+    telefono_cliente VARCHAR(50) NULL,
+    
+);
+
+CREATE INDEX idx_clientes_cedula ON clientes(cedula);
+CREATE INDEX idx_clientes_nombre ON clientes(nombre_cliente);
+CREATE INDEX idx_clientes_activo ON clientes(activo);
+
+-- ======================== TABLA: DISPOSITIVOS ========================
+CREATE TABLE dispositivos (
+    id_dispositivo UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cliente_id_dispositivo UUID NOT NULL REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    tipo VARCHAR(255) NOT NULL,
+    marca VARCHAR(255) NOT NULL,
+    modelo VARCHAR(255) NOT NULL,
+    numero_serie VARCHAR(255) NOT NULL,
+    descripcion TEXT NULL,
+    fecha_ingreso TIMESTAMP DEFAULT now(),    
+);
+
+CREATE INDEX idx_dispositivos_cliente ON dispositivos(cliente_id_dispositivo);
+CREATE INDEX idx_dispositivos_serie ON dispositivos(numero_serie);
+CREATE INDEX idx_dispositivos_activo ON dispositivos(activo);
+
+-- ======================== TABLA: SERVICIOS ========================
+CREATE TABLE servicios (
+    id_servicio UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cliente_id_servicio UUID NOT NULL REFERENCES clientes(id_cliente),
+    dispositivo_id_servicio UUID NULL REFERENCES dispositivos(id_dispositivo) ON DELETE SET NULL,
+    usuario_id_servicio UUID NOT NULL REFERENCES usuarios(id_usuario),
+    tipo_servicio VARCHAR(45) NOT NULL,
+    fecha_servicio TIMESTAMP DEFAULT now(),
+    fecha_entrega TIMESTAMP NULL,
+    precio_servicio NUMERIC(10, 2) NOT NULL,
+    descripcion TEXT NULL,
+    estado_servicio estado_servicio_enum NOT NULL DEFAULT 'recibido',
+    
+);
+
+CREATE INDEX idx_servicios_cliente ON servicios(cliente_id_servicio);
+CREATE INDEX idx_servicios_dispositivo ON servicios(dispositivo_id_servicio);
+CREATE INDEX idx_servicios_usuario ON servicios(usuario_id_servicio);
+CREATE INDEX idx_servicios_estado ON servicios(estado_servicio);
+CREATE INDEX idx_servicios_activo ON servicios(activo);
+
+-- ======================== TABLA: PRODUCTOS ========================
+CREATE TABLE productos (
+    id_producto UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre_producto VARCHAR(255) NOT NULL,
+    descripcion TEXT NULL,
+    precio_venta NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    cantidad_stock INTEGER NOT NULL DEFAULT 0,
+    
+);
+
+CREATE INDEX idx_productos_nombre ON productos(nombre_producto);
+CREATE INDEX idx_productos_activo ON productos(activo);
+
+-- ======================== TABLA: PROVEEDORES ========================
+CREATE TABLE proveedores (
+    id_proveedor UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nit VARCHAR(16) UNIQUE NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    informacion_contacto TEXT NULL,
+    
+);
+
+CREATE INDEX idx_proveedores_nit ON proveedores(nit);
+CREATE INDEX idx_proveedores_nombre ON proveedores(nombre);
+CREATE INDEX idx_proveedores_activo ON proveedores(activo);
+
+-- ======================== TABLA: COMPRAS ========================
+CREATE TABLE compras (
+    id_compras UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    proveedor_id_compras UUID NOT NULL REFERENCES proveedores(id_proveedor),
+    usuario_id_compras UUID NOT NULL REFERENCES usuarios(id_usuario),
+    fecha_compras TIMESTAMP DEFAULT now(),
+    total_compras NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    metodo_pago metodo_pago_enum NOT NULL,
+    
+);
+
+CREATE INDEX idx_compras_proveedor ON compras(proveedor_id_compras);
+CREATE INDEX idx_compras_usuario ON compras(usuario_id_compras);
+CREATE INDEX idx_compras_fecha ON compras(fecha_compras);
+CREATE INDEX idx_compras_activo ON compras(activo);
+
+-- ======================== TABLA: DETALLES COMPRAS ========================
+CREATE TABLE detalles_compras (
+    id_detalles_compras UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    compras_id_detalles UUID NOT NULL REFERENCES compras(id_compras) ON DELETE CASCADE,
+    producto_id_detalles UUID NOT NULL REFERENCES productos(id_producto) ON DELETE RESTRICT,
+    cantidad INTEGER NOT NULL,
+    precio NUMERIC(10, 2) NOT NULL,
+    UNIQUE (compras_id_detalles, producto_id_detalles)
+);
+
+CREATE INDEX idx_detalles_compras_compra ON detalles_compras(compras_id_detalles);
+CREATE INDEX idx_detalles_compras_producto ON detalles_compras(producto_id_detalles);
+
+-- ======================== TABLA: FACTURAS ========================
+CREATE TABLE facturas (
+    id_factura UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cliente_id_factura UUID NOT NULL REFERENCES clientes(id_cliente),
+    usuario_id_factura UUID NOT NULL REFERENCES usuarios(id_usuario),
+    fecha TIMESTAMP DEFAULT now(),
+    pago NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    total NUMERIC(10, 2) NOT NULL DEFAULT 0,  
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE INDEX idx_facturas_cliente ON facturas(cliente_id_factura);
+CREATE INDEX idx_facturas_usuario ON facturas(usuario_id_factura);
+CREATE INDEX idx_facturas_fecha ON facturas(fecha);
+CREATE INDEX idx_facturas_activo ON facturas(activo);
+
+-- ======================== TABLA: DETALLES FACTURAS ========================
+CREATE TABLE detalle_factura (
+    id_detalle UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    factura_id_detalle UUID NOT NULL REFERENCES facturas(id_factura) ON DELETE CASCADE,
+    producto_id_detalle UUID NOT NULL REFERENCES productos(id_producto) ON DELETE RESTRICT,
+    cantidad_detalle INTEGER NOT NULL,
+    subtotal NUMERIC(10, 2) NOT NULL,
+    UNIQUE (factura_id_detalle, producto_id_detalle)
+);
+
+CREATE INDEX idx_detalle_factura_factura ON detalle_factura(factura_id_detalle);
+CREATE INDEX idx_detalle_factura_producto ON detalle_factura(producto_id_detalle);
+
+-- ======================== TABLA: INVENTARIO ========================
+CREATE TABLE inventario (
+    id_inventario UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    producto_id UUID NOT NULL REFERENCES productos(id_producto),
+    proveedor_id UUID NOT NULL REFERENCES proveedores(id_proveedor),
+    cantidad INTEGER NOT NULL DEFAULT 0,
+    ultima_actualizacion TIMESTAMP DEFAULT now()
+);
+
+CREATE INDEX idx_inventario_producto ON inventario(producto_id);
+CREATE INDEX idx_inventario_proveedor ON inventario(proveedor_id);
+
+-- ======================== RESTRICCIONES ADICIONALES ========================
+
+-- Foreign Keys con constraint names
+ALTER TABLE dispositivos
+ADD CONSTRAINT fk_dispositivos_cliente FOREIGN KEY (cliente_id_dispositivo)
+REFERENCES clientes(id_cliente) ON DELETE CASCADE;
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_cliente FOREIGN KEY (cliente_id_servicio)
+REFERENCES clientes(id_cliente);
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_dispositivo FOREIGN KEY (dispositivo_id_servicio)
+REFERENCES dispositivos(id_dispositivo) ON DELETE SET NULL;
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_usuario FOREIGN KEY (usuario_id_servicio)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE compras
+ADD CONSTRAINT fk_compras_proveedor FOREIGN KEY (proveedor_id_compras)
+REFERENCES proveedores(id_proveedor);
+
+ALTER TABLE compras
+ADD CONSTRAINT fk_compras_usuario FOREIGN KEY (usuario_id_compras)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE detalles_compras
+ADD CONSTRAINT fk_detalles_compras_compra FOREIGN KEY (compras_id_detalles)
+REFERENCES compras(id_compras) ON DELETE CASCADE;
+
+ALTER TABLE detalles_compras
+ADD CONSTRAINT fk_detalles_compras_producto FOREIGN KEY (producto_id_detalles)
+REFERENCES productos(id_producto) ON DELETE RESTRICT;
+
+ALTER TABLE facturas
+ADD CONSTRAINT fk_facturas_cliente FOREIGN KEY (cliente_id_factura)
+REFERENCES clientes(id_cliente);
+
+ALTER TABLE facturas
+ADD CONSTRAINT fk_facturas_usuario FOREIGN KEY (usuario_id_factura)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE detalle_factura
+ADD CONSTRAINT fk_detalle_factura_factura FOREIGN KEY (factura_id_detalle)
+REFERENCES facturas(id_factura) ON DELETE CASCADE;
+
+ALTER TABLE detalle_factura
+ADD CONSTRAINT fk_detalle_factura_producto FOREIGN KEY (producto_id_detalle)
+REFERENCES productos(id_producto) ON DELETE RESTRICT;
+
+ALTER TABLE inventario
+ADD CONSTRAINT fk_inventario_producto FOREIGN KEY (producto_id)
+REFERENCES productos(id_producto);
+
+ALTER TABLE inventario
+ADD CONSTRAINT fk_inventario_proveedor FOREIGN KEY (proveedor_id)
+REFERENCES proveedores(id_proveedor);
+
+================================================================================
+                          OBSERVACIONES IMPORTANTES
+================================================================================
+
+1. TIPOS DE DATOS USADOS:
+   - UUID: Identificadores únicos con extensión uuid-ossp
+   - VARCHAR: Campos de texto corto
+   - TEXT: Campos de texto largo sin límite
+   - NUMERIC(10,2): Campos monetarios con 10 dígitos y 2 decimales
+   - INTEGER: Cantidades sin decimales
+   - BOOLEAN: Valores verdadero/falso
+   - TIMESTAMP: Fechas con hora
+
+2. ENUMERABLES CREADOS:
+   - rol_enum: Roles de usuario (admin, tecnico, vendedor)
+   - estado_servicio_enum: Estados de servicio (recibido, en_proceso, finalizado, entregado)
+   - metodo_pago_enum: Métodos de pago (efectivo, tarjeta, transferencia, credito)
+
+3. ÍNDICES:
+   - Creados en campos frecuentemente consultados
+   - Optimizar búsquedas por cedula, email, numero de serie, etc.
+
+4. RESTRICCIONES:
+   - CASCADE: Al eliminar padre, se eliminan registros hijos (servicios, dispositivos, etc.)
+   - SET NULL: Al eliminar dispositivo, servicios quedan sin dispositivo
+   - RESTRICT: No permite eliminar productos si hay detalles asociados
+
+5. VALORES POR DEFECTO:
+   - Fechas creadas/actualizadas: now() (hora del servidor)
+   - UUID: gen_random_uuid()
+   - Booleanos: FALSE/TRUE según corresponda
+   - Enumerables: Valores por defecto especificados
+
+=====================================================================================================================================================================
+
+
+-- Aumentar stock al insertar un detalle de compra
+CREATE OR REPLACE FUNCTION trg_aumenta_stock()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    -- 1. Aumentar stock
+    UPDATE productos
+       SET cantidad_stock = cantidad_stock + NEW.cantidad
+     WHERE id_producto = NEW.producto_id_detalles;
+
+    -- 2. Registrar auditoría (inventario)
+    INSERT INTO inventarios (producto_id_inventario, ultima_orden)
+    VALUES (NEW.producto_id_detalles, NOW())
+    ON CONFLICT (producto_id_inventario)
+    DO UPDATE SET ultima_orden = NOW();
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_after_insert_dc
+AFTER INSERT ON detalles_compras
+FOR EACH ROW
+EXECUTE FUNCTION trg_aumenta_stock();
+
+====================================================================================================================================================================
+
+-- b) Al insertar un detalle de VENTA → disminuir stock
+CREATE OR REPLACE FUNCTION trg_disminuye_stock()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    stk INT;
+BEGIN
+    SELECT cantidad_stock INTO stk
+      FROM productos
+     WHERE id_producto = NEW.producto_id_detalle;
+    IF stk < NEW.cantidad_detalle THEN
+        RAISE EXCEPTION 'Stock insuficiente para el producto %', NEW.producto_id_detalle;
+    END IF;
+    UPDATE productos
+       SET cantidad_stock = cantidad_stock - NEW.cantidad_detalle
+     WHERE id_producto = NEW.producto_id_detalle;
+    -- auditoría
+    INSERT INTO inventarios (producto_id_inventario, ultima_orden)
+    VALUES (NEW.producto_id_detalle, NOW())
+    ON CONFLICT (producto_id_inventario)
+    DO UPDATE SET ultima_orden = NOW();
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER tg_venta_ins
+BEFORE INSERT ON detalle_factura
+FOR EACH ROW EXECUTE FUNCTION trg_disminuye_stock();
+======================================================================================================================================================================
+
+-- Trigger para dejar NULL si no se envía fecha_entrega
+CREATE OR REPLACE FUNCTION tg_servicios_fecha_entrega()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    -- Si no se envió fecha_entrega, dejarlo explícitamente NULL
+    IF NEW.fecha_entrega IS NULL THEN
+        NEW.fecha_entrega := NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_servicios_fecha_entrega
+BEFORE INSERT OR UPDATE ON servicios
+FOR EACH ROW
+EXECUTE FUNCTION tg_servicios_fecha_entrega();
+======================================================================================================================================================================
+
+-- Trigger que coloca 'no tiene registros' cuando marca, modelo o numero_serie vienen vacíos
+CREATE OR REPLACE FUNCTION tg_dispositivos_campos_vacios()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.marca IS NULL OR TRIM(NEW.marca) = '' THEN
+        NEW.marca := 'no tiene registros';
+    END IF;
+    IF NEW.modelo IS NULL OR TRIM(NEW.modelo) = '' THEN
+        NEW.modelo := 'no tiene registros';
+    END IF;
+    IF NEW.numero_serie IS NULL OR TRIM(NEW.numero_serie) = '' THEN
+        NEW.numero_serie := 'no tiene registros';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_dispositivos_campos_vacios
+BEFORE INSERT OR UPDATE ON dispositivos
+FOR EACH ROW
+EXECUTE FUNCTION tg_dispositivos_campos_vacios();
+
+======================================================================================================================================================================
+
+-- Insert 1: Homero Simpson (vendedor)
+INSERT INTO usuarios (
+    nombre_usuario,
+    email_usuario,
+    password,
+    rol,
+    autenticado,
+    ultima_autenticacion,
+    token,
+    token_expiration,
+    activo
+) VALUES (
+    'Homero Simpson',
+    'homero@planta742.com',
+    '$2b$12$8wYg6ZWwNWzoYfI7hhcB5u1pFu1Y2RywHfGDLtcmYGXGQdXCo4J6q',  -- bcrypt('donas123')
+    'vendedor',
+    true,
+    NOW(),
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob21lcm8iLCJleHAiOjE3MzU2NzAwMDB9.fake',
+    NOW() + INTERVAL '7 days',
+    true
+);
+
+
+-- Insert 2: Lisa Simpson (admin)
+INSERT INTO usuarios (
+    nombre_usuario,
+    email_usuario,
+    password,
+    rol,
+    autenticado,
+    ultima_autenticacion,
+    token,
+    token_expiration,
+    activo
+) VALUES (
+    'Lisa Simpson',
+    'lisa@planta742.com',
+    '$2b$12$4Dm9XPdDmrFD1bLXZreSGuwXSS8rZgK9Xf7ypchYPH1zCwItQUOOC',  -- bcrypt('saxofon456')
+    'admin',
+    true,
+    NOW(),
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsaXNhIiwiZXhwIjoxNzM1NjcwMDAwfQ.fake',
+    NOW() + INTERVAL '7 days',
+    true
+);
+
+
+INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+VALUES ('1234567890123456', 'Ned Flanders', 'Calle Evergreen 740, Springfield', '555-1234');
+
+INSERT INTO clientes (cedula, nombre_cliente, direccion, telefono_cliente)
+VALUES ('9876543210987654', 'Montgomery Burns', 'Mansión Burns, Colina de Springfield', '555-6666');
+
+
+-- Dispositivo 1: televisor de Ned Flanders
+INSERT INTO dispositivos (
+    cliente_id_dispositivo,
+    tipo,
+    marca,
+    modelo,
+    numero_serie,
+    reporte,
+    fecha_ingreso
+) VALUES (
+    (SELECT id_cliente FROM clientes WHERE cedula = '1234567890123456'),
+    'Televisor',
+    'Zepter',
+    'ZF-42LCD',
+    'ZN123456789',
+    'Pantalla 42" con problemas de imagen y sonido',
+    NOW()
+);
+
+-- Dispositivo 2: laptop de Montgomery Burns
+INSERT INTO dispositivos (
+    cliente_id_dispositivo,
+    tipo,
+    marca,
+    modelo,
+    numero_serie,
+    reporte,
+    fecha_ingreso
+) VALUES (
+    (SELECT id_cliente FROM clientes WHERE cedula = '9876543210987654'),
+    'Laptop',
+    'NuclearBook',
+    'NB-Pro-15',
+    'MB987654321',
+    'No enciende, posible falla en la placa base',
+    NOW()
+);
+
+-- Servicio 1: Ned Flanders pide reparación de su televisor
+INSERT INTO servicios (
+    cliente_id_servicio,
+    dispositivo_id_servicio,
+    usuario_id_servicio,
+    tipo_servicio,
+    fecha_entrega,
+    precio_servicio,
+    descripcion,
+    estado_servicio
+) VALUES (
+    (SELECT id_cliente FROM clientes WHERE cedula = '1234567890123456'),
+    (SELECT id_dispositivo FROM dispositivos WHERE numero_serie = 'ZN123456789'),
+    (SELECT id_usuario FROM usuarios WHERE email_usuario = 'homero@planta742.com'),
+    'reparación',
+    NULL,  -- aún sin fecha de entrega
+    120.00,
+    'Revisar y reparar placa de video y altavoces internos',
+    'recibido'
+);
+
+-- Servicio 2: Montgomery Burns solicita mantenimiento de su laptop
+INSERT INTO servicios (
+    cliente_id_servicio,
+    dispositivo_id_servicio,
+    usuario_id_servicio,
+    tipo_servicio,
+    fecha_entrega,
+    precio_servicio,
+    descripcion,
+    estado_servicio
+) VALUES (
+    (SELECT id_cliente FROM clientes WHERE cedula = '9876543210987654'),
+    (SELECT id_dispositivo FROM dispositivos WHERE numero_serie = 'MB987654321'),
+    (SELECT id_usuario FROM usuarios WHERE email_usuario = 'lisa@planta742.com'),
+    'mantenimiento',
+    NOW() + INTERVAL '3 days',  -- entrega estimada
+    250.00,
+    'Limpieza interna, cambio de pasta térmica y actualización de SSD',
+    'en_proceso'
+);
+
+======================================================================================================================================================================
+consultas:
+
+SELECT
+    s.id_servicio,
+    cl.cedula,
+    cl.nombre_cliente,
+    cl.direccion,
+    cl.telefono_cliente,
+    s.tipo_servicio,
+    d.marca,
+    d.modelo,
+    d.numero_serie,
+    s.estado_servicio,
+    d.reporte,
+    d.fecha_ingreso,
+    s.fecha_entrega,
+    s.precio_servicio,
+    usr.email_usuario
+FROM servicios s
+INNER JOIN usuarios usr
+    ON usr.id_usuario = s.usuario_id_servicio
+INNER JOIN clientes cl
+    ON s.cliente_id_servicio = cl.id_cliente
+INNER JOIN dispositivos d
+    ON s.dispositivo_id_servicio = d.id_dispositivo
+
+
+SELECT
+    s.id_servicio,
+    cl.cedula,
+    cl.nombre_cliente,
+    cl.direccion,
+    cl.telefono_cliente,
+    s.tipo_servicio,
+    d.marca,
+    d.modelo,
+    d.numero_serie,
+    s.estado_servicio,
+    d.reporte,
+    d.fecha_ingreso,
+    s.fecha_entrega,
+    (CURRENT_DATE - d.fecha_ingreso::date) AS dias,
+    s.precio_servicio,
+    usr.email_usuario
+FROM servicios s
+JOIN usuarios usr ON usr.id_usuario = s.usuario_id_servicio
+JOIN clientes cl ON s.cliente_id_servicio = cl.id_cliente
+JOIN dispositivos d ON s.dispositivo_id_servicio = d.id_dispositivo
+WHERE cl.cedula = '1234567890123456';
+
+SELECT
+    s.id_servicio,
+    cl.cedula,
+    cl.nombre_cliente,
+    cl.direccion,
+    cl.telefono_cliente,
+    s.tipo_servicio,
+    d.marca,
+    d.modelo,
+    d.numero_serie,
+    s.estado_servicio,
+    d.reporte,
+    d.fecha_ingreso,
+    s.fecha_entrega,
+    (CURRENT_DATE - d.fecha_ingreso::date) AS dias,
+    s.precio_servicio,
+    usr.email_usuario
+FROM servicios s
+JOIN usuarios usr ON usr.id_usuario = s.usuario_id_servicio
+JOIN clientes cl ON s.cliente_id_servicio = cl.id_cliente
+JOIN dispositivos d ON s.dispositivo_id_servicio = d.id_dispositivo
+WHERE cl.cedula = '1234567890123456';
+
+
+======================================================================================================================================================================
+procedimientos almacenados:
+
+CREATE OR REPLACE PROCEDURE sp_guardar_servicio_json(p_data JSON)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id_usuario      INTEGER;
+    v_id_cliente      INTEGER;
+    v_id_dispositivo  INTEGER;
+BEGIN
+    ---------------------------------------------------
+    -- 1. Obtener usuario por email
+    ---------------------------------------------------
+    SELECT id_usuario
+    INTO v_id_usuario
+    FROM usuarios
+    WHERE email_usuario = p_data->>'usuario_email';
+
+    IF v_id_usuario IS NULL THEN
+        RAISE EXCEPTION 'El usuario con email % no existe',
+            p_data->>'usuario_email';
+    END IF;
+
+    ---------------------------------------------------
+    -- 2. Verificar / insertar cliente
+    ---------------------------------------------------
+    SELECT id_cliente
+    INTO v_id_cliente
+    FROM clientes
+    WHERE cedula = p_data->>'cedula';
+
+    IF v_id_cliente IS NULL THEN
+        INSERT INTO clientes(
+            cedula,
+            nombre_cliente,
+            direccion,
+            telefono_cliente
+        )
+        VALUES (
+            p_data->>'cedula',
+            p_data->>'nombre_cliente',
+            p_data->>'direccion',
+            p_data->>'telefono_cliente'
+        )
+        RETURNING id_cliente INTO v_id_cliente;
+    END IF;
+
+    ---------------------------------------------------
+    -- 3. Verificar / insertar dispositivo
+    ---------------------------------------------------
+    SELECT id_dispositivo
+    INTO v_id_dispositivo
+    FROM dispositivos
+    WHERE numero_serie = p_data->>'numero_serie';
+
+    IF v_id_dispositivo IS NULL THEN
+        INSERT INTO dispositivos(
+            cliente_id_dispositivo,
+            tipo,
+            marca,
+            modelo,
+            numero_serie,
+            reporte
+        )
+        VALUES (
+            v_id_cliente,
+            p_data->>'tipo',
+            p_data->>'marca',
+            p_data->>'modelo',
+            p_data->>'numero_serie',
+            p_data->>'reporte'
+        )
+        RETURNING id_dispositivo INTO v_id_dispositivo;
+    END IF;
+
+    ---------------------------------------------------
+    -- 4. Insertar servicio
+    ---------------------------------------------------
+    INSERT INTO servicios(
+        cliente_id_servicio,
+        dispositivo_id_servicio,
+        usuario_id_servicio,
+        tipo_servicio,
+        precio_servicio,
+        descripcion,
+        estado_servicio
+    )
+    VALUES (
+        v_id_cliente,
+        v_id_dispositivo,
+        v_id_usuario,
+        p_data->>'tipo_servicio',
+        (p_data->>'precio_servicio')::NUMERIC,
+        p_data->>'descripcion',
+        (p_data->>'estado_servicio')::estado_servicio_enum
+    );
+
+    RAISE NOTICE 'Servicio registrado correctamente ✔';
+
+END;
+$$;
+
+
+CALL sp_guardar_servicio_json(
+'{
+  "usuario_email": "homero@planta742.com",
+  "cedula": "742742742",
+  "nombre_cliente": "Homer Simpson",
+  "direccion": "742 Evergreen Terrace",
+  "telefono_cliente": "555-9393",
+  "tipo": "Televisor",
+  "marca": "KrustyBrand",
+  "modelo": "K2000",
+  "numero_serie": "SN-SIMPSON-001",
+  "reporte": "Pantalla no enciende",
+  "tipo_servicio": "Reparación",
+  "precio_servicio": 150.50,
+  "descripcion": "Cambio de fuente de poder",
+  "estado_servicio": "recibido"
+}'
+);
+
+CREATE OR REPLACE PROCEDURE sp_actualizar_servicio_json(p_data JSON)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_id_usuario      INTEGER;
+    v_id_cliente      INTEGER;
+    v_id_dispositivo  INTEGER;
+    v_id_servicio     INTEGER;
+BEGIN
+    ---------------------------------------------------
+    -- 1. Validar usuario
+    ---------------------------------------------------
+    SELECT id_usuario
+    INTO v_id_usuario
+    FROM usuarios
+    WHERE email_usuario = p_data->>'usuario_email';
+
+    IF v_id_usuario IS NULL THEN
+        RAISE EXCEPTION 'Usuario no existe: %',
+            p_data->>'usuario_email';
+    END IF;
+
+    ---------------------------------------------------
+    -- 2. Buscar cliente
+    ---------------------------------------------------
+    SELECT id_cliente
+    INTO v_id_cliente
+    FROM clientes
+    WHERE cedula = p_data->>'cedula';
+
+    IF v_id_cliente IS NULL THEN
+        RAISE EXCEPTION 'Cliente no existe con cédula: %',
+            p_data->>'cedula';
+    END IF;
+
+    ---------------------------------------------------
+    -- 3. Actualizar cliente
+    ---------------------------------------------------
+    UPDATE clientes
+    SET
+        nombre_cliente   = p_data->>'nombre_cliente',
+        direccion         = p_data->>'direccion',
+        telefono_cliente  = p_data->>'telefono_cliente'
+    WHERE id_cliente = v_id_cliente;
+
+    ---------------------------------------------------
+    -- 4. Buscar dispositivo
+    ---------------------------------------------------
+    SELECT id_dispositivo
+    INTO v_id_dispositivo
+    FROM dispositivos
+    WHERE numero_serie = p_data->>'numero_serie';
+
+    IF v_id_dispositivo IS NULL THEN
+        RAISE EXCEPTION 'Dispositivo no existe con serie: %',
+            p_data->>'numero_serie';
+    END IF;
+
+    ---------------------------------------------------
+    -- 5. Actualizar dispositivo
+    ---------------------------------------------------
+    UPDATE dispositivos
+    SET
+        tipo    = p_data->>'tipo',
+        marca   = p_data->>'marca',
+        modelo  = p_data->>'modelo',
+        reporte = p_data->>'reporte'
+    WHERE id_dispositivo = v_id_dispositivo;
+
+    ---------------------------------------------------
+    -- 6. Buscar servicio asociado
+    ---------------------------------------------------
+    SELECT id_servicio
+    INTO v_id_servicio
+    FROM servicios
+    WHERE cliente_id_servicio    = v_id_cliente
+      AND dispositivo_id_servicio = v_id_dispositivo;
+
+    IF v_id_servicio IS NULL THEN
+        RAISE EXCEPTION 'No existe servicio para ese cliente y dispositivo';
+    END IF;
+
+    ---------------------------------------------------
+    -- 7. Actualizar servicio
+    ---------------------------------------------------
+    UPDATE servicios
+    SET
+        tipo_servicio    = p_data->>'tipo_servicio',
+        precio_servicio  = (p_data->>'precio_servicio')::NUMERIC,
+        descripcion      = p_data->>'descripcion',
+        estado_servicio  = (p_data->>'estado_servicio')::estado_servicio_enum,
+        usuario_id_servicio = v_id_usuario
+    WHERE id_servicio = v_id_servicio;
+
+    RAISE NOTICE 'Servicio actualizado correctamente ✔';
+
+END;
+$$;
+
+CALL sp_actualizar_servicio_json(
+'{
+  "usuario_email": "lisa@planta742.com",
+  "cedula": "742742742",
+  "nombre_cliente": "Homer Simpson",
+  "direccion": "742 Evergreen Terrace",
+  "telefono_cliente": "555-9393",
+  "tipo": "Televisor",
+  "marca": "KrustyBrand",
+  "modelo": "K2000",
+  "numero_serie": "SN-SIMPSON-001",
+  "reporte": "Pantalla no enciende",
+  "tipo_servicio": "Reparación",
+  "precio_servicio": 150.50,
+  "descripcion": "",
+  "estado_servicio": "finalizado"
+}'
+);
+

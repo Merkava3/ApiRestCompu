@@ -1,0 +1,130 @@
+
+CREATE TABLE usuarios (
+  id_usuario BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nombre_usuario VARCHAR(255) NOT NULL,
+  email_usuario VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+
+  -- Autenticación
+  autenticado BOOLEAN NOT NULL DEFAULT FALSE,
+  ultima_autenticacion TIMESTAMP NULL DEFAULT NULL,
+  token VARCHAR(255) DEFAULT NULL,
+
+  -- Rol del usuario
+  rol ENUM('admin','tecnico','vendedor') NOT NULL,
+
+  -- Auditoría
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE clientes (
+  id_cliente BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cedula VARCHAR(16) NOT NULL UNIQUE,
+  nombre_cliente VARCHAR(255) NOT NULL,
+  direccion TEXT,
+  telefono_cliente VARCHAR(50)
+);
+
+
+CREATE TABLE dispositivos (
+  id_dispositivo BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cliente_id_dispositivo BIGINT NOT NULL,
+  tipo VARCHAR(255),
+  marca VARCHAR(255),
+  modelo VARCHAR(255),
+  numero_serie VARCHAR(255),
+  descripcion TEXT,
+  fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (cliente_id_dispositivo)
+    REFERENCES clientes(id_cliente)
+    ON DELETE CASCADE
+);
+
+
+CREATE TABLE servicios (
+  id_servicio BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cliente_id_servicio BIGINT NOT NULL,
+  dispositivo_id_servicio BIGINT,
+  tipo_servicio VARCHAR(45),
+  fecha_servicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  precio_servicio DECIMAL(10,2) NOT NULL,
+  descripcion TEXT,
+  estado_servicio ENUM('recibido','en_proceso','finalizado','entregado') DEFAULT 'recibido',
+  fecha_entrega TIMESTAMP NULL,
+  FOREIGN KEY (cliente_id_servicio) REFERENCES clientes(id_cliente),
+  FOREIGN KEY (dispositivo_id_servicio) REFERENCES dispositivos(id_dispositivo),
+  FOREIGN KEY (tipo_servicio_id) REFERENCES tipos_servicio(id_tipo_servicio)
+);
+
+CREATE TABLE productos (
+  id_producto BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nombre_producto VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  precio_venta DECIMAL(10,2) NOT NULL CHECK (precio_venta >= 0),
+  cantidad_stock INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE proveedores (
+  id_proveedor BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nit VARCHAR(16) UNIQUE NOT NULL,
+  nombre VARCHAR(255) NOT NULL,
+  informacion_contacto TEXT
+);
+
+CREATE TABLE compras (
+  id_compras BIGINT AUTO_INCREMENT PRIMARY KEY,
+  proveedor_id_compras BIGINT NOT NULL,
+  usuario_id_compras BIGINT NOT NULL,
+  fecha_compras TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  total_compras DECIMAL(10,2) NOT NULL,
+  metodo_pago ENUM('efectivo','tarjeta','transferencia','credito'),
+  FOREIGN KEY (proveedor_id_compras) REFERENCES proveedores(id_proveedor),
+  FOREIGN KEY (usuario_id_compras) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE detalles_compras (
+  id_detalles_compras BIGINT AUTO_INCREMENT PRIMARY KEY,
+  compras_id_detalles BIGINT NOT NULL,
+  producto_id_detalles BIGINT NOT NULL,
+  cantidad INT NOT NULL,
+  precio DECIMAL(10,2) NOT NULL,
+  UNIQUE (compras_id_detalles, producto_id_detalles),
+  FOREIGN KEY (compras_id_detalles) REFERENCES compras(id_compras),
+  FOREIGN KEY (producto_id_detalles) REFERENCES productos(id_producto)
+);
+
+CREATE TABLE facturas (
+  id_factura BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cliente_id_factura BIGINT NOT NULL,
+  usuario_id_factura BIGINT NOT NULL,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  pago DECIMAL(10,2) NOT NULL,
+  total DECIMAL(10,2) NOT NULL,
+  FOREIGN KEY (cliente_id_factura) REFERENCES clientes(id_cliente),
+  FOREIGN KEY (usuario_id_factura) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE detalle_factura (
+  id_detalle BIGINT AUTO_INCREMENT PRIMARY KEY,
+  factura_id_detalle BIGINT NOT NULL,
+  producto_id_detalle BIGINT NOT NULL,
+  cantidad_detalle INT NOT NULL,
+  subtotal DECIMAL(10,2) NOT NULL,
+  UNIQUE (factura_id_detalle, producto_id_detalle),
+  FOREIGN KEY (factura_id_detalle) REFERENCES facturas(id_factura),
+  FOREIGN KEY (producto_id_detalle) REFERENCES productos(id_producto)
+);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Verifica que TODAS las tablas del usuario actual tengan 0 filas
+SELECT
+    CASE
+        WHEN SUM(n_live_tup) = 0 THEN 'VACÍA'
+        ELSE 'CON DATOS'
+    END AS estado_base_de_datos
+FROM pg_stat_user_tables;

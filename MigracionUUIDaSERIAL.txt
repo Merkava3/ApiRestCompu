@@ -1,0 +1,189 @@
+================================================================================
+                MIGRACIÓN DE UUID A SERIAL (AUTO-INCREMENT)
+           Script para modificar tablas en PostgreSQL - DBMACROCOMPUTEC
+================================================================================
+
+-- ======================== PASO 1: DROP CONSTRAINTS ========================
+-- Eliminar las foreign keys antes de cambiar el tipo de dato
+
+ALTER TABLE dispositivos DROP CONSTRAINT fk_dispositivos_cliente;
+ALTER TABLE servicios DROP CONSTRAINT fk_servicios_cliente;
+ALTER TABLE servicios DROP CONSTRAINT fk_servicios_dispositivo;
+ALTER TABLE servicios DROP CONSTRAINT fk_servicios_usuario;
+ALTER TABLE compras DROP CONSTRAINT fk_compras_proveedor;
+ALTER TABLE compras DROP CONSTRAINT fk_compras_usuario;
+ALTER TABLE detalles_compras DROP CONSTRAINT fk_detalles_compras_compra;
+ALTER TABLE detalles_compras DROP CONSTRAINT fk_detalles_compras_producto;
+ALTER TABLE facturas DROP CONSTRAINT fk_facturas_cliente;
+ALTER TABLE facturas DROP CONSTRAINT fk_facturas_usuario;
+ALTER TABLE detalle_factura DROP CONSTRAINT fk_detalle_factura_factura;
+ALTER TABLE detalle_factura DROP CONSTRAINT fk_detalle_factura_producto;
+ALTER TABLE inventario DROP CONSTRAINT fk_inventario_producto;
+ALTER TABLE inventario DROP CONSTRAINT fk_inventario_proveedor;
+
+-- ======================== PASO 2: CONVERTIR TIPOS DE DATOS ========================
+
+-- Tabla USUARIOS
+ALTER TABLE usuarios 
+    ALTER COLUMN id_usuario DROP DEFAULT,
+    ALTER COLUMN id_usuario TYPE SERIAL USING EXTRACT(EPOCH FROM id_usuario)::integer;
+
+-- Tabla CLIENTES
+ALTER TABLE clientes 
+    ALTER COLUMN id_cliente DROP DEFAULT,
+    ALTER COLUMN id_cliente TYPE SERIAL USING EXTRACT(EPOCH FROM id_cliente)::integer;
+
+-- Tabla DISPOSITIVOS
+ALTER TABLE dispositivos
+    ALTER COLUMN id_dispositivo DROP DEFAULT,
+    ALTER COLUMN id_dispositivo TYPE SERIAL USING EXTRACT(EPOCH FROM id_dispositivo)::integer,
+    ALTER COLUMN cliente_id_dispositivo TYPE INTEGER;
+
+-- Tabla SERVICIOS
+ALTER TABLE servicios
+    ALTER COLUMN id_servicio DROP DEFAULT,
+    ALTER COLUMN id_servicio TYPE SERIAL USING EXTRACT(EPOCH FROM id_servicio)::integer,
+    ALTER COLUMN cliente_id_servicio TYPE INTEGER,
+    ALTER COLUMN dispositivo_id_servicio TYPE INTEGER,
+    ALTER COLUMN usuario_id_servicio TYPE INTEGER;
+
+-- Tabla PRODUCTOS
+ALTER TABLE productos
+    ALTER COLUMN id_producto DROP DEFAULT,
+    ALTER COLUMN id_producto TYPE SERIAL USING EXTRACT(EPOCH FROM id_producto)::integer;
+
+-- Tabla PROVEEDORES
+ALTER TABLE proveedores
+    ALTER COLUMN id_proveedor DROP DEFAULT,
+    ALTER COLUMN id_proveedor TYPE SERIAL USING EXTRACT(EPOCH FROM id_proveedor)::integer;
+
+-- Tabla COMPRAS
+ALTER TABLE compras
+    ALTER COLUMN id_compras DROP DEFAULT,
+    ALTER COLUMN id_compras TYPE SERIAL USING EXTRACT(EPOCH FROM id_compras)::integer,
+    ALTER COLUMN proveedor_id_compras TYPE INTEGER,
+    ALTER COLUMN usuario_id_compras TYPE INTEGER;
+
+-- Tabla DETALLES COMPRAS
+ALTER TABLE detalles_compras
+    ALTER COLUMN id_detalles_compras DROP DEFAULT,
+    ALTER COLUMN id_detalles_compras TYPE SERIAL USING EXTRACT(EPOCH FROM id_detalles_compras)::integer,
+    ALTER COLUMN compras_id_detalles TYPE INTEGER,
+    ALTER COLUMN producto_id_detalles TYPE INTEGER;
+
+-- Tabla FACTURAS
+ALTER TABLE facturas
+    ALTER COLUMN id_factura DROP DEFAULT,
+    ALTER COLUMN id_factura TYPE SERIAL USING EXTRACT(EPOCH FROM id_factura)::integer,
+    ALTER COLUMN cliente_id_factura TYPE INTEGER,
+    ALTER COLUMN usuario_id_factura TYPE INTEGER;
+
+-- Tabla DETALLE FACTURA
+ALTER TABLE detalle_factura
+    ALTER COLUMN id_detalle DROP DEFAULT,
+    ALTER COLUMN id_detalle TYPE SERIAL USING EXTRACT(EPOCH FROM id_detalle)::integer,
+    ALTER COLUMN factura_id_detalle TYPE INTEGER,
+    ALTER COLUMN producto_id_detalle TYPE INTEGER;
+
+-- Tabla INVENTARIO
+ALTER TABLE inventario
+    ALTER COLUMN id_inventario DROP DEFAULT,
+    ALTER COLUMN id_inventario TYPE SERIAL USING EXTRACT(EPOCH FROM id_inventario)::integer,
+    ALTER COLUMN producto_id TYPE INTEGER,
+    ALTER COLUMN proveedor_id TYPE INTEGER;
+
+-- ======================== PASO 3: RECREAR FOREIGN KEYS ========================
+
+ALTER TABLE dispositivos
+ADD CONSTRAINT fk_dispositivos_cliente FOREIGN KEY (cliente_id_dispositivo)
+REFERENCES clientes(id_cliente) ON DELETE CASCADE;
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_cliente FOREIGN KEY (cliente_id_servicio)
+REFERENCES clientes(id_cliente);
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_dispositivo FOREIGN KEY (dispositivo_id_servicio)
+REFERENCES dispositivos(id_dispositivo) ON DELETE SET NULL;
+
+ALTER TABLE servicios
+ADD CONSTRAINT fk_servicios_usuario FOREIGN KEY (usuario_id_servicio)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE compras
+ADD CONSTRAINT fk_compras_proveedor FOREIGN KEY (proveedor_id_compras)
+REFERENCES proveedores(id_proveedor);
+
+ALTER TABLE compras
+ADD CONSTRAINT fk_compras_usuario FOREIGN KEY (usuario_id_compras)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE detalles_compras
+ADD CONSTRAINT fk_detalles_compras_compra FOREIGN KEY (compras_id_detalles)
+REFERENCES compras(id_compras) ON DELETE CASCADE;
+
+ALTER TABLE detalles_compras
+ADD CONSTRAINT fk_detalles_compras_producto FOREIGN KEY (producto_id_detalles)
+REFERENCES productos(id_producto) ON DELETE RESTRICT;
+
+ALTER TABLE facturas
+ADD CONSTRAINT fk_facturas_cliente FOREIGN KEY (cliente_id_factura)
+REFERENCES clientes(id_cliente);
+
+ALTER TABLE facturas
+ADD CONSTRAINT fk_facturas_usuario FOREIGN KEY (usuario_id_factura)
+REFERENCES usuarios(id_usuario);
+
+ALTER TABLE detalle_factura
+ADD CONSTRAINT fk_detalle_factura_factura FOREIGN KEY (factura_id_detalle)
+REFERENCES facturas(id_factura) ON DELETE CASCADE;
+
+ALTER TABLE detalle_factura
+ADD CONSTRAINT fk_detalle_factura_producto FOREIGN KEY (producto_id_detalle)
+REFERENCES productos(id_producto) ON DELETE RESTRICT;
+
+ALTER TABLE inventario
+ADD CONSTRAINT fk_inventario_producto FOREIGN KEY (producto_id)
+REFERENCES productos(id_producto);
+
+ALTER TABLE inventario
+ADD CONSTRAINT fk_inventario_proveedor FOREIGN KEY (proveedor_id)
+REFERENCES proveedores(id_proveedor);
+
+================================================================================
+                          NOTAS IMPORTANTES
+================================================================================
+
+1. CAMBIOS REALIZADOS:
+   - UUID → SERIAL (INTEGER AUTO-INCREMENT)
+   - Todos los IDs son ahora INTEGER con autoincremento automático
+   - Las Foreign Keys se han actualizado al nuevo tipo
+
+2. ANTES DE EJECUTAR:
+   - Hacer backup de la base de datos
+   - Ejecutar en la BD correcta (neondb)
+   - Verificar que no hay datos con IDs UUID que no se puedan convertir
+
+3. EJECUCIÓN:
+   - Ejecutar en orden los 3 pasos
+   - Si hay error en PASO 1, verificar constraints existentes
+   - Si hay error en PASO 2, verificar tipos de datos actuales
+
+4. SECUENCIAS (SEQUENCES):
+   - PostgreSQL crea automáticamente sequences para SERIAL
+   - Estas se nombran como: tablename_columnname_seq
+   - Las sequences se pueden resetear si es necesario
+
+5. VERIFICACIÓN POST-MIGRACIÓN:
+   -- Verificar las secuencias
+   SELECT sequence_name FROM information_schema.sequences WHERE sequence_name LIKE '%_seq';
+   
+   -- Verificar tipos de columnas
+   SELECT table_name, column_name, data_type 
+   FROM information_schema.columns 
+   WHERE table_name IN ('usuarios','clientes','dispositivos','servicios',
+                        'productos','proveedores','compras','detalles_compras',
+                        'facturas','detalle_factura','inventario')
+   ORDER BY table_name, column_name;
+
+================================================================================

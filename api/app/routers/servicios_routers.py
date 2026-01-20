@@ -12,28 +12,30 @@ servicios_routes = Blueprint('servicios_routes', __name__)
 @handle_endpoint_errors
 def get_servicios():
     servicios = Servicios.get_servicio_all()
-    return successfully(api_servicios.dump(servicios))
+    return successfully(api_servicios_completos.dump(servicios))
 
 @servicios_routes.route('/servicio', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Crear Servicio")
 def post_client():
-    json = request.get_json(force=True)
-    if not json:
+    json_data = request.get_json(force=True)
+    if not json_data:
         return badRequest()
-    servicio = Servicios.new(json)
-    servicio = Help.generator_id(servicio, ID_SERVICIO)        
-    if servicio.save():
-        return response(api_servicio.dump(servicio))    
+    
+    # Generar ID y asignarlo al JSON
+    Help.add_generated_id_to_data(json_data, ID_SERVICIO)
+    
+    if Servicios.insertar_servicio(json_data):
+        return response(SUCCESSFULSERVICIO)    
     return badRequest()
 
 @servicios_routes.route('/search/servicio', methods=['POST'])
 @Help.set_resource(Servicios.get_servicio_filter, many=True)
 def get_servicio(servicios):
-    return successfully(api_servicios.dump(servicios))
+    return successfully(api_servicios_completos.dump(servicios))
 
 @servicios_routes.route('/servicio', methods=['PUT'])
-@Help.set_resource(Servicios.get_servicio_filter)
+@Help.set_resource(Servicios.get_servicio_orm)
 @handle_endpoint_errors
 @log_operation("Actualizar Servicio")
 def update_servicio(servicio):
@@ -49,7 +51,7 @@ def update_servicio(servicio):
     return badRequest()
 
 @servicios_routes.route('/servicio', methods=['DELETE'])
-@Help.set_resource(Servicios.get_servicio_filter)
+@Help.set_resource(Servicios.get_servicio_orm)
 def delete_servicio(servicio):
     if servicio.delete():
         return successfully(message="Registro eliminado")
@@ -72,17 +74,14 @@ def post_servicio_cliente():
 @servicios_routes.route('/servicio/ultimo', methods=['GET'])
 def get_ultimo_servicio():
     """
-    Obtiene el último servicio insertado con información completa:
-    id_servicio, email_usuario, nombre_usuario, cedula, nombre_cliente, direccion, telefono_cliente,
-    marca, modelo, reporte, numero_serie, fecha_ingreso, fecha_servicio, tipo_dispositivo, tipo_servicio, pago, precio_servicio
+    Obtiene los últimos 10 servicios insertados con información completa.
     """
-    servicio = Servicios.get_ultimo_servicio()
-    if not servicio:
+    servicios = Servicios.get_ultimo_servicio()
+    if not servicios:
         return notFound()
-    return successfully(api_servicio.dump(servicio))
+    return successfully(api_servicios_completos.dump(servicios))
 
-
-@servicios_routes.route('/servicio/actualizar_completo', methods=['POST'])
+@servicios_routes.route('/servicio/update', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Actualizar Servicio Completo")
 def actualizar_servicio_completo():
@@ -99,15 +98,11 @@ def actualizar_servicio_completo():
 
     params = data.get('params') or data.get('parametros')
 
-    def _map_positional(pos_list):
-        if len(pos_list) != len(COLUMN_LIST_ACTUALIZAR_SERVICIO):
-            return None
-        return {COLUMN_LIST_ACTUALIZAR_SERVICIO[i]: pos_list[i] for i in range(len(pos_list))}
-
     if isinstance(params, list):
-        payload = _map_positional(params)
-        if payload is None:
-            return badRequest(ERROR)
+        if len(params) != len(COLUMN_LIST_ACTUALIZAR_SERVICIO):
+            return badRequest("Número de parámetros incorrecto")
+            
+        payload = {COLUMN_LIST_ACTUALIZAR_SERVICIO[i]: params[i] for i in range(len(params))}
     else:
         payload = data
 
@@ -116,11 +111,20 @@ def actualizar_servicio_completo():
         return response(SUCCESSFULSERVICIO)
     return badEquals()
 
-@servicios_routes.route('/servicio/reporte', methods=['GET'])
+@servicios_routes.route('/servicio/entrega_fecha', methods=['PUT'])
 @handle_endpoint_errors
-def get_servicios_custom():
+@log_operation("Actualizar Fecha Entrega")
+def actualizar_fecha_entrega():
     """
-    Endpoint para obtener datos específicos de servicios usando una consulta personalizada.
+    Actualiza solo la fecha de entrega de un servicio específico a NOW().
+    Requiere id_servicio en el body.
     """
-    servicios = Servicios.get_all_servicios_custom()
-    return successfully(api_servicio_consulta.dump(servicios))
+    json_data = request.get_json(force=True)
+    if not json_data:
+        return badRequest(ERROR)
+        
+    if Servicios.actualizar_fecha_entrega(json_data):
+        return successfully({"mensaje": "Fecha de entrega actualizada correctamente"}, "Actualización Exitosa")
+    
+    return badRequest(ERROR_NO_ENCONTRADO)
+

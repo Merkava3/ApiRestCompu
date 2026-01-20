@@ -1,47 +1,44 @@
-"""
-Modelo Cliente - Refactorizado usando BaseModelMixin.
-Elimina código duplicado en métodos save/delete usando herencia múltiple.
-"""
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, String, Text, Integer
 from . import db
 from .base_model import BaseModelMixin
 
 
 class Cliente(BaseModelMixin, db.Model):
-    """Modelo de Cliente con funcionalidad base proporcionada por BaseModelMixin."""
     __tablename__ = 'clientes'
     
     id_cliente = Column(Integer, primary_key=True, autoincrement=True)
     cedula = Column(String(16), nullable=False, unique=True)
     nombre_cliente = Column(String(255), nullable=False)
-    direccion = Column(Text, nullable=False)
-    telefono_cliente = Column(String(50), nullable=False)
+    direccion = Column(Text, nullable=True)
+    telefono_cliente = Column(String(50), nullable=True)
+    
 
     # Relaciones
     dispositivos = db.relationship('Dispositivo', back_populates='cliente', cascade="all, delete-orphan")
     servicios = db.relationship('Servicios', back_populates='cliente', cascade="all, delete-orphan")
     facturas = db.relationship('Facturas', back_populates='cliente', cascade="all, delete-orphan")
 
-    # Métodos de consulta
     @staticmethod
     def get_cliente(cedula):
         """Obtiene un cliente por su cédula."""
-        return Cliente.query.filter_by(cedula=cedula).first()
+        return Cliente.query.filter_by(cedula=cedula, activo=True).first()
     
     @staticmethod
     def get_id_client(id_cliente):
         """Obtiene un cliente por su ID."""
-        return Cliente.query.filter_by(id_cliente=id_cliente).first()
+        return Cliente.query.filter_by(id_cliente=id_cliente, activo=True).first()
+    
+    @staticmethod
+    def get_clientes():
+        """Obtiene todos los clientes activos."""
+        return Cliente.query.filter_by(activo=True).all()
     
     @classmethod
     def count_clients(cls):
-        """Cuenta el total de clientes."""
-        return db.session.query(db.func.count(cls.cedula)).scalar()
+        """Cuenta el total de clientes activos."""
+        return db.session.query(db.func.count(cls.cedula)).filter(cls.activo == True).scalar()
     
     @classmethod
     def get_last_three_clients(cls):
-        """Obtiene los últimos 3 clientes ordenados por cédula descendente."""
-        return cls.query.order_by(cls.cedula.desc()).limit(3).all()
-    
-    # Los métodos save(), delete(), new(), create_from_dict() y update_from_dict()
-    # son heredados de BaseModelMixin, eliminando código duplicado
+        """Obtiene los últimos 3 clientes activos ordenados por fecha de creación descendente."""
+        return cls.query.filter_by(activo=True).order_by(cls.created_at.desc()).limit(3).all()

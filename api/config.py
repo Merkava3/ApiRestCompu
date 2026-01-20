@@ -15,7 +15,7 @@ class Config:
     # Obtener configuración de variables de entorno o usar valores por defecto
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+        'postgresql://neondb_owner:npg_iPNr6cuTSbF8@ep-dark-lab-ahal0y0t-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     )
     
     # Configuración de CORS
@@ -30,7 +30,7 @@ class DevelopmentConfig(Config):
     # URL de base de datos para desarrollo (puede ser local o remota)
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DEV_DATABASE_URL',
-        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+        'postgresql://neondb_owner:npg_iPNr6cuTSbF8@ep-dark-lab-ahal0y0t-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     )
 
 
@@ -49,7 +49,7 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'postgresql://tecnoexpress_owner:npg_zNdIya8tj6TG@ep-round-paper-acxjrr4q-pooler.sa-east-1.aws.neon.tech/tecnoexpress?sslmode=require&channel_binding=require'
+        'postgresql://neondb_owner:npg_iPNr6cuTSbF8@ep-dark-lab-ahal0y0t-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     )
 
 

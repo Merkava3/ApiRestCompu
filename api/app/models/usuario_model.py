@@ -1,32 +1,38 @@
-from . import db
-from flask_bcrypt import Bcrypt
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime,timedelta
-from sqlalchemy.exc import IntegrityError
-from flask_bcrypt import Bcrypt
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Boolean
-from dotenv import load_dotenv
-import jwt
+from datetime import datetime, timedelta
 import os
+import jwt
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, text, Integer
+from . import db
+from .base_model import BaseModelMixin
+from ..helpers.const import ROLES_USUARIO
 
-load_dotenv()
+bcrypt_available = False
+try:
+    from flask_bcrypt import Bcrypt
+    bcrypt_available = True
+    bcrypt = Bcrypt()
+except ImportError:
+    pass
 
-bcrypt = Bcrypt()
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'D5*F?_1?-d$f*1')
-JWT_ALGORITHM = "HS256" # Algoritmo de encriptación
+JWT_ALGORITHM = "HS256"
 
-class Usuario(db.Model):
+
+class Usuario(BaseModelMixin, db.Model):
     __tablename__ = 'usuarios'
-    
+        
     id_usuario = Column(Integer, primary_key=True, autoincrement=True)
     nombre_usuario = Column(String(255), nullable=False)
-    email_usuario = Column(Text, nullable=False, unique=True)
+    email_usuario = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
+    rol = Column(Enum(*ROLES_USUARIO, name='rol_enum'), nullable=False, default='vendedor')
     autenticado = Column(Boolean, default=False)
-    ultima_autenticacion = Column(TIMESTAMP, default=datetime.utcnow, nullable=True)
-    token = Column(String(255), unique=True, nullable=True)
-    token_expiration = Column(TIMESTAMP, nullable=True)
+    ultima_autenticacion = Column(DateTime, nullable=True)
+    token = Column(String(255), nullable=True)
+    token_expiration = Column(DateTime, nullable=True)    
+    activo = Column(Boolean, default=True)
 
+    # Relaciones
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")
     facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
     compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
@@ -34,36 +40,31 @@ class Usuario(db.Model):
     def generate_auth_token(self, expires_in=3600):
         """Genera un token JWT y actualiza los campos en la base de datos"""
         try:
-            # 1. Crear payload del token
             payload = {
-                'sub': str(self.id_usuario),  # Asegurar que es string
+                'sub': str(self.id_usuario),
                 'email': str(self.email_usuario),
+                'rol': self.rol,
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(seconds=expires_in)
             }
             
-            # 2. Generar el token JWT
             token = jwt.encode(
                 payload,
-                os.getenv('JWT_SECRET_KEY', 'fallback-secret-key'),  # Clave segura
+                os.getenv('JWT_SECRET_KEY', 'fallback-secret-key'),
                 algorithm='HS256'
             )
             
-            # 3. Asegurar que el token es un string (PyJWT puede devolver bytes)
             if isinstance(token, bytes):
                 token = token.decode('utf-8')
                 
-            # 4. Actualizar los campos en el modelo
             self.token = token
             self.token_expiration = datetime.utcnow() + timedelta(seconds=expires_in)
             self.autenticado = True
+            self.ultima_autenticacion = datetime.utcnow()
             
-            # 5. Retornar el token generado
             return token
             
         except Exception as e:
-            # Log detallado del error
-            print(f"Error generando token para usuario {self.id_usuario}: {str(e)}")
             raise ValueError(f"No se pudo generar el token: {str(e)}")
     
     def revoke_token(self):
@@ -79,7 +80,6 @@ class Usuario(db.Model):
             if not token:
                 return None
                 
-            # Limpieza básica del token (por si hay espacios o caracteres raros)
             clean_token = token.strip()
             
             payload = jwt.decode(
@@ -89,64 +89,26 @@ class Usuario(db.Model):
             )
             usuario = Usuario.query.get(payload['sub'])
             
-            # Verificación adicional de coincidencia de token
             if usuario and usuario.token == clean_token:
                 return usuario
             return None
             
         except jwt.ExpiredSignatureError:
-            print("Token expirado")
             return None
-        except jwt.InvalidTokenError as e:
-            print(f"Token inválido: {str(e)}")
+        except jwt.InvalidTokenError:
             return None
-        except Exception as e:
-            print(f"Error verificando token: {str(e)}")
-            return None
-     
-    def set_password(self, password):
-        """Encripta la contraseña antes de almacenarla"""
-        self.password = generate_password_hash(password)
-
-    def check_password(self, password):
-        """Verifica si la contraseña proporcionada coincide con la almacenada"""
-        return check_password_hash(self.password, password)
 
     @staticmethod
-    def get_user(email_usuario):
-        return Usuario.query.filter_by( email_usuario= email_usuario).first()
+    def get_usuario(id_usuario):
+        """Obtiene un usuario por su ID."""
+        return Usuario.query.filter_by(id_usuario=id_usuario).first()
     
     @staticmethod
-    def get_user_id(id_usuario):
-        return Usuario.query.filter_by(id_usuario=id_usuario).first()
-
-    @classmethod
-    def new(cls, **kwargs):
-        return cls(**kwargs)  # Usar cls en lugar de Usuario para flexibilidad
-
-    def save(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return True
-        except IntegrityError as e:
-            db.session.rollback()
-            print(f"IntegrityError: {e}")
-            return False
-        except Exception as e:
-            db.session.rollback()
-            print(f"Exception: {e.__class__.__name__}: {e}")
-            return False
-
-    def delete(self):
-        try:
-            db.session.delete(self)
-            db.session.commit()
-            return True
-        except Exception as e:
-            db.session.rollback()
-            print(f"Exception: {e.__class__.__name__}: {e}")
-            return False
-
-    def __str__(self):
-        return f"Usuario: {self.nombre_usuario} - {self.email_usuario}"  
+    def get_usuario_by_email(email_usuario):
+        """Obtiene un usuario por su email."""
+        return Usuario.query.filter_by(email_usuario=email_usuario).first()
+    
+    @staticmethod
+    def get_usuarios():
+        """Obtiene todos los usuarios activos."""
+        return Usuario.query.filter_by(activo=True).all()

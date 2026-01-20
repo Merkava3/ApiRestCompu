@@ -1,174 +1,197 @@
-from datetime import datetime
-from . import db
-from .dispositivo_model import Dispositivo
+import json
+from sqlalchemy import *
+from sqlalchemy.orm import joinedload
 from .cliente_model import Cliente
+from .dispositivo_model import Dispositivo
 from .usuario_model import Usuario
+from . import db
 from .base_model import BaseModelMixin
+from ..helpers.const import *
 from ..helpers.helpers import Help
-from ..helpers.const import INSERTAR_SERVICIO, COLUMN_LIST_SERVICIO, ACTUALIZAR_SERVICIO_COMPLETO, COLUMN_LIST_ACTUALIZAR_SERVICIO
-from sqlalchemy import text, func
 
 
 class Servicios(BaseModelMixin, db.Model):
-    __tablename__ = 'servicios'  # Nombre de la tabla
-    id_servicio = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    cliente_id_servicio = db.Column(db.BigInteger, db.ForeignKey('clientes.id_cliente'), nullable=False)
-    dispositivos_id_servicio = db.Column(db.BigInteger, db.ForeignKey('dispositivos.id_dispositivo'), nullable=False)
-    usuario_id_servicio = db.Column(db.BigInteger, db.ForeignKey('usuarios.id_usuario'), nullable=False)
-    tipo = db.Column(db.String(255), nullable=False)
-    estado = db.Column(db.String(45), nullable=False)
-    descripcion = db.Column(db.Text, nullable=False)    
-    fecha_servicio = db.Column(db.TIMESTAMP, default=datetime.utcnow, nullable=False)
-    pago = db.Column(db.Float, nullable=False)
-    precio_servicio = db.Column(db.Float, nullable=False)
+    __tablename__ = 'servicios'
+    
+    id_servicio = Column(Integer, primary_key=True, autoincrement=True)
+    cliente_id_servicio = Column(Integer, ForeignKey('clientes.id_cliente'), nullable=False)
+    dispositivo_id_servicio = Column(Integer, ForeignKey('dispositivos.id_dispositivo', ondelete='SET NULL'), nullable=True)
+    usuario_id_servicio = Column(Integer, ForeignKey('usuarios.id_usuario'), nullable=False)
+    tipo_servicio = Column(String(45), nullable=False)
+    fecha_entrega = Column(DateTime, nullable=True)
+    precio_servicio = Column(Numeric(10, 2), nullable=False)
+    descripcion = Column(Text, nullable=True)
+    estado_servicio = Column(Enum(*ESTADOS_SERVICIO, name='estado_servicio_enum'), nullable=False, default='recibido')
+  
 
+    # Relaciones
     cliente = db.relationship('Cliente', back_populates='servicios')
-    dispositivos = db.relationship('Dispositivo', back_populates='servicios')
+    dispositivo = db.relationship('Dispositivo', back_populates='servicios')
     usuario = db.relationship('Usuario', back_populates='servicios')
 
     @staticmethod
+    def _get_detailed_query():
+        """
+        Construye y retorna la consulta base detallada para servicios.
+        Aplica DRY para get_servicio_all y get_servicio_filter.
+        """
+        dias_expr = (func.current_date() - cast(Dispositivo.fecha_ingreso, Date)).label("dias")
+        
+        return db.session.query(
+            Servicios.id_servicio,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
+            Servicios.tipo_servicio,
+            Servicios.descripcion,
+            Dispositivo.marca,
+            Dispositivo.modelo,
+            Dispositivo.numero_serie,
+            Servicios.estado_servicio,
+            Dispositivo.reporte,
+            Dispositivo.fecha_ingreso,
+            Servicios.fecha_entrega,
+            dias_expr,
+            Servicios.precio_servicio,
+            Usuario.email_usuario
+        ).join(Usuario, Usuario.id_usuario == Servicios.usuario_id_servicio)\
+         .join(Cliente, Cliente.id_cliente == Servicios.cliente_id_servicio)\
+         .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)
+
+    @staticmethod
     def get_servicio(id_servicio):
-        return Servicios.query.filter_by(id_servicio=id_servicio).first()
+        """Obtiene un servicio por su ID."""
+        return Servicios.query.options(
+            joinedload(Servicios.cliente),
+            joinedload(Servicios.dispositivo),
+            joinedload(Servicios.usuario)
+        ).filter_by(id_servicio=id_servicio, activo=True).first()
 
     @staticmethod
     def get_servicio_all():
+        """Retorna todos los servicios con información detallada."""
+        query = Servicios._get_detailed_query().order_by(Dispositivo.fecha_ingreso.desc())
+        results = query.all()
+        return Help.map_query_results(results, CAMPOS_SERVICIOS_COMPLETOS)
+        
+    @staticmethod
+    def get_servicio_filter(cedula=None, id_servicio=None, many=False):
         """
-        Retorna todos los servicios con información de dispositivo, cliente y usuario pre-cargada.
+        Retorna servicios filtrados con información completa.
+        Busca por cedula o id_servicio.
         """
-        from sqlalchemy.orm import joinedload
-        return Servicios.query.options(
-            joinedload(Servicios.cliente),
-            joinedload(Servicios.dispositivos),
-            joinedload(Servicios.usuario)
-        ).all()
+        query = Servicios._get_detailed_query()
+
+        if id_servicio:
+            query = query.filter(Servicios.id_servicio == id_servicio)
+        elif cedula:
+            query = query.filter(Cliente.cedula == cedula)
+        elif not many:
+            return None
+
+        results = query.all()
+        mapped_results = Help.map_query_results(results, CAMPOS_SERVICIOS_COMPLETOS)
+
+        if many:
+            return mapped_results
+        return mapped_results[0] if mapped_results else None
     
     @staticmethod
-    def get_servicio_filter(cedula=None, numero_serie=None, id_servicio=None, many=False):
+    def get_ultimo_servicio():
         """
-        Retorna uno o varios objetos Servicio con información del dispositivo, cliente y usuario pre-cargada.
-        """        
-        from sqlalchemy.orm import joinedload
+        Obtiene los últimos 10 servicios registrados basado en fecha de ingreso del dispositivo.
+        Recrea la lógica SQL:
+        ORDER BY d.fecha_ingreso DESC LIMIT 10
+        """
+        query = Servicios._get_detailed_query().order_by(Dispositivo.fecha_ingreso.desc()).limit(10)
+        results = query.all()
+        mapped_results = Help.map_query_results(results, CAMPOS_SERVICIOS_COMPLETOS)
+        return mapped_results
+    
+    @staticmethod
+    def get_servicio_orm(id_servicio=None, cedula=None):
+        """
+        Retorna un objeto ORM de servicio para operaciones de actualización/eliminación.
+        """
         query = Servicios.query.options(
             joinedload(Servicios.cliente),
-            joinedload(Servicios.dispositivos),
+            joinedload(Servicios.dispositivo),
             joinedload(Servicios.usuario)
-        )
+        ).filter(Servicios.activo == True)
 
         if id_servicio:
             query = query.filter(Servicios.id_servicio == id_servicio)
         elif cedula:
             query = query.join(Cliente).filter(Cliente.cedula == cedula)
-        elif numero_serie:
-            query = query.join(Dispositivo).filter(Dispositivo.numero_serie == numero_serie)
         
-        # Ordenar por fecha_servicio descendente (más nuevo primero)
-        query = query.order_by(Servicios.fecha_servicio.desc())
-        
-        if many:
-            return query.all()
         return query.first()
     
-    @staticmethod
-    def get_ultimo_servicio():
+    @classmethod
+    def insertar_servicio(cls, data):
         """
-        Retorna el último servicio insertado con información completa pre-cargada.
+        Llama al procedimiento almacenado sp_guardar_servicio_json.
         """
-        from sqlalchemy.orm import joinedload
-        return Servicios.query.options(
-            joinedload(Servicios.cliente),
-            joinedload(Servicios.dispositivos),
-            joinedload(Servicios.usuario)
-        ).order_by(Servicios.fecha_servicio.desc(), Servicios.id_servicio.desc()) \
-         .first()
-    
-    @staticmethod
-    def insertar_servicio(data):
-        """
-        Llama al procedimiento almacenado usando extract_params para limpiar el código.
-        """
-        try:           
-            query_params = Help.extract_params_servicio(data, COLUMN_LIST_SERVICIO)
-            #print(f"Parámetros enviados al procedimiento almacenado - id_servicio: {query_params.get('p_id_servicio')}")  # Debug
-            query = text(INSERTAR_SERVICIO)
-            db.session.execute(query, query_params)
+        try:
+            clean_data = Help.extract_params_servicio_json(data)
+            params = {'p_data': json.dumps(clean_data, ensure_ascii=False)}
+            
+            query = text(INSERTAR_SERVICIO_JSON)
+            db.session.execute(query, params)
             db.session.commit()
             return True
         except Exception as e:
             db.session.rollback()
             print(f"Error al insertar servicio: {e}")
-            return False
+            raise e
 
     @classmethod
     def actualizar_servicio_completo(cls, data):
         """
-        Llama al procedimiento almacenado `actualizar_servicio_completo_json`.
+        Llama al procedimiento almacenado sp_actualizar_servicio_json.
         """
         try:
-            # Mapeo de nombres alternativos a nombres esperados
-            field_mapping = {
-                'direccion': 'direccion_cliente',
-                'marca': 'marca_dispositivo',
-                'modelo': 'modelo_dispositivo',
-                'reporte': 'reporte_dispositivo',
-                'pago': 'pago_servicio',
-                'precio': 'precio_servicio',
-                'tipo': 'tipo_dispositivo',
-                'cedula': 'cedula_cliente'
-            }
-            
-            # Normalizar nombres de campos
-            normalized_data = Help.normalize_field_names(data, field_mapping)
-            
-            # Extraer id_servicio
-            id_servicio = normalized_data.get('id_servicio')
-            if not id_servicio:
-                # Intentar buscarlo en el payload original si no fue normalizado
-                id_servicio = data.get('id_servicio')
-            
-            if not id_servicio:
-                print("Error: id_servicio no proporcionado")
-                return False
+            # Reutilizamos el helper extract_params con la lista de columnas de actualizacion
+            # Al ser JSON, prefix debe ser vacío
+            if "params" in data or "parametros" in data:
+                 # Si viene pre-procesado del router, ya es un dict limpio, pero validamos campos
+                 clean_data = Help.extract_params(data, list(COLUMN_LIST_ACTUALIZAR_SERVICIO), prefix="")
+            else:
+                 clean_data = Help.extract_params(data, list(COLUMN_LIST_ACTUALIZAR_SERVICIO), prefix="")
 
-            # Eliminar campos que no se deben enviar al SP según requerimiento
-            normalized_data.pop('fecha_ingreso', None)
-            normalized_data.pop('fecha_servicio', None)
-
-            # Preparar el JSON de datos (excluyendo id_servicio si se desea, 
-            # aunque el procedimiento puede ignorarlo o usarlo)
-            import json
-            p_data = json.dumps(normalized_data)
+            params = {'p_data': json.dumps(clean_data, ensure_ascii=False)}
             
-            query = text(ACTUALIZAR_SERVICIO_COMPLETO)
-            db.session.execute(query, {"p_id_servicio": id_servicio, "p_data": p_data})
+            query = text(ACTUALIZAR_SERVICIO_JSON)
+            db.session.execute(query, params)
             db.session.commit()
             return True
+            
         except Exception as e:
+            db.session.rollback()
             print(f"Error al actualizar servicio completo: {e}")
-            return False
+            # Raise para que el manejador de errores capture excepciones SQL (ej: Trigger, RAISE EXCEPTION)
+            raise e
 
-    @staticmethod
-    def get_all_servicios_custom():
+    @classmethod
+    def actualizar_fecha_entrega(cls, data):
         """
-        Ejecuta la consulta personalizada para obtener servicios con detalles específicos.
-        """
-        query_sql = """
-            select 
-                s.id_servicio,
-                c.cedula,
-                c.nombre_cliente,
-                c.telefono_cliente,
-                d.reporte,
-                d.tipo,
-                d.fecha_ingreso	 	
-            from servicios as s 
-                inner join dispositivos as d 
-                    on d.id_dispositivo=s.dispositivos_id_servicio 
-                inner join clientes as c 
-                    on c.id_cliente = s.cliente_id_servicio;
+        Actualiza la fecha de entrega de un servicio al momento actual (NOW()).
+        Recrea: UPDATE servicios SET fecha_entrega = NOW() WHERE id_servicio = :id;
         """
         try:
-            result = db.session.execute(text(query_sql))
-            return result.fetchall()
+            id_servicio = data.get(ID_SERVICIO)
+            if not id_servicio:
+                return False
+
+            # Usamos query.update para ser eficientes y directos, similar a la sentencia SQL bruta
+            nrows = db.session.query(cls).filter(cls.id_servicio == id_servicio).update(
+                {cls.fecha_entrega: func.now()},
+                synchronize_session=False
+            )
+            
+            db.session.commit()
+            return nrows > 0
         except Exception as e:
-            print(f"Error al ejecutar consulta personalizada: {e}")
-            return []
+            db.session.rollback()
+            print(f"Error al actualizar fecha entrega: {e}")
+            return False

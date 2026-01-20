@@ -145,3 +145,14 @@ def get_servicio_por_cedula():
     if servicio:
         return successfully(api_servicio_cedula.dump(servicio))
     return notFound(ERROR_NO_ENCONTRADO)
+
+@servicios_routes.route('/servicio/ultimo_detalle', methods=['GET'])
+@handle_endpoint_errors
+def get_ultimo_servicio_detalle():
+    """
+    Obtiene el último servicio registrado con detalles completos.
+    """
+    servicio = Servicios.get_ultimo_servicio_detalle()
+    if servicio:
+        return successfully(api_servicio_ultimo_detalle.dump(servicio))
+    return notFound(ERROR_NO_ENCONTRADO)

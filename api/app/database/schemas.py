@@ -78,6 +78,11 @@ class DetalleCompraSchemas(Schema):
     class Meta:
         fields = CAMPOS_DETALLE_COMPRA
 
+class ServicioUltimoDetalleSchema(Schema):
+    """Esquema para el último servicio con detalle específico."""
+    class Meta:
+        fields = CAMPOS_SERVICIO_ULTIMO_DETALLE
+
 # --- search schema ---
 api_search = SearchSchema()
 
@@ -112,3 +117,6 @@ api_proveedores = ProveedorSchemas(many=True)
 # --- serialization inventario ---
 api_inventario = InventarioSchemas()
 api_inventarios = InventarioSchemas(many=True)
+
+# --- serialization ultimo servicio detalle ---
+api_servicio_ultimo_detalle = ServicioUltimoDetalleSchema()

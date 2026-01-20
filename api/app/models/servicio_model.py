@@ -143,6 +143,39 @@ class Servicios(BaseModelMixin, db.Model):
         return None
     
     @staticmethod
+    def get_ultimo_servicio_detalle():
+        """
+        Obtiene el último servicio registrado con detalles completos.
+        Recrea la consulta SQL solicitada.
+        """
+        query = db.session.query(
+            Usuario.email_usuario,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
+            Dispositivo.tipo,
+            Dispositivo.marca,
+            Dispositivo.modelo,
+            Dispositivo.numero_serie,
+            Dispositivo.reporte,
+            Dispositivo.fecha_ingreso,
+            Servicios.tipo_servicio,
+            Servicios.precio_servicio
+        ).join(Usuario, Usuario.id_usuario == Servicios.usuario_id_servicio)\
+         .join(Cliente, Cliente.id_cliente == Servicios.cliente_id_servicio)\
+         .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)\
+         .order_by(Servicios.id_servicio.desc())\
+         .limit(1)
+        
+        result = query.first()
+        
+        if result:
+            mapped = Help.map_query_results([result], CAMPOS_SERVICIO_ULTIMO_DETALLE)
+            return mapped[0]
+        return None
+    
+    @staticmethod
     def get_servicio_orm(id_servicio=None, cedula=None):
         """
         Retorna un objeto ORM de servicio para operaciones de actualización/eliminación.

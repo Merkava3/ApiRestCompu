@@ -250,3 +250,11 @@ class Help:
                 return f(resource, *args, **kwargs)
             return wrapper
         return decorator
+    
+    @staticmethod
+    def add_default_value_to_data(data: Dict[str, Any], key: str, default_value: Any):
+        """
+        Agrega un valor por defecto a un campo en el diccionario de datos si no existe.
+        """
+        if key not in data:
+            data[key] = default_value

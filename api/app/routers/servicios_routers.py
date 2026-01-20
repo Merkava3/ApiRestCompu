@@ -66,6 +66,8 @@ def post_servicio_cliente():
         return badRequest(ERROR)
     # Generar id_servicio aleatorio y agregarlo al data si no existe
     Help.add_generated_id_to_data(data, ID_SERVICIO)
+    Help.add_default_value_to_data(data, 'estado_servicio', 'recibido')
+    Help.add_default_value_to_data(data, 'descripcion', '')
     if Servicios.insertar_servicio(data):
         return response(SUCCESSFULSERVICIO)        
     return badEquals()

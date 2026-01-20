@@ -149,6 +149,7 @@ class Servicios(BaseModelMixin, db.Model):
         Recrea la consulta SQL solicitada.
         """
         query = db.session.query(
+            Servicios.id_servicio,
             Usuario.email_usuario,
             Cliente.cedula,
             Cliente.nombre_cliente,

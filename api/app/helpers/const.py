@@ -40,6 +40,7 @@ CAMPOS_COMPRAS = ("id_compras", "proveedor_id_compras", "usuario_id_compras", "f
 CAMPOS_DETALLE_COMPRA = ("id_detalles_compras", "compras_id_detalles", "producto_id_detalles", "cantidad", "precio")
 
 CAMPOS_SERVICIO_ULTIMO_DETALLE = (
+    "id_servicio",
     "usuario_email",
     "cedula",
     "nombre_cliente",

@@ -61,15 +61,6 @@ class Servicios(BaseModelMixin, db.Model):
          .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)
 
     @staticmethod
-    def get_servicio(id_servicio):
-        """Obtiene un servicio por su ID."""
-        return Servicios.query.options(
-            joinedload(Servicios.cliente),
-            joinedload(Servicios.dispositivo),
-            joinedload(Servicios.usuario)
-        ).filter_by(id_servicio=id_servicio, activo=True).first()
-
-    @staticmethod
     def get_servicio_all():
         """Retorna todos los servicios con información detallada."""
         query = Servicios._get_detailed_query().order_by(Dispositivo.fecha_ingreso.desc())
@@ -177,6 +168,30 @@ class Servicios(BaseModelMixin, db.Model):
         return None
     
     @staticmethod
+    def get_servicio_reporte():
+        """
+        Obtiene el reporte de servicios con información de clientes y dispositivos.
+        Retorna: id_servicio, cedula, nombre_cliente, telefono_cliente, fecha_ingreso, tipo_servicio
+        """
+        query = db.session.query(
+            Servicios.id_servicio,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.telefono_cliente,
+            Dispositivo.fecha_ingreso,
+            Servicios.tipo_servicio
+        ).join(Usuario, Usuario.id_usuario == Servicios.usuario_id_servicio)\
+         .join(Cliente, Cliente.id_cliente == Servicios.cliente_id_servicio)\
+         .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)
+        
+        results = query.all()
+        
+        if results:
+            mapped = Help.map_query_results(results, CAMPOS_SERVICIO_REPORTE)
+            return mapped
+        return []
+    
+    @staticmethod
     def get_servicio_orm(id_servicio=None, cedula=None):
         """
         Retorna un objeto ORM de servicio para operaciones de actualización/eliminación.
@@ -202,8 +217,6 @@ class Servicios(BaseModelMixin, db.Model):
         try:
             Help.add_generated_id_to_data(data, ID_SERVICIO)
             clean_data = Help.extract_params_servicio_json(data)
-            # Asegurar que el ID esté presente en los datos limpios
-            Help.add_generated_id_to_data(clean_data, ID_SERVICIO)
             params = {'p_data': json.dumps(clean_data, ensure_ascii=False)}
             
             query = text(INSERTAR_SERVICIO_JSON)
@@ -221,14 +234,7 @@ class Servicios(BaseModelMixin, db.Model):
         Llama al procedimiento almacenado sp_actualizar_servicio_json.
         """
         try:
-            # Reutilizamos el helper extract_params con la lista de columnas de actualizacion
-            # Al ser JSON, prefix debe ser vacío
-            if "params" in data or "parametros" in data:
-                 # Si viene pre-procesado del router, ya es un dict limpio, pero validamos campos
-                 clean_data = Help.extract_params(data, list(COLUMN_LIST_ACTUALIZAR_SERVICIO), prefix="")
-            else:
-                 clean_data = Help.extract_params(data, list(COLUMN_LIST_ACTUALIZAR_SERVICIO), prefix="")
-
+            clean_data = Help.extract_params(data, list(COLUMN_LIST_ACTUALIZAR_SERVICIO), prefix="")
             params = {'p_data': json.dumps(clean_data, ensure_ascii=False)}
             
             query = text(ACTUALIZAR_SERVICIO_JSON)
@@ -239,7 +245,6 @@ class Servicios(BaseModelMixin, db.Model):
         except Exception as e:
             db.session.rollback()
             print(f"Error al actualizar servicio completo: {e}")
-            # Raise para que el manejador de errores capture excepciones SQL (ej: Trigger, RAISE EXCEPTION)
             raise e
 
     @classmethod

@@ -156,3 +156,15 @@ def get_ultimo_servicio_detalle():
     if servicio:
         return successfully(api_servicio_ultimo_detalle.dump(servicio))
     return notFound(ERROR_NO_ENCONTRADO)
+
+@servicios_routes.route('/servicio/reporte', methods=['GET'])
+@handle_endpoint_errors
+def get_servicio_reporte():
+    """
+    Obtiene el reporte de servicios con información de clientes y dispositivos.
+    Retorna lista con: id_servicio, cedula, nombre_cliente, telefono_cliente, fecha_ingreso, tipo_servicio
+    """
+    servicios = Servicios.get_servicio_reporte()
+    if servicios:
+        return successfully(api_servicios_reporte.dump(servicios))
+    return notFound(ERROR_NO_ENCONTRADO)

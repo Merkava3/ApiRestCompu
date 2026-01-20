@@ -83,6 +83,11 @@ class ServicioUltimoDetalleSchema(Schema):
     class Meta:
         fields = CAMPOS_SERVICIO_ULTIMO_DETALLE
 
+class ServicioReporteSchema(Schema):
+    """Esquema para reporte de servicios."""
+    class Meta:
+        fields = CAMPOS_SERVICIO_REPORTE
+
 # --- search schema ---
 api_search = SearchSchema()
 
@@ -120,3 +125,6 @@ api_inventarios = InventarioSchemas(many=True)
 
 # --- serialization ultimo servicio detalle ---
 api_servicio_ultimo_detalle = ServicioUltimoDetalleSchema()
+
+# --- serialization reporte servicios ---
+api_servicios_reporte = ServicioReporteSchema(many=True)

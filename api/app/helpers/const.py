@@ -56,6 +56,15 @@ CAMPOS_SERVICIO_ULTIMO_DETALLE = (
     "precio_servicio"
 )
 
+CAMPOS_SERVICIO_REPORTE = (
+    "id_servicio",
+    "cedula",
+    "nombre_cliente",
+    "telefono_cliente",
+    "fecha_ingreso",
+    "tipo_servicio"
+)
+
 # ======================== IDENTIFICADORES DE CAMPO ========================
 CEDULA_CLIENT = 'cedula'
 ID_CLIENTE = 'id_cliente'

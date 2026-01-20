@@ -113,18 +113,32 @@ class Servicios(BaseModelMixin, db.Model):
     @staticmethod
     def get_servicio_by_cedula(cedula):
         """
-        Obtiene el último servicio de un cliente por su cédula.
-        Recrea la consulta SQL:
-        SELECT ... FROM servicios ... WHERE cl.cedula = :cedula ORDER BY d.fecha_ingreso DESC LIMIT 1
+        Obtiene el último servicio de un cliente por su cédula con columnas específicas.
+        Recrea la consulta SQL solicitada.
         """
-        query = Servicios._get_detailed_query().filter(Cliente.cedula == cedula)\
-            .order_by(Dispositivo.fecha_ingreso.desc()).limit(1)
+        query = db.session.query(
+            Servicios.id_servicio,
+            Cliente.cedula,
+            Cliente.nombre_cliente,
+            Cliente.direccion,
+            Cliente.telefono_cliente,
+            Dispositivo.marca,
+            Dispositivo.tipo,
+            Servicios.estado_servicio,
+            Dispositivo.fecha_ingreso,
+            Servicios.precio_servicio,
+            Usuario.email_usuario
+        ).join(Usuario, Usuario.id_usuario == Servicios.usuario_id_servicio)\
+         .join(Cliente, Cliente.id_cliente == Servicios.cliente_id_servicio)\
+         .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)\
+         .filter(Cliente.cedula == cedula)\
+         .order_by(Dispositivo.fecha_ingreso.desc())\
+         .limit(1)
         
         result = query.first()
-        # map_query_results espera una lista, pero aqui es un solo resultado row.
-        # Si map_query_results maneja lista, pasamos [result] y tomamos el primero.
+        
         if result:
-            mapped = Help.map_query_results([result], CAMPOS_SERVICIOS_COMPLETOS)
+            mapped = Help.map_query_results([result], CAMPOS_SERVICIOS_CEDULA)
             return mapped[0]
         return None
     
@@ -152,7 +166,10 @@ class Servicios(BaseModelMixin, db.Model):
         Llama al procedimiento almacenado sp_guardar_servicio_json.
         """
         try:
+            Help.add_generated_id_to_data(data, ID_SERVICIO)
             clean_data = Help.extract_params_servicio_json(data)
+            # Asegurar que el ID esté presente en los datos limpios
+            Help.add_generated_id_to_data(clean_data, ID_SERVICIO)
             params = {'p_data': json.dumps(clean_data, ensure_ascii=False)}
             
             query = text(INSERTAR_SERVICIO_JSON)

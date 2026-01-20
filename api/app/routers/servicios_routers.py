@@ -141,5 +141,5 @@ def get_servicio_por_cedula():
     
     servicio = Servicios.get_servicio_by_cedula(data['cedula'])
     if servicio:
-        return successfully(api_servicio_completo.dump(servicio))
+        return successfully(api_servicio_cedula.dump(servicio))
     return notFound(ERROR_NO_ENCONTRADO)

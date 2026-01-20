@@ -23,6 +23,7 @@ CAMPOS_USUARIO = ("id_usuario", "nombre_usuario", "email_usuario", "password", "
 CAMPOS_SERVICIOS = ("id_servicio", "cliente_id_servicio", "dispositivo_id_servicio", "usuario_id_servicio", "tipo_servicio", "fecha_servicio", "precio_servicio", "descripcion", "estado_servicio", "fecha_entrega", "created_at", "updated_at", "activo")
 CAMPOS_SERVICIO_UPDATE = ("estado_servicio", "precio_servicio", "fecha_entrega")
 CAMPOS_SERVICIOS_COMPLETOS = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo_servicio", "descripcion","marca", "modelo", "tipo", "numero_serie", "estado_servicio", "reporte", "fecha_ingreso", "fecha_entrega", "dias", "precio_servicio", "email_usuario")
+CAMPOS_SERVICIOS_CEDULA = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "tipo", "estado_servicio", "fecha_ingreso", "precio_servicio", "email_usuario")
 
 CAMPOS_PRODUCTOS = ("id_producto", "nombre_producto", "descripcion", "precio_venta", "cantidad_stock", "created_at", "updated_at", "activo")
 
@@ -84,6 +85,7 @@ ERROR_DUPLICADO = "El registro ya existe"
 INSERTAR_SERVICIO_JSON = "CALL sp_guardar_servicio_json(:p_data)"
 
 CAMPOS_SERVICIO_JSON = (
+    "id_servicio",
     "usuario_email",
     "cedula",
     "nombre_cliente",

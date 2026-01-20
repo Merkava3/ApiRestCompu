@@ -28,6 +28,11 @@ class ServiciosCompletosSchemas(Schema):
     class Meta:
         fields = CAMPOS_SERVICIOS_COMPLETOS
 
+class ServiciosCedulaSchemas(Schema):
+    """Esquema específico para búsqueda por cédula con campos reducidos."""
+    class Meta:
+        fields = CAMPOS_SERVICIOS_CEDULA
+
 # Registro de campos dinámicos para aplanamiento (DRY)
 # Se añaden a _declared_fields para que Marshmallow los reconozca al instanciar
 for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
@@ -90,6 +95,7 @@ api_servicios = ServiciosSchemas(many=True)
 api_servicio_update = ServiciosUpdateSchemas()
 api_servicios_completos = ServiciosCompletosSchemas(many=True)
 api_servicio_completo = ServiciosCompletosSchemas()
+api_servicio_cedula = ServiciosCedulaSchemas()
 
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()

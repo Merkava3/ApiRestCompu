@@ -576,6 +576,29 @@ JOIN clientes cl ON s.cliente_id_servicio = cl.id_cliente
 JOIN dispositivos d ON s.dispositivo_id_servicio = d.id_dispositivo
 WHERE cl.cedula = '1234567890123456';
 
+SELECT
+    s.id_servicio,
+    cl.cedula,
+    cl.nombre_cliente,
+    cl.direccion,
+    cl.telefono_cliente,   
+    d.marca,   
+	d.tipo,
+    s.estado_servicio,   
+    d.fecha_ingreso,    
+    s.precio_servicio,
+    usr.email_usuario
+FROM servicios s
+INNER JOIN usuarios usr
+    ON usr.id_usuario = s.usuario_id_servicio
+INNER JOIN clientes cl
+    ON s.cliente_id_servicio = cl.id_cliente
+INNER JOIN dispositivos d
+    ON s.dispositivo_id_servicio = d.id_dispositivo 
+WHERE cl.cedula = '742742742'
+ORDER BY d.fecha_ingreso DESC
+LIMIT 1;
+
 
 ======================================================================================================================================================================
 procedimientos almacenados:

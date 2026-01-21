@@ -29,9 +29,12 @@ def create_app(environment: Type[Config] = None):
     
     # Configurar CORS
     CORS(
-        app, 
-        resources={r"/api/*": {"origins": app.config.get('CORS_ORIGINS', '*')}},
-        supports_credentials=app.config.get('CORS_SUPPORTS_CREDENTIALS', True)
+        app,
+        origins=app.config.get('CORS_ORIGINS', ['*']),
+        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+        allow_headers=['Content-Type', 'Authorization'],
+        supports_credentials=True,
+        max_age=3600
     )
     
     # Registrar blueprints

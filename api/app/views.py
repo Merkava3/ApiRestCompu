@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from .routers.cliente_routers import cliente_routes
 from .routers.dispositivo_routers import dispositivo_routes
 from .routers.usuario_routers import usuario_routes
@@ -10,7 +10,13 @@ from .routers.facturas_routeres import facturas_routes
 from .routers.compras_routers import compras_routes
 api_v1 = Blueprint('api', __name__, url_prefix='/api/v1')
 
-# ------------------------ Ruta Cliente --------------------------------------
+# ======================== Health Check ====================================
+@api_v1.route('/health', methods=['GET'])
+def health_check():
+    """Endpoint de verificación de salud del servidor."""
+    return jsonify({"status": "ok", "message": "Servidor funcionando correctamente"}), 200
+
+# ======================== Ruta Cliente ====================================
 api_v1.register_blueprint(cliente_routes)
 
 # ------------------------ Ruta Dispositivo ----------------------------------

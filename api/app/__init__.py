@@ -9,6 +9,7 @@ from typing import Type
 from .models import db
 from .views import api_v1
 from api.config import Config, get_config
+from .helpers.const import METHODS, HEADERS
 
 
 def create_app(environment: Type[Config] = None):
@@ -31,8 +32,8 @@ def create_app(environment: Type[Config] = None):
     CORS(
         app,
         origins=app.config.get('CORS_ORIGINS', ['*']),
-        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-        allow_headers=['Content-Type', 'Authorization'],
+        methods=METHODS,
+        allow_headers=HEADERS,
         supports_credentials=True,
         max_age=3600
     )

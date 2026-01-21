@@ -1,6 +1,7 @@
 """
 Factory function para crear y configurar la aplicación Flask.
 Aplica el patrón Factory para la inicialización de la app.
+Integra caché automático para optimizar rendimiento.
 """
 from flask import Flask
 from flask_cors import CORS
@@ -8,6 +9,7 @@ from typing import Type
 
 from .models import db
 from .views import api_v1
+from .cache import CacheMiddleware
 from api.config import Config, get_config
 from .helpers.const import METHODS, HEADERS
 
@@ -20,7 +22,7 @@ def create_app(environment: Type[Config] = None):
         environment: Clase de configuración. Si es None, usa get_config()
     
     Returns:
-        Flask app configurada
+        Flask app configurada con caché integrado
     """
     if environment is None:
         environment = get_config()
@@ -48,5 +50,9 @@ def create_app(environment: Type[Config] = None):
         # Solo crear tablas en desarrollo/testing
         if app.config.get('DEBUG') or app.config.get('TESTING'):
             db.create_all()
+    
+    # Inicializar middleware de caché
+    cache_middleware = CacheMiddleware()
+    cache_middleware.init_app(app)
     
     return app

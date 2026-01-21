@@ -5,11 +5,13 @@ from ..database.schemas import *
 from ..helpers.helpers import Help
 from ..helpers.const import *
 from ..helpers.error_handler import handle_endpoint_errors, log_operation
+from ..cache import with_cache, invalidate_cache
 
 servicios_routes = Blueprint('servicios_routes', __name__)
 
 @servicios_routes.route('/servicios', methods=['GET'])
 @handle_endpoint_errors
+@with_cache(resource='servicios', operation='get_all')
 def get_servicios():
     servicios = Servicios.get_servicio_all()
     return successfully(api_servicios_completos.dump(servicios))
@@ -17,6 +19,7 @@ def get_servicios():
 @servicios_routes.route('/servicio', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Crear Servicio")
+@invalidate_cache(resource='servicios')
 def post_client():
     json_data = request.get_json(force=True)
     if not json_data:
@@ -38,6 +41,7 @@ def get_servicio(servicios):
 @Help.set_resource(Servicios.get_servicio_orm)
 @handle_endpoint_errors
 @log_operation("Actualizar Servicio")
+@invalidate_cache(resource='servicios')
 def update_servicio(servicio):
     json = request.get_json(force=True)
     # Se aplican actualizaciones específicamente para estado y fecha_servicio
@@ -52,6 +56,7 @@ def update_servicio(servicio):
 
 @servicios_routes.route('/servicio', methods=['DELETE'])
 @Help.set_resource(Servicios.get_servicio_orm)
+@invalidate_cache(resource='servicios')
 def delete_servicio(servicio):
     if servicio.delete():
         return successfully(message="Registro eliminado")
@@ -74,6 +79,8 @@ def post_servicio_cliente():
     
 # microservicio para obtener el ultimo servicio insertado
 @servicios_routes.route('/servicio/ultimo', methods=['GET'])
+@handle_endpoint_errors
+@with_cache(resource='servicios', operation='get_ultimo')
 def get_ultimo_servicio():
     """
     Obtiene los últimos 10 servicios insertados con información completa.
@@ -86,6 +93,7 @@ def get_ultimo_servicio():
 @servicios_routes.route('/servicio/update', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Actualizar Servicio Completo")
+@invalidate_cache(resource='servicios')
 def actualizar_servicio_completo():
     """Recibe JSON y actualiza un servicio completo.
 
@@ -116,6 +124,7 @@ def actualizar_servicio_completo():
 @servicios_routes.route('/servicio/entrega_fecha', methods=['PUT'])
 @handle_endpoint_errors
 @log_operation("Actualizar Fecha Entrega")
+@invalidate_cache(resource='servicios')
 def actualizar_fecha_entrega():
     """
     Actualiza solo la fecha de entrega de un servicio específico a NOW().
@@ -148,6 +157,7 @@ def get_servicio_por_cedula():
 
 @servicios_routes.route('/servicio/ultimo_detalle', methods=['GET'])
 @handle_endpoint_errors
+@with_cache(resource='servicios', operation='get_ultimo_detalle')
 def get_ultimo_servicio_detalle():
     """
     Obtiene el último servicio registrado con detalles completos.
@@ -159,6 +169,7 @@ def get_ultimo_servicio_detalle():
 
 @servicios_routes.route('/servicio/reporte', methods=['GET'])
 @handle_endpoint_errors
+@with_cache(resource='servicios', operation='get_reporte')
 def get_servicio_reporte():
     """
     Obtiene el reporte de servicios con información de clientes y dispositivos.

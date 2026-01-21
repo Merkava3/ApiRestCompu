@@ -62,7 +62,9 @@ CAMPOS_SERVICIO_REPORTE = (
     "nombre_cliente",
     "telefono_cliente",
     "fecha_ingreso",
-    "tipo_servicio"
+    "tipo_servicio",
+    "tipo",
+    "reporte"
 )
 
 # ======================== IDENTIFICADORES DE CAMPO ========================
@@ -158,6 +160,8 @@ FIELD_MAPPING = {
     'cedula': 'cedula_cliente'
 }
 
+METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+HEADERS = ['Content-Type', 'Authorization']
 
 
 

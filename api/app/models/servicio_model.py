@@ -179,7 +179,9 @@ class Servicios(BaseModelMixin, db.Model):
             Cliente.nombre_cliente,
             Cliente.telefono_cliente,
             Dispositivo.fecha_ingreso,
-            Servicios.tipo_servicio
+            Servicios.tipo_servicio,
+            Dispositivo.tipo,
+            Dispositivo.reporte
         ).join(Usuario, Usuario.id_usuario == Servicios.usuario_id_servicio)\
          .join(Cliente, Cliente.id_cliente == Servicios.cliente_id_servicio)\
          .join(Dispositivo, Dispositivo.id_dispositivo == Servicios.dispositivo_id_servicio)

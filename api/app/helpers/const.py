@@ -163,17 +163,10 @@ FIELD_MAPPING = {
 METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
 HEADERS = ['Content-Type', 'Authorization']
 
-# ======================== SOCKET.IO EVENTS ========================
-EVENT_CONNECT = 'connect'
-EVENT_DISCONNECT = 'disconnect'
-EVENT_CLIENT_MESSAGE = 'client_message'
-EVENT_ADMIN_MESSAGE = 'admin_message'
-EVENT_CHAT_LIST = 'chat_list'
-EVENT_NEW_CHAT = 'new_chat'
-EVENT_CHAT_CLOSED = 'chat_closed'
 
-# ======================== CHAT STATES ========================
-CHAT_STATE_ACTIVE = 'active'
-CHAT_STATE_INACTIVE = 'inactive'
-CHAT_STATE_CLOSED = 'closed'
+
+
+
+
+
 

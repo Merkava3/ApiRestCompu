@@ -12,11 +12,6 @@ from .views import api_v1
 from .cache import CacheMiddleware
 from api.config import Config, get_config
 from .helpers.const import METHODS, HEADERS
-from flask_socketio import SocketIO
-from .routers.chat_routers import register_chat_handlers
-
-# Instancia global de SocketIO
-socketio = SocketIO()
 
 
 def create_app(environment: Type[Config] = None):
@@ -59,11 +54,5 @@ def create_app(environment: Type[Config] = None):
     # Inicializar middleware de caché
     cache_middleware = CacheMiddleware()
     cache_middleware.init_app(app)
-    
-    # Inicializar SocketIO
-    socketio.init_app(app, cors_allowed_origins="*")
-
-    # Registrar manejadores de chat
-    register_chat_handlers(socketio)
     
     return app

@@ -30,7 +30,6 @@ def register_chat_handlers(socketio):
         socketio.emit(EVENT_CHAT_LIST, {'chats': active_chats_list}, room=request.sid)
 
     @socketio.on(EVENT_CONNECT)
-    @socketio.on(EVENT_CONNECT)
     def handle_connect(auth=None):
         try:
             # En algunas versiones auth viene como argumento, en otras no. 

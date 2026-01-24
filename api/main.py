@@ -6,6 +6,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from api.app import create_app, socketio
+from api.config import get_config
 import os
 
 

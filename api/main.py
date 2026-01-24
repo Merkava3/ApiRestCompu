@@ -1,8 +1,12 @@
 """
 Punto de entrada principal de la aplicación con soporte para Socket.IO.
 """
+import eventlet
+# Monkey patch must be the very first thing
+eventlet.monkey_patch()
+
 from api.app import create_app, socketio
-from api.config import get_config
+import os
 
 
 def create_application():

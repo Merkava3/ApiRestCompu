@@ -30,36 +30,35 @@ def register_chat_handlers(socketio):
         socketio.emit(EVENT_CHAT_LIST, {'chats': active_chats_list}, room=request.sid)
 
     @socketio.on(EVENT_CONNECT)
+    @socketio.on(EVENT_CONNECT)
     def handle_connect(auth=None):
-        """
-        Maneja la conexión de un nuevo cliente.
-        El cliente puede enviar un uuid en auth para reconexión.
-        """
-        # En algunas versiones auth viene como argumento, en otras no. 
-        # Lo hacemos opcional y también intentamos leerlo del request si es necesario.
-        client_uuid = None
-        if auth and isinstance(auth, dict):
-            client_uuid = auth.get('uuid')
-        
-        if not client_uuid:
-             client_uuid = ChatManager.generate_uuid()
-             
-        sid = request.sid
-        
-        # Crear o recuperar chat
-        chat = ChatManager.create_chat(client_uuid, sid)
-        print(f"[CHAT] Nuevo cliente conectado. UUID: {client_uuid} | SID: {sid}")
-        
-        # Notificar al cliente su UUID asignado
-        socketio.emit(EVENT_CONNECT, {'uuid': client_uuid, 'status': 'connected'}, room=sid)
-        
-        # Notificar a los admins (broadcast)
-        # En versiones recientes broadcast=True debe ser directo.
         try:
-            socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid}, broadcast=True)
-        except TypeError:
-            # Fallback si broadcast falla por versión
-            socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid})
+            # En algunas versiones auth viene como argumento, en otras no. 
+            # Lo hacemos opcional y también intentamos leerlo del request si es necesario.
+            client_uuid = None
+            if auth and isinstance(auth, dict):
+                client_uuid = auth.get('uuid')
+            
+            if not client_uuid:
+                 client_uuid = ChatManager.generate_uuid()
+                 
+            sid = request.sid
+            
+            # Crear o recuperar chat
+            chat = ChatManager.create_chat(client_uuid, sid)
+            print(f"[CHAT] Nuevo cliente conectado. UUID: {client_uuid} | SID: {sid}")
+            
+            # Notificar al cliente su UUID asignado
+            socketio.emit(EVENT_CONNECT, {'uuid': client_uuid, 'status': 'connected'}, room=sid)
+            
+            # Notificar a los admins (broadcast)
+            try:
+                socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid}, broadcast=True)
+            except TypeError:
+                # Fallback si broadcast falla por versión
+                socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid})
+        except Exception as e:
+            print(f"[CHAT] Error crítico en handle_connect: {str(e)}")
 
     @socketio.on(EVENT_CLIENT_MESSAGE)
     def handle_client_message(data):

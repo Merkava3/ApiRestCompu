@@ -1,0 +1,10 @@
+cat << 'EOF'
+
+git commit -m "Implementación de sistema de caché en Flask
+
+- Se creó el módulo de caché con gestión centralizada y soporte para múltiples estrategias.
+- Se implementó el middleware de caché para integración automática con Flask.
+- Se añadieron decoradores `@with_cache` y `@invalidate_cache` para facilitar el uso de caché en endpoints.
+- Se configuró TTL por recurso y operación en `cache_config.py`.
+- Se implementaron pruebas automatizadas para validar el funcionamiento del sistema de caché.
+- Se documentó la implementación y se generó un resumen detallado de características y uso."

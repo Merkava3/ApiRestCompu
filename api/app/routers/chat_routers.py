@@ -1,0 +1,83 @@
+from flask import request
+from ..helpers.helpers import ChatManager
+from ..helpers.const import *
+
+def register_chat_handlers(socketio):
+    """
+    Registra los manejadores de eventos de Socket.IO para el chat.
+    Sigue el principio de separación de responsabilidades al desacoplar
+    la configuración de Socket.IO de la lógica de negocio.
+    """
+
+    @socketio.on(EVENT_CONNECT)
+    def handle_connect(auth):
+        """
+        Maneja la conexión de un nuevo cliente.
+        El cliente puede enviar un uuid en auth para reconexión.
+        """
+        client_uuid = (auth or {}).get('uuid') or ChatManager.generate_uuid()
+        sid = request.sid
+        
+        # Crear o recuperar chat
+        chat = ChatManager.create_chat(client_uuid, sid)
+        
+        # Notificar al cliente su UUID asignado
+        socketio.emit(EVENT_CONNECT, {'uuid': client_uuid, 'status': 'connected'}, room=sid)
+        
+        # Si es un nuevo chat, notificar a los admins (broadcast a un room específico si existiera)
+        # Por ahora lo dejamos simple como pide el requerimiento
+        socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid}, broadcast=True)
+
+    @socketio.on(EVENT_CLIENT_MESSAGE)
+    def handle_client_message(data):
+        """
+        Maneja los mensajes enviados por el cliente.
+        data debe contener { uuid, message }
+        """
+        client_uuid = data.get('uuid')
+        text = data.get('message')
+        
+        if not client_uuid or not text:
+            return
+
+        # Guardar en memoria
+        ChatManager.add_message(client_uuid, 'client', text)
+        
+        # Emitir a los administradores
+        socketio.emit(EVENT_CLIENT_MESSAGE, {
+            'uuid': client_uuid,
+            'message': text,
+            'sender': 'client'
+        }, broadcast=True)
+
+    @socketio.on(EVENT_ADMIN_MESSAGE)
+    def handle_admin_message(data):
+        """
+        Maneja los mensajes enviados por el administrador a un cliente específico.
+        data debe contener { uuid, message }
+        """
+        client_uuid = data.get('uuid')
+        text = data.get('message')
+        
+        chat = ChatManager.get_chat(client_uuid)
+        if chat and text:
+            # Guardar en memoria
+            ChatManager.add_message(client_uuid, 'admin', text)
+            
+            # Emitir solo al cliente específico
+            socketio.emit(EVENT_ADMIN_MESSAGE, {
+                'message': text,
+                'sender': 'admin'
+            }, room=chat['sid'])
+
+    @socketio.on(EVENT_DISCONNECT)
+    def handle_disconnect():
+        """
+        Maneja la desconexión de un cliente.
+        Elimina el chat de la memoria automáticamente.
+        """
+        sid = request.sid
+        client_uuid = ChatManager.remove_chat_by_sid(sid)
+        
+        if client_uuid:
+            socketio.emit(EVENT_CHAT_CLOSED, {'uuid': client_uuid}, broadcast=True)

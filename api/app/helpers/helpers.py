@@ -5,6 +5,7 @@ Contiene funciones genéricas y reutilizables siguiendo principios DRY.
 import random
 import json
 import logging
+import uuid
 from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
@@ -258,3 +259,67 @@ class Help:
         """
         if key not in data:
             data[key] = default_value
+
+
+class ChatManager:
+    """
+    Gestor de chats efímeros en memoria.
+    Sigue el principio de responsabilidad única para el manejo del estado del chat.
+    """
+    _chats: Dict[str, Dict[str, Any]] = {}
+
+    @staticmethod
+    def create_chat(client_uuid: str, sid: str) -> Dict[str, Any]:
+        """Crea un nuevo chat para un cliente si no existe."""
+        if client_uuid not in ChatManager._chats:
+            ChatManager._chats[client_uuid] = {
+                "sid": sid,
+                "messages": [],
+                "status": "active",
+                "last_activity": None
+            }
+        return ChatManager._chats[client_uuid]
+
+    @staticmethod
+    def get_chat(client_uuid: str) -> Optional[Dict[str, Any]]:
+        """Busca un chat por el UUID del cliente."""
+        return ChatManager._chats.get(client_uuid)
+
+    @staticmethod
+    def get_all_chats() -> Dict[str, Dict[str, Any]]:
+        """Retorna todos los chats activos."""
+        return ChatManager._chats
+
+    @staticmethod
+    def add_message(client_uuid: str, sender: str, text: str):
+        """Agrega un mensaje al historial de un chat."""
+        chat = ChatManager.get_chat(client_uuid)
+        if chat:
+            message = {
+                "sender": sender,
+                "text": text,
+                "timestamp": None # Podría usarse datetime si se requiere
+            }
+            chat["messages"].append(message)
+
+    @staticmethod
+    def remove_chat_by_sid(sid: str) -> Optional[str]:
+        """
+        Elimina un chat basado en el SID de Socket.IO.
+        Retorna el client_uuid si fue encontrado y eliminado.
+        """
+        uuid_to_remove = None
+        for client_uuid, data in ChatManager._chats.items():
+            if data.get("sid") == sid:
+                uuid_to_remove = client_uuid
+                break
+        
+        if uuid_to_remove:
+            del ChatManager._chats[uuid_to_remove]
+        
+        return uuid_to_remove
+
+    @staticmethod
+    def generate_uuid() -> str:
+        """Genera un UUID único para identificación anónima."""
+        return str(uuid.uuid4())

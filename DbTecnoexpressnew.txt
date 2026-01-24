@@ -841,3 +841,72 @@ CALL sp_actualizar_servicio_json(
 }'
 );
 
+============================================================= asignacion tareas ===========================================================================
+
+tareas realizar:
+SELECT
+  s.id_servicio,
+  c.nombre_cliente,
+  s.tipo_servicio,
+  s.estado_servicio,
+  s.descripcion,
+  d.fecha_ingreso
+FROM servicios s
+JOIN clientes c ON s.cliente_id_servicio = c.id_cliente
+join dispositivos d on s.dispositivo_id_servicio = d.id_dispositivo
+WHERE s.estado_servicio IN ('recibido','en_proceso')
+ORDER BY d.fecha_ingreso ASC;
+
+ganancias del dia hoy :
+
+SELECT
+    SUM(s.precio_servicio) AS ganancias_hoy
+FROM servicios s
+WHERE DATE(s.fecha_entrega) = CURRENT_DATE
+  AND s.estado_servicio IN ('entregado');
+
+Totales :
+
+Resumen diario de servicios, entregas y ganancias:
+
+SELECT
+  (SELECT COUNT(*) FROM clientes) AS total_clientes,
+  (SELECT COUNT(*) FROM dispositivos) AS total_dispositivos,
+  (SELECT COUNT(*) FROM servicios) AS total_servicios,
+  (SELECT COUNT(*) FROM productos) AS total_productos,
+  (SELECT SUM(total) FROM facturas) AS ingresos_totales;
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  SELECT
+    COUNT(d.fecha_ingreso)                       AS total_servicios_ingresados,
+    COUNT(s.fecha_entrega)                       AS total_servicios_entregados,
+    SUM(s.precio_servicio) FILTER (
+        WHERE s.fecha_entrega IS NOT NULL
+    )                                            AS ganancias_por_entregados,
+    COUNT(*) FILTER (
+        WHERE s.fecha_entrega IS NULL
+    )                                            AS servicios_sin_entregar
+FROM servicios s
+INNER JOIN dispositivos d
+    ON d.id_dispositivo = s.dispositivo_id_servicio;
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Resumen mensual de servicios y ganancias:
+
+SELECT
+    TO_CHAR(d.fecha_ingreso, 'YYYY-MM') AS mes,
+    COUNT(s.id_servicio) AS servicios_realizados,
+    COUNT(s.fecha_entrega) AS servicios_entregados,
+    COUNT(*) - COUNT(s.fecha_entrega) AS servicios_pendientes,
+    COALESCE(SUM(
+        CASE
+            WHEN s.fecha_entrega IS NOT NULL
+            THEN s.precio_servicio
+            ELSE 0
+        END
+    ), 0) AS ganancias_mensuales
+FROM servicios s
+INNER JOIN dispositivos d
+    ON d.id_dispositivo = s.dispositivo_id_servicio
+GROUP BY TO_CHAR(d.fecha_ingreso, 'YYYY-MM')
+ORDER BY mes DESC;

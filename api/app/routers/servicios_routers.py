@@ -139,7 +139,6 @@ def actualizar_fecha_entrega():
     
     return badRequest(ERROR_NO_ENCONTRADO)
 
-
 @servicios_routes.route('/search/servicio/cedula', methods=['POST'])
 @handle_endpoint_errors
 def get_servicio_por_cedula():

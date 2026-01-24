@@ -9,6 +9,26 @@ def register_chat_handlers(socketio):
     la configuración de Socket.IO de la lógica de negocio.
     """
 
+    @socketio.on('get_active_chats')
+    def handle_get_active_chats():
+        """
+        Envía la lista de chats activos al solicitante (admin).
+        """
+        chats = ChatManager.get_all_chats()
+        active_chats_list = []
+        
+        for uuid, data in chats.items():
+            messages = data.get('messages', [])
+            last_msg = messages[-1]['text'] if messages else "Nueva conexión"
+            
+            active_chats_list.append({
+                'uuid': uuid,
+                'last_message': last_msg,
+                'messages': messages 
+            })
+            
+        socketio.emit(EVENT_CHAT_LIST, {'chats': active_chats_list}, room=request.sid)
+
     @socketio.on(EVENT_CONNECT)
     def handle_connect(auth):
         """

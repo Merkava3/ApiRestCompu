@@ -20,12 +20,12 @@ def register_chat_handlers(socketio):
         
         # Crear o recuperar chat
         chat = ChatManager.create_chat(client_uuid, sid)
+        print(f"[CHAT] Nuevo cliente conectado. UUID: {client_uuid} | SID: {sid}")
         
         # Notificar al cliente su UUID asignado
         socketio.emit(EVENT_CONNECT, {'uuid': client_uuid, 'status': 'connected'}, room=sid)
         
         # Si es un nuevo chat, notificar a los admins (broadcast a un room específico si existiera)
-        # Por ahora lo dejamos simple como pide el requerimiento
         socketio.emit(EVENT_NEW_CHAT, {'uuid': client_uuid}, broadcast=True)
 
     @socketio.on(EVENT_CLIENT_MESSAGE)
@@ -37,6 +37,8 @@ def register_chat_handlers(socketio):
         client_uuid = data.get('uuid')
         text = data.get('message')
         
+        print(f"[CHAT] Mensaje recibido de {client_uuid}: {text}")
+
         if not client_uuid or not text:
             return
 
@@ -59,6 +61,8 @@ def register_chat_handlers(socketio):
         client_uuid = data.get('uuid')
         text = data.get('message')
         
+        print(f"[CHAT] Admin responde a {client_uuid}: {text}")
+        
         chat = ChatManager.get_chat(client_uuid)
         if chat and text:
             # Guardar en memoria
@@ -80,4 +84,5 @@ def register_chat_handlers(socketio):
         client_uuid = ChatManager.remove_chat_by_sid(sid)
         
         if client_uuid:
+            print(f"[CHAT] Cliente desconectado: {client_uuid}")
             socketio.emit(EVENT_CHAT_CLOSED, {'uuid': client_uuid}, broadcast=True)

@@ -96,6 +96,7 @@ def handle_endpoint_errors(func):
         try:
             return func(*args, **kwargs)
             
+
         except APIException as e:
             # Errores controlados de API
             logger.error(f"API Error en {func.__name__}: {e.message}", extra={"details": e.details})
@@ -112,6 +113,27 @@ def handle_endpoint_errors(func):
             }), e.status_code
             
         except (SQLAlchemyError, Exception) as e:
+            # Manejo específico para errores de concurrencia/lock de SQLAlchemy/Greenlet
+            if isinstance(e, RuntimeError) and "cannot notify on un-acquired lock" in str(e):
+                logger.error(f"Concurrency/Lock Error in {func.__name__}: {str(e)}")
+                print(f"\n⚠️  ERROR DE CONCURRENCIA (LOCK) en '{func.__name__}':")
+                print(f"   Mensaje: {str(e)}\n")
+                
+                # Intentar limpiar la sesión de base de datos para recuperar el estado
+                try:
+                    from ..models import db
+                    db.session.remove()
+                except Exception:
+                    pass
+                
+                return jsonify({
+                    "code": 503,
+                    "success": False,
+                    "message": "El servidor está ocupado temporalmente. Por favor, intente nuevamente.",
+                    "error_type": "ConcurrencyError",
+                    "details": "Resource lock contention"
+                }), 503
+
             # Manejo de errores de base de datos y excepciones genéricas
             error_type = type(e).__name__
             error_msg = str(e)

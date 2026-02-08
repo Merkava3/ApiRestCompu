@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from ..models import db
 from ..helpers.response import successfully, badRequest, serverError
 from ..helpers.const import *
@@ -99,3 +99,50 @@ def get_dashboard_estadisticas():
         db.session.rollback()
         print(f"Error al obtener estadísticas del dashboard: {e}")
         return serverError(f"Error al obtener estadísticas del dashboard: {str(e)}")
+
+
+@dashboard_routes.route('/dashboard/pie-estado-mes', methods=['GET'])
+def get_dashboard_pie_estado_mes():
+    """
+    Obtiene los datos para el gráfico de torta de estados del mes actual.
+    Ejecuta la función fn_dashboard_pie_estado_mes_actual() que retorna JSONB.
+    """
+    try:
+        # Ejecutar la función directamente sin usar modelos ni helpers
+        query = text("SELECT fn_dashboard_pie_estado_mes_actual()")
+        result = db.session.execute(query)
+        row = result.fetchone()
+
+        if row and row[0]:
+            # Retorna el JSONB directamente como un diccionario de Python
+            return jsonify(row[0]), 200
+
+        return jsonify({"error": "No se encontraron datos para el mes actual"}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+
+
+@dashboard_routes.route('/dashboard/bar-meses-anio', methods=['GET'])
+def get_dashboard_bar_meses_anio():
+    """
+    Obtiene los datos para el gráfico de barras por meses del año actual.
+    Ejecuta la función fn_dashboard_bar_meses_anio_actual() que retorna JSONB.
+    """
+    try:
+        # Ejecutar la función directamente sin usar modelos ni helpers
+        query = text("SELECT fn_dashboard_bar_meses_anio_actual()")
+        result = db.session.execute(query)
+        row = result.fetchone()
+
+        if row and row[0]:
+            # Retorna el JSONB directamente como un diccionario de Python
+            return jsonify(row[0]), 200
+
+        return jsonify({"error": "No se encontraron datos para el año actual"}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
+

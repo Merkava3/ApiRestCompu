@@ -1156,8 +1156,7 @@ $$;
 
 
 ==================================================================================================================================================================
-
-
+ estadisticas:
 CREATE OR REPLACE FUNCTION fn_dashboard_estadisticas(p_periodo TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -1166,6 +1165,7 @@ DECLARE
     resultado JSONB;
     hoy TIMESTAMP := now() AT TIME ZONE 'America/Bogota';
     inicio_anio TIMESTAMP := date_trunc('year', hoy);
+    inicio_mes_actual TIMESTAMP := date_trunc('month', hoy);
 BEGIN
 
 /* =========================================================
@@ -1177,9 +1177,9 @@ IF p_periodo = 'monthly' THEN
         'periodo', 'monthly',
         'labels', COALESCE(jsonb_agg(mes_nombre ORDER BY mes_num), '[]'::jsonb),
         'data', jsonb_build_object(
-            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY mes_num), '[]'::jsonb),
+            'servicios',    COALESCE(jsonb_agg(total_servicios ORDER BY mes_num), '[]'::jsonb),
             'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY mes_num), '[]'::jsonb),
-            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY mes_num), '[]'::jsonb)
+            'ganancias',    COALESCE(jsonb_agg(ganancias ORDER BY mes_num), '[]'::jsonb)
         )
     )
     INTO resultado
@@ -1187,40 +1187,24 @@ IF p_periodo = 'monthly' THEN
         SELECT
             EXTRACT(MONTH FROM m.fecha) AS mes_num,
             TO_CHAR(m.fecha, 'TMMonth') AS mes_nombre,
-
             COUNT(DISTINCT s.id_servicio) AS total_servicios,
             COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
             COALESCE(SUM(s.precio_servicio), 0) AS ganancias
-
         FROM generate_series(
             inicio_anio,
-            date_trunc('month', hoy),
+            inicio_mes_actual,
             interval '1 month'
         ) m(fecha)
-
-        LEFT JOIN servicios s ON (
-            (
-                s.estado_servicio = 'entregado'
-                AND s.fecha_entrega >= m.fecha
-                AND s.fecha_entrega < m.fecha + interval '1 month'
-            )
-            OR
-            (
-                s.estado_servicio IN ('recibido', 'revision')
-            )
-        )
-
-        LEFT JOIN dispositivos d ON (
-            d.id_dispositivo = s.dispositivo_id_servicio
-            AND d.fecha_ingreso >= m.fecha
-            AND d.fecha_ingreso < m.fecha + interval '1 month'
-        )
-
+        LEFT JOIN dispositivos d
+            ON d.fecha_ingreso >= m.fecha
+           AND d.fecha_ingreso < m.fecha + interval '1 month'
+        LEFT JOIN servicios s
+            ON s.dispositivo_id_servicio = d.id_dispositivo
         GROUP BY m.fecha
     ) t;
 
 /* =========================================================
-   QUARTERLY → Trimestres iniciados del año actual
+   QUARTERLY
 ========================================================= */
 ELSIF p_periodo = 'quarterly' THEN
 
@@ -1228,9 +1212,9 @@ ELSIF p_periodo = 'quarterly' THEN
         'periodo', 'quarterly',
         'labels', COALESCE(jsonb_agg('Trimestre ' || trimestre ORDER BY trimestre), '[]'::jsonb),
         'data', jsonb_build_object(
-            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY trimestre), '[]'::jsonb),
+            'servicios',    COALESCE(jsonb_agg(total_servicios ORDER BY trimestre), '[]'::jsonb),
             'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY trimestre), '[]'::jsonb),
-            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY trimestre), '[]'::jsonb)
+            'ganancias',    COALESCE(jsonb_agg(ganancias ORDER BY trimestre), '[]'::jsonb)
         )
     )
     INTO resultado
@@ -1240,16 +1224,16 @@ ELSIF p_periodo = 'quarterly' THEN
             COUNT(DISTINCT s.id_servicio) AS total_servicios,
             COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
             COALESCE(SUM(s.precio_servicio), 0) AS ganancias
-        FROM servicios s
-        LEFT JOIN dispositivos d
-            ON d.id_dispositivo = s.dispositivo_id_servicio
+        FROM dispositivos d
+        LEFT JOIN servicios s
+            ON s.dispositivo_id_servicio = d.id_dispositivo
         WHERE d.fecha_ingreso >= inicio_anio
           AND d.fecha_ingreso <= hoy
         GROUP BY trimestre
     ) t;
 
 /* =========================================================
-   ANNUALLY → Años con datos
+   ANNUALLY
 ========================================================= */
 ELSIF p_periodo = 'annually' THEN
 
@@ -1257,9 +1241,9 @@ ELSIF p_periodo = 'annually' THEN
         'periodo', 'annually',
         'labels', COALESCE(jsonb_agg(anio ORDER BY anio), '[]'::jsonb),
         'data', jsonb_build_object(
-            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY anio), '[]'::jsonb),
+            'servicios',    COALESCE(jsonb_agg(total_servicios ORDER BY anio), '[]'::jsonb),
             'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY anio), '[]'::jsonb),
-            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY anio), '[]'::jsonb)
+            'ganancias',    COALESCE(jsonb_agg(ganancias ORDER BY anio), '[]'::jsonb)
         )
     )
     INTO resultado
@@ -1269,9 +1253,9 @@ ELSIF p_periodo = 'annually' THEN
             COUNT(DISTINCT s.id_servicio) AS total_servicios,
             COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
             COALESCE(SUM(s.precio_servicio), 0) AS ganancias
-        FROM servicios s
-        LEFT JOIN dispositivos d
-            ON d.id_dispositivo = s.dispositivo_id_servicio
+        FROM dispositivos d
+        LEFT JOIN servicios s
+            ON s.dispositivo_id_servicio = d.id_dispositivo
         GROUP BY anio
     ) t;
 
@@ -1280,6 +1264,64 @@ ELSE
 END IF;
 
 RETURN resultado;
+END;
+$$;
+
+==================================================================================================================================================================
+
+chart torta :
+select fn_dashboard_pie_estado_mes_actual();
+
+drop function fn_dashboard_pie_estado_mes_actual();
+
+
+CREATE OR REPLACE FUNCTION fn_dashboard_pie_estado_mes_actual()
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    hoy TIMESTAMP := now() AT TIME ZONE 'America/Bogota';
+    inicio_mes TIMESTAMP := date_trunc('month', hoy);
+    mes_nombre TEXT := TO_CHAR(hoy, 'TMMonth');
+    anio TEXT := TO_CHAR(hoy, 'YYYY');
+BEGIN
+    RETURN (
+        SELECT jsonb_build_object(
+            'periodo', 'monthly',
+            'mes', mes_nombre,
+            'anio', anio,
+            'periodo_label', mes_nombre || ' ' || anio,
+
+            'labels', jsonb_build_array(
+                'recibido',
+                'en_proceso',
+                'finalizado',
+                'entregado',
+                'revision'
+            ),
+
+            'data', jsonb_build_array(
+                recibido_pct,
+                en_proceso_pct,
+                finalizado_pct,
+                entregado_pct,
+                revision_pct
+            )
+        )
+        FROM (
+            SELECT
+                ROUND(100.0 * COUNT(*) FILTER (WHERE s.estado_servicio = 'recibido')   / NULLIF(COUNT(*),0), 2) AS recibido_pct,
+                ROUND(100.0 * COUNT(*) FILTER (WHERE s.estado_servicio = 'en_proceso') / NULLIF(COUNT(*),0), 2) AS en_proceso_pct,
+                ROUND(100.0 * COUNT(*) FILTER (WHERE s.estado_servicio = 'finalizado') / NULLIF(COUNT(*),0), 2) AS finalizado_pct,
+                ROUND(100.0 * COUNT(*) FILTER (WHERE s.estado_servicio = 'entregado')  / NULLIF(COUNT(*),0), 2) AS entregado_pct,
+                ROUND(100.0 * COUNT(*) FILTER (WHERE s.estado_servicio = 'revision')   / NULLIF(COUNT(*),0), 2) AS revision_pct
+            FROM servicios s
+            JOIN dispositivos d
+              ON d.id_dispositivo = s.dispositivo_id_servicio
+            WHERE d.fecha_ingreso >= inicio_mes
+              AND d.fecha_ingreso < inicio_mes + interval '1 month'
+        ) t
+    );
 END;
 $$;
 

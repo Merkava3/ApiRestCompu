@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from ..models import Usuario
 from ..helpers.response import *
 from ..database.schemas import *
@@ -8,6 +8,7 @@ from ..helpers.const import *
 from ..models.auth_decorator import token_required
 from flask import g
 from ..helpers.error_handler import handle_endpoint_errors, log_operation
+from ..email.mailer import mailer
 
 usuario_routes = Blueprint('usuarios_routes', __name__)
 
@@ -17,11 +18,13 @@ def set_usuarios_by():
             json = request.get_json(force=True)
             id_usuario = json.get(ID_USUARIO)
             email_usuario = json.get(EMAIL_USUARIO)            
-            # Buscar primero por ID, luego por Número de Serie o Cédula
-            if email_usuario:
-                usuario = Usuario.get_user(email_usuario) 
+            
+            usuario = None
             if id_usuario:
-                usuario = Usuario.get_user_id(id_usuario)         
+                usuario = Usuario.get_by_id(id_usuario)
+            elif email_usuario:
+                usuario = Usuario.get_by_email(email_usuario)
+            
             if not usuario:
                 return notFound()            
             return function(usuario, *args, **kwargs)
@@ -32,176 +35,175 @@ def set_usuarios_by():
 @usuario_routes.route('/usuarios', methods=['GET'])
 @handle_endpoint_errors
 def get_usuarios():
-    usuario = Usuario.query.all()
-    return successfully(api_usuarios.dump(usuario))
+    # Obtiene lista de usuarios activos
+    return successfully(api_usuarios.dump(Usuario.get_active_users()))
 
-@usuario_routes.route('/usuario', methods=['POST'])
+@usuario_routes.route('/usuario/register', methods=['POST'])
 @handle_endpoint_errors
 @log_operation("Registrar Usuario")
 def post_user():
+    # Registro de nuevo usuario con activacion por email
     json = request.get_json()
-    if not json:
-        return badRequest("Datos JSON requeridos")
+    if not json: return badRequest("Datos requeridos")
 
-    # Validación de campos
-    required_fields = {
-        "nombre_usuario": "Nombre de usuario es requerido",
-        "email_usuario": "Email es requerido",
-        "password": "Contraseña es requerida"
-    }
-    
-    missing_fields = [field for field, msg in required_fields.items() if not json.get(field)]
-    if missing_fields:
-        return badRequest(", ".join([required_fields[field] for field in missing_fields]))
+    # Validar campos obligatorios
+    email = str(json.get(EMAIL_USUARIO, "")).strip().lower()
+    if not email or not json.get("password") or not json.get("nombre_usuario"):
+        return badRequest("Nombre, email y password son obligatorios")
 
-    # Normalización y limpieza
-    nombre = str(json["nombre_usuario"]).strip()
-    email = str(json["email_usuario"]).strip().lower()
-    password = str(json["password"]).strip()
-
-    # Verificar si el usuario ya existe
-    if Usuario.get_user(email):
+    if Usuario.get_by_email(email):
         return badRequest("El email ya está registrado")
 
-    # Validar contraseña
-    if len(password) < 8:
-        return badRequest("La contraseña debe tener al menos 8 caracteres")
-
-    # Crear nuevo usuario
+    # Carga basica de datos
     user = Usuario(
-        nombre_usuario=nombre,
-        email_usuario=email
+        nombre_usuario=str(json["nombre_usuario"]).strip(),
+        email_usuario=email,
+        rol=str(json.get("rol", "vendedor")).strip().lower(),
+        autenticado=False,
+        activo=False
     )
-    user.set_password(password)
+    user.set_password(str(json["password"]).strip())
+    user.generate_auth_token() # Genera token para el enlace
+    
+    # Reset de estados iniciales
+    user.autenticado = False
+    user.ultima_autenticacion = None
+    user.token_expiration = None
 
-    # Generar ID (si es necesario, según tu implementación)
-    if hasattr(Help, 'generator_id'):
-        user = Help.generator_id(user, ID_USUARIO)
+    if not user.save(): return serverError("Error al guardar")
 
-    # Generar token JWT (esto actualiza user.token y user.token_expiration automáticamente)
-    token = user.generate_auth_token()
-    if not isinstance(token, str):
-        return serverError("Formato de token inválido")
+    # Envio de correo de activacion
+    activation_link = f"{request.url_root}api/v1/usuario/activate/{user.token}"
+    mailer.send_email(
+        "Bienvenido - Enlace de Acceso",
+        f"Haz clic para activar: {activation_link}",
+        user.email_usuario
+    )
 
-    # Guardar usando el método save() existente
-    if not user.save():
-        return serverError("Error al guardar el usuario en la base de datos")
-
-    # Serializar datos del usuario
-    usuario_data = api_usuario.dump(user)
-    if not usuario_data:
-        return serverError("Error serializando datos del usuario")
-
-    # Respuesta exitosa
     return jsonify({
         "code": 201,
         "success": True,
-        "message": "Usuario registrado exitosamente",
-        "data": {
-            "token": token,
-            "expires_in": 3600,
-            "token_type": "Bearer",
-            "usuario": usuario_data
-        }
+        "message": "Usuario registrado. Revisa tu correo.",
+        "data": {"usuario": {"nombre": user.nombre_usuario, "rol": user.rol}}
     }), 201
 
-@usuario_routes.route('/usuario', methods=['GET'])
-@set_usuarios_by()
-def get_usuario(usuario):  
-    return successfully(api_usuario.dump(usuario))
+@usuario_routes.route('/usuario/activate/<token>', methods=['GET'])
+@handle_endpoint_errors
+def activate_user(token):
+    # Activa usuario mediante el token del correo
+    usuario = Usuario.query.filter_by(token=token).first()
+    if not usuario: return notFound("Token inválido")
 
-@usuario_routes.route('/usuario', methods=['DELETE'])
-@set_usuarios_by()
-def delete_usuario(usuario):
-    if usuario.delete():
-        return delete()
-    return badRequest()
-
-@usuario_routes.route('/usuario', methods=['PUT'])
-@set_usuarios_by()
-def put_usuario(usuario):
-    json = request.get_json(force=True)
-    for key, value in json.items():
-        setattr(usuario, key, value)
-    if usuario.save():
-        return update(api_usuario.dump(usuario))      
-    return badRequest()
-
-@usuario_routes.route('/usuario/auth', methods=['PUT'])
-@set_usuarios_by()
-def auth_usuario(usuario):
     usuario.autenticado = True
     usuario.ultima_autenticacion = datetime.utcnow()
+    usuario.token_expiration = datetime.utcnow() # Dispara trigger DB
+    
     if usuario.save():
-        return update(api_usuario.dump(usuario))      
-    return badRequest()
+        return successfully({
+            "email_usuario": usuario.email_usuario,
+            "autenticado": True
+        })
+    return badRequest("Error en activación")
+
+@usuario_routes.route('/usuario', methods=['GET', 'DELETE'])
+@set_usuarios_by()
+def handle_usuario(usuario):
+    # CRUD individual de usuario
+    if request.method == 'GET':
+        return successfully(api_usuario.dump(usuario))
+    
+    if request.method == 'DELETE':
+        return delete() if usuario.delete() else badRequest()
+
+@usuario_routes.route('/usuario/update', methods=['PUT'])
+@set_usuarios_by()
+def update_usuario(usuario):
+    # Actualiza datos del usuario (nombres, email, password, rol)
+    json = request.get_json(force=True)
+    
+    # Validar si el nuevo email ya está en uso por otro usuario
+    if 'email_usuario' in json:
+        nuevo_email = str(json['email_usuario']).strip().lower()
+        if nuevo_email != usuario.email_usuario:
+            usuario_existente = Usuario.get_by_email(nuevo_email)
+            if usuario_existente:
+                return badRequest("El email ya está registrado por otro usuario")
+            usuario.email_usuario = nuevo_email
+
+    # Mapeo según la consulta: update usuarios set nombres...
+    if 'nombres' in json:
+        usuario.nombre_usuario = json['nombres']
+    if 'rol' in json:
+        usuario.rol = json['rol']
+    if 'password' in json:
+        usuario.set_password(json['password'])
+        
+    # Guardar cambios
+    if usuario.save():
+        return update(api_usuario.dump(usuario))
+    return badRequest("Error al actualizar usuario")
 
 @usuario_routes.route('/usuario/login', methods=['POST'])
 def login_usuario():
+    # Login unificado usando SP de Postgres
     json = request.get_json(force=True)
-    
-    if not json:
-        return badRequest("Datos de autenticación requeridos")
-
-    email = json.get("email_usuario")
+    email = json.get(EMAIL_USUARIO)
     password = json.get("password")
 
     if not email or not password:
-        return badRequest("Email y contraseña son obligatorios")
-
-    usuario = Usuario.get_user(email)
-    if not usuario:
-        return unauthorized("Credenciales incorrectas")
-
-    if not usuario.check_password(password):
-        return unauthorized("Credenciales incorrectas")
+        return badRequest("Email y password requeridos")
 
     try:
-        # Verificar si el usuario tiene un token válido
-        if not usuario.token or not usuario.token_expiration or usuario.token_expiration < datetime.utcnow():
-            return unauthorized("No hay token válido. Contacte al administrador")
-        
-        # Actualizar última autenticación SIN generar nuevo token
-        usuario.ultima_autenticacion = datetime.utcnow()
-        usuario.autenticado = True
-        
-        if usuario.save():
-            return successfully({
-                "mensaje": "Inicio de sesión exitoso",
-                "token": usuario.token,  # Usa el token existente
-                "expires_in": (usuario.token_expiration - datetime.utcnow()).total_seconds(),
-                "token_type": "Bearer",
-                "usuario": api_usuario.dump(usuario)
-            })
-        return badRequest("Error al actualizar la autenticación")
+        data = Usuario.call_login_sp(email)
+        if not data or not data.get(EMAIL_USUARIO):
+            return unauthorized("Usuario no encontrado")
+
+        if not Usuario.verify_password(data.get("password"), password):
+            return unauthorized("Contraseña incorrecta")
+
+        if not data.get("autenticado"):
+            return unauthorized("Sesión expirada o no autenticada")
+
+        # Actualizar estado activo a True
+        user = Usuario.get_by_email(email)
+        if user:
+            user.activo = True
+            user.save()
+
+        return successfully({
+            "email_usuario": data.get(EMAIL_USUARIO),
+            "autenticado": data.get("autenticado"),
+            "rol": user.rol if user else data.get("rol")
+        })
     except Exception as e:
-        return serverError(f"Error en el servidor: {str(e)}")
+        return serverError(str(e))
 
 @usuario_routes.route('/usuario/logout', methods=['POST'])
-@token_required
-def logout_usuario(usuario):
-    """Endpoint para cerrar sesión"""
-    usuario.revoke_token()
-    if usuario.save():
-        return successfully({"mensaje": "Sesión cerrada correctamente"})
-    return badRequest("Error al cerrar sesión")
+def logout_usuario():
+    # Logout solo actualiza activo a False
+    email = request.get_json(force=True).get(EMAIL_USUARIO)
+    if not email: return badRequest("Email requerido")
 
-# validation 
+    try:
+        user = Usuario.get_by_email(email)
+        if user:
+            user.activo = False
+            if user.save():
+                return successfully({"mensaje": "Sesión cerrada correctamente"})
+        return badRequest("Usuario no encontrado")
+    except Exception as e:
+        return serverError(str(e))
+
 @usuario_routes.route('/usuario/me', methods=['GET'])
 @token_required
 def get_current_user(usuario):
-    """Endpoint protegido que devuelve datos del usuario actual"""
-    return successfully({
-        "usuario": api_usuario.dump(usuario),
-        "is_authenticated": usuario.autenticado
-    })
-
+    # Retorna datos del usuario actual autenticado
+    return successfully({"usuario": api_usuario.dump(usuario), "is_authenticated": True})
 
 @usuario_routes.route('/renovar-token', methods=['POST'])
 @token_required
 def renovar_token():
+    # Genera nuevo token para sesion activa
     usuario = g.current_user
-    nuevo_token = usuario.generate_auth_token()
-    if usuario.save():
-        return successfully({"token": nuevo_token})
-    return badRequest("Error al renovar token")
+    usuario.generate_auth_token()
+    return successfully({"token": usuario.token}) if usuario.save() else badRequest()

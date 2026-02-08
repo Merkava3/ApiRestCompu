@@ -1,0 +1,48 @@
+# Estadísticas mensuales del año actual
+GET /dashboard/estadisticas?periodo=monthly
+
+# Estadísticas por trimestre del año actual  
+GET /dashboard/estadisticas?periodo=quarterly
+
+# Estadísticas anuales históricas
+GET /dashboard/estadisticas?periodo=annually
+
+
+
+1. Separa la lógica de negocio de la presentación.
+
+No mezcles peras con manzanas. Componentes para la vista, hooks para el comportamiento.
+
+2. Mantenlos simples.
+
+Si el hook empieza a parecerse al Quijote por su extensión, divide y vencerás.
+
+3. No uses la API de contexto.
+
+Mejor, ni la menciones.
+
+4. No llames a las dependencias de forma global.
+
+Pásalas por parámetro. Esto te permite testearlo mucho más fácil.
+
+5. Las funciones puras úsalas directamente.
+
+Deja de pasarlas por props.
+
+6. No uses useEffect dentro.
+
+Ni ningún otro hook que no sea useState. useEffect tiene que ver con el ciclo de vida del componente, eso mejor donde se vea.
+
+7. No anides funciones dentro de funciones.
+
+Con una closure (que es el propio hook) es suficiente.
+
+8. No expongas ni el estado ni su actualización directamente.
+
+Encapsúlalo y crea funciones que manejen cambios explícitos.
+
+9. No declares más de un useState.
+
+Y por favor, no utilices useReducer.
+
+10. No uses el estado actual a la hora de actualizar.

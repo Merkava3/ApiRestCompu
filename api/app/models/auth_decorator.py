@@ -38,17 +38,17 @@ def token_required(f):
             usuario = Usuario.query.filter_by(token=token).first()
             if not usuario:
                 logger.warning("Token no encontrado en base de datos")
-                return unauthorized("Token no válido")
+                return unauthorized("Renovar el token esta vencido")
 
             # 4. Verificar expiración
             if usuario.token_expiration < datetime.utcnow():
                 logger.warning(f"Token expirado para usuario {usuario.id_usuario}")
-                return unauthorized("Token expirado")
+                return unauthorized("Renovar el token esta vencido")
 
-            # 5. Verificar estado de autenticación
-            if not usuario.autenticado:
-                logger.warning(f"Usuario {usuario.id_usuario} no está autenticado")
-                return unauthorized("Usuario no autenticado")
+            # 5. Verificar estado de autenticación y activo
+            if not usuario.autenticado or not usuario.activo:
+                logger.warning(f"Usuario {usuario.id_usuario} no está autenticado o inactivo")
+                return unauthorized("Renovar el token esta vencido")
 
             # 6. Adjuntar usuario al contexto
             g.current_user = usuario

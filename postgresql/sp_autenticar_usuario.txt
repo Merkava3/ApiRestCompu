@@ -1,0 +1,92 @@
+-- ================================================================================
+-- Procedimiento Almacenado de Autenticación de Usuarios
+-- Proyecto: ApiRestCompu
+-- ================================================================================
+
+-- Habilitar la extensión pgcrypto si no está habilitada (necesaria para bcrypt)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+/**
+ * Función: fn_autenticar_usuario
+ * Descripción: Verifica las credenciales de un usuario a partir de un objeto JSON.
+ * Parámetros:
+ *   - p_data: JSON con las llaves "email" y "password".
+ * Retorna:
+ *   - JSON: {"correo": string, "autenticado": boolean}
+ */
+CREATE OR REPLACE FUNCTION fn_autenticar_usuario(p_data JSON)
+RETURNS JSON
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_email           VARCHAR(255);
+    v_password        VARCHAR(255);
+    v_stored_password VARCHAR(255);
+    v_autenticado     BOOLEAN := FALSE;
+BEGIN
+    -- 1. Extraer el email y la contraseña del JSON de entrada
+    v_email := p_data->>'email';
+    v_password := p_data->>'password';
+
+    -- 2. Buscar la contraseña (hash) del usuario activo en la tabla usuarios
+    -- Se asume que la columna es 'email_usuario' y 'password' según el modelo
+    SELECT password 
+    INTO v_stored_password
+    FROM usuarios
+    WHERE email_usuario = v_email AND activo = TRUE;
+
+    -- 3. Verificar las credenciales
+    -- Usamos la función crypt() de pgcrypto para comparar el password plano con el hash bcrypt
+    -- Si coinciden, crypt(v_password, v_stored_password) devolverá exactamente v_stored_password
+    IF v_stored_password IS NOT NULL THEN
+        IF v_stored_password = crypt(v_password, v_stored_password) THEN
+            v_autenticado := TRUE;
+            
+            -- Actualizar metadatos de autenticación en la base de datos
+            UPDATE usuarios 
+            SET autenticado = TRUE, 
+                ultima_autenticacion = NOW() 
+            WHERE email_usuario = v_email;
+        END IF;
+    END IF;
+
+    -- 4. Retornar el resultado estructurado como JSON
+    RETURN json_build_object(
+        'correo', v_email,
+        'autenticado', v_autenticado
+    );
+
+EXCEPTION
+    WHEN OTHERS THEN
+        -- En caso de error, retornar autenticado como false
+        RETURN json_build_object(
+            'correo', v_email,
+            'autenticado', FALSE,
+            'error', SQLERRM
+        );
+END;
+$$;
+
+-- ================================================================================
+-- EJEMPLO DE USO (POSTGRESQL):
+-- ================================================================================
+-- 1. Usando la FUNCIÓN:
+-- SELECT fn_autenticar_usuario('{"email": "homero@planta742.com", "password": "donas123"}'::json);
+
+-- 2. Usando el PROCEDIMIENTO:
+-- CALL sp_autenticar_usuario('{"email": "homero@planta742.com", "password": "donas123"}'::json, NULL);
+
+/**
+ * Procedimiento: sp_autenticar_usuario
+ * Descripción: Versión procedimiento que usa un parámetro INOUT para el resultado.
+ */
+CREATE OR REPLACE PROCEDURE sp_autenticar_usuario(
+    p_data JSON,
+    INOUT p_resultado JSON DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    p_resultado := fn_autenticar_usuario(p_data);
+END;
+$$;

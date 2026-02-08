@@ -1,222 +1,106 @@
-"""
-Módulo de utilidades y helpers para la aplicación.
-Contiene funciones genéricas y reutilizables siguiendo principios DRY.
-"""
+"""Utilidades y helpers para la aplicación."""
 import random
 import json
 import logging
+import os
+import sqlite3
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
+from .const import *
 
 logger = logging.getLogger(__name__)
 
-
 class Help:
-    """Clase de utilidades con métodos estáticos para operaciones comunes."""
-    
+    """Clase de utilidades con métodos estáticos."""
+
     @staticmethod
     def _generation_id() -> str:
-        """
-        Genera un ID numérico aleatorio.
-        
-        Returns:
-            str: ID generado como string
-        """
-        digitos: int = random.randint(3, 8)
-        numero: int = random.randint(10**(digitos-1), 10**digitos - 1)
-        return str(numero)
+        """Genera un ID aleatorio."""
+        digitos = random.randint(3, 8)
+        return str(random.randint(10**(digitos-1), 10**digitos - 1))
 
     @staticmethod
-    def generator_id(objeto: Any, atributo: str) -> Any:
-        """
-        Asigna un ID generado al atributo especificado de un objeto.
+    def generator_id(obj: Any, attr: str) -> Any:
+        """Asigna un ID generado a un atributo."""
+        if hasattr(obj, attr):
+            setattr(obj, attr, Help._generation_id())
+            return obj
+        raise AttributeError(f"El objeto no tiene '{attr}'")
 
-        Args:
-            objeto (Any): El objeto al que se le asignará el ID.
-            atributo (str): Nombre del atributo donde se guardará el ID.
+    @staticmethod
+    def extract_params(data: Dict, column_list: List, json_fields: List = None, prefix: str = "p_") -> Dict:
+        """Extrae y normaliza parámetros de un diccionario."""
+        res, json_fields = {}, json_fields or []
+        for col in column_list:
+            val = data.get(col)
+            if (col in json_fields or not json_fields) and isinstance(val, (list, dict)):
+                val = json.dumps(val, ensure_ascii=False)
+            res[f"{prefix}{col}"] = val
+        return res
 
-        Returns:
-            Any: El objeto modificado con el ID asignado.
-        
-        Raises:
-            AttributeError: Si el objeto no tiene el atributo especificado.
-        """
-        if hasattr(objeto, atributo):
-            setattr(objeto, atributo, Help._generation_id())
-        else:
-            raise AttributeError(f"El objeto no tiene el atributo '{atributo}'")
-        return objeto
-    
     @staticmethod
-    def extract_params(data: Dict[str, Any], column_list: List[str], 
-                      json_fields: Optional[List[str]] = None,
-                      prefix: str = "p_") -> Dict[str, Any]:
-        """
-        Extrae y normaliza valores de un diccionario según una lista de claves.
-        Método genérico que reemplaza a extract_params_factura, extract_params_compra, etc.
-        
-        Args:
-            data: Diccionario con los datos fuente
-            column_list: Lista de columnas a extraer
-            json_fields: Lista de campos que deben convertirse a JSON (opcional)
-            prefix: Prefijo para las claves del resultado (default: "p_")
-        
-        Returns:
-            Dict con los parámetros extraídos y prefijados
-        """
-        extracted_data = {}
-        json_fields = json_fields or []
-        
-        for column in column_list:
-            value = data.get(column)
-            
-            # Convertir a JSON si el campo está en la lista de campos JSON
-            if column in json_fields and isinstance(value, (list, dict)):
-                value = json.dumps(value, ensure_ascii=False)
-            
-            # Convertir listas/dicts a JSON por defecto si no se especificó json_fields
-            elif not json_fields and isinstance(value, (list, dict)):
-                value = json.dumps(value, ensure_ascii=False)
-            
-            extracted_data[f"{prefix}{column}"] = value
-        
-        return extracted_data
-    
-    # Métodos de compatibilidad que usan extract_params internamente
+    def extract_params_factura(data, cols): return Help.extract_params(data, cols, ["productos"])
     @staticmethod
-    def extract_params_factura(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para facturas (productos se convierte a JSON)."""
-        return Help.extract_params(data, column_list, json_fields=["productos"])
-    
+    def extract_params_compra(data, cols): return Help.extract_params(data, cols, ["productos"])
     @staticmethod
-    def extract_params_compra(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para compras (productos se convierte a JSON)."""
-        return Help.extract_params(data, column_list, json_fields=["productos"])
-    
+    def extract_params_servicio_json(data): return Help.extract_params(data, list(CAMPOS_SERVICIO_JSON), prefix="")
+
     @staticmethod
-    def extract_params_inventario(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para inventario (productos se convierte a JSON)."""
-        return Help.extract_params(data, column_list, json_fields=["productos"])
-    
-    @staticmethod
-    def extract_params_cliente_dispositivo(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para cliente_dispositivo."""
-        return Help.extract_params(data, column_list)
-    
-    @staticmethod
-    def extract_params_servicio(data: Dict[str, Any], column_list: List[str]) -> Dict[str, Any]:
-        """Compatibilidad: Extrae parámetros para servicio."""
-        return Help.extract_params(data, column_list)
-    
-    @staticmethod
-    def extract_params_servicio_json(data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Extrae y limpia los parámetros para el procedimiento de guardar servicio (JSON).
-        No usa prefijo porque las claves van dentro de un objeto JSON.
-        """
-        from .const import CAMPOS_SERVICIO_JSON
-        return Help.extract_params(data, list(CAMPOS_SERVICIO_JSON), prefix="")
-    
-    @staticmethod
-    def normalize_field_names(data: Dict[str, Any], 
-                              field_mapping: Dict[str, str]) -> Dict[str, Any]:
-        """
-        Normaliza nombres de campos en un diccionario usando un mapeo.
-        Útil para aceptar variantes de nombres de campos.
-        
-        Args:
-            data: Diccionario con los datos
-            field_mapping: Dict con mapeo {nombre_alternativo: nombre_esperado}
-        
-        Returns:
-            Dict con los nombres normalizados
-        """
-        normalized = data.copy()
-        
-        for alt_name, expected_name in field_mapping.items():
-            if alt_name in normalized and expected_name not in normalized:
-                normalized[expected_name] = normalized[alt_name]
-        
-        return normalized
-    
-    @staticmethod
-    def add_generated_id_to_data(data: Dict[str, Any], id_key: str) -> Dict[str, Any]:
-        """
-        Genera un ID aleatorio y lo agrega al diccionario si no existe o está vacío.
-        
-        Args:
-            data: Diccionario al que se le agregará el ID generado.
-            id_key: Clave del diccionario donde se guardará el ID.
-        
-        Returns:
-            Dict: El diccionario modificado con el ID generado (si no existía).
-        """
-        if id_key not in data or not data.get(id_key):
-            id_generado = Help._generation_id()
-            data[id_key] = int(id_generado)
+    def add_generated_id_to_data(data: Dict, key: str) -> Dict:
+        """Agrega ID generado si no existe."""
+        if key not in data or not data.get(key):
+            data[key] = int(Help._generation_id())
         return data
-    
+
     @staticmethod
-    def validate_required_fields(data: Dict[str, Any], 
-                                required_fields: List[str]) -> tuple[bool, Optional[List[str]]]:
-        """
-        Valida que todos los campos requeridos estén presentes y no sean None.
-        Patrón: Strategy Pattern para validación.
-        
-        Args:
-            data: Diccionario con los datos a validar
-            required_fields: Lista de campos que son obligatorios
-        
-        Returns:
-            Tupla (es_válido: bool, campos_faltantes: Optional[List[str]])
-        """
-        missing_fields = [field for field in required_fields 
-                         if field not in data or data[field] is None]
-        return (len(missing_fields) == 0, missing_fields if missing_fields else None)
-    
+    def format_date_colombia(date_val):
+        """Convierte fecha UTC a hora Colombia y formatea."""
+        if not date_val: return None
+        try:
+            # Si es string, intentar parsear (asumiendo formato ISO si viene de JSON)
+            if isinstance(date_val, str):
+                from dateutil import parser
+                date_val = parser.parse(date_val)
+            
+            # Ajustar a Colombia (UTC-5)
+            # Nota: Si el servidor ya guarda en local, esto restaría 5 horas extra.
+            # Asumimos que la BD guarda en UTC como se vio en el modelo Dispositivo.
+            local_date = date_val - timedelta(hours=5)
+            # Formato: 05/02/2026 : 05:02 pm
+            return local_date.strftime('%d/%m/%Y : %I:%M %p').lower()
+        except Exception:
+            return str(date_val)
+
     @staticmethod
-    def validate_at_least_one_field(data: Dict[str, Any], 
-                                   fields: List[str]) -> bool:
-        """
-        Valida que al menos uno de los campos especificados esté presente.
-        Patrón: Strategy Pattern para validación condicional.
-        
-        Args:
-            data: Diccionario con los datos
-            fields: Lista de campos (debe haber al menos uno)
-        
-        Returns:
-            bool: True si al menos uno está presente, False en caso contrario
-        """
-        return any(data.get(field) for field in fields)
+    def format_currency_colombia(value):
+        """Formatea moneda a pesos colombianos."""
+        if value is None: return "$ 0"
+        try:
+            val = float(value)
+            # Formato: $ 300.000 (Python usa coma por defecto, reemplazamos)
+            return "$ {:,.0f}".format(val).replace(",", ".")
+        except:
+            return str(value)
 
     @staticmethod
     def map_query_results(results: list, column_list: tuple) -> list[dict]:
-        """
-        Mapea los resultados de una consulta SQLAlchemy a una lista de diccionarios.
-        
-        Args:
-            results: Lista de resultados de la consulta (tuplas o filas)
-            column_list: Tupla/Lista con los nombres de las columnas en orden
-            
-        Returns:
-            Lista de diccionarios mapeados
-        """
-        mapped_list = []
+        """Mapea resultados de SQLAlchemy a diccionarios con formato Colombia."""
+        formatted_list = []
         for row in results:
-            item_dict = {
-                campo: row[i] for i, campo in enumerate(column_list)
-            }
-            mapped_list.append(item_dict)
-        return mapped_list
+            item = {}
+            for i, col in enumerate(column_list):
+                val = row[i]
+                if col == 'fecha_ingreso':
+                    val = Help.format_date_colombia(val)
+                elif col == 'precio_servicio':
+                    val = Help.format_currency_colombia(val)
+                item[col] = val
+            formatted_list.append(item)
+        return formatted_list
 
     @staticmethod
     def set_resource(model_method: Any, many: bool = False) -> Any:
-        # ... (rest of the method remains valid, but since I am replacing until end of file or just adding, I need to be careful with context)
-        """
-        Decorador genérico para buscar y asignar uno o varios recursos (Servicio, etc.)
-        basado en los identificadores enviados en el JSON de la petición.
-        Aplica principios DRY y Clean Code.
-        """
+        """Decorador para inyectar recursos desde el JSON de la petición."""
         from functools import wraps
         from flask import request
         from ..database.schemas import api_search
@@ -226,35 +110,80 @@ class Help:
         def decorator(f):
             @wraps(f)
             def wrapper(*args, **kwargs):
-                json_data = request.get_json(force=True) or {}
-                # Extraer criterios de búsqueda usando el esquema centralizado
-                params = api_search.load(json_data)
-                
-                # Identificar dinámicamente qué parámetros acepta el método del modelo
+                params = api_search.load(request.get_json(force=True) or {})
                 sig = inspect.signature(model_method)
-                search_args = {
-                    k: v for k, v in params.items() 
-                    if k in sig.parameters and v is not None
-                }
-                
-                # Si el método acepta 'many', pasarlo
-                if 'many' in sig.parameters:
-                    search_args['many'] = many
-                
-                # Ejecutar búsqueda
-                resource = model_method(**search_args)
-                
-                if not resource:
-                    return notFound()
-                    
-                return f(resource, *args, **kwargs)
+                search_args = {k: v for k, v in params.items() if k in sig.parameters and v is not None}
+                if 'many' in sig.parameters: search_args['many'] = many
+                res = model_method(**search_args)
+                return f(res, *args, **kwargs) if res else notFound()
             return wrapper
         return decorator
-    
+
     @staticmethod
-    def add_default_value_to_data(data: Dict[str, Any], key: str, default_value: Any):
-        """
-        Agrega un valor por defecto a un campo en el diccionario de datos si no existe.
-        """
-        if key not in data:
-            data[key] = default_value
+    def add_default_value_to_data(data: Dict, key: str, val: Any):
+        if key not in data: data[key] = val
+
+    @staticmethod
+    def init_chat_db():
+        """Inicializa SQLite para chat."""
+        if not os.path.exists(os.path.dirname(CHAT_DB_PATH)):
+            os.makedirs(os.path.dirname(CHAT_DB_PATH))
+        with sqlite3.connect(CHAT_DB_PATH) as conn:
+            with open(CHAT_SCHEMA_PATH, 'r') as f:
+                conn.executescript(f.read())
+
+    @staticmethod
+    def save_chat_message(names, phone, msg, admin_email):
+        """Guarda mensaje en SQLite."""
+        with sqlite3.connect(CHAT_DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute(SQL_CHAT_INSERT, (names, phone, msg, admin_email))
+            return cursor.lastrowid
+
+    @staticmethod
+    def get_chat_history(user_id=None):
+        """Obtiene historial de chat."""
+        with sqlite3.connect(CHAT_DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if user_id and user_id != WS_SUPPORT_ID:
+                cursor.execute(SQL_CHAT_GET_BY_USER, (user_id, user_id))
+            else:
+                cursor.execute(SQL_CHAT_GET_ALL)
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def delete_chat_history(user_id):
+        """Borra historial de un usuario."""
+        with sqlite3.connect(CHAT_DB_PATH) as conn:
+            conn.execute(SQL_CHAT_DELETE_BY_USER, (user_id, user_id))
+            return True
+
+    @staticmethod
+    def delete_chat_message(id_msg):
+        """Borra un mensaje específico."""
+        with sqlite3.connect(CHAT_DB_PATH) as conn:
+            return conn.execute(SQL_CHAT_DELETE_BY_ID, (id_msg,)).rowcount > 0
+
+    @staticmethod
+    def validate_dashboard_period(period: str) -> tuple[bool, Optional[str]]:
+        """Valida periodo del dashboard."""
+        p = period.lower().strip() if period else ""
+        if p in PERIODOS_DASHBOARD: return True, None
+        return False, f"Periodo inválido. Usar: {', '.join(PERIODOS_DASHBOARD)}"
+
+    @staticmethod
+    def get_dashboard_period_message(period: str) -> str:
+        return MENSAJES_PERIODO_DASHBOARD.get(period.lower().strip(), "OK")
+
+    @staticmethod
+    def validate_status(status: str, allowed: tuple) -> bool:
+        """Valida si un estado está en la lista permitida."""
+        return status in allowed
+
+    @staticmethod
+    def validate_service_id(id_serv: Any) -> tuple[bool, Optional[str]]:
+        try:
+            if int(id_serv) > 0: return True, None
+            return False, "ID debe ser positivo"
+        except: return False, "ID inválido"

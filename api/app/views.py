@@ -6,15 +6,28 @@ from .routers.servicios_routers import servicios_routes
 from .routers.producto_routers import productos_routes
 from .routers.proveedor_routers import proveedor_routes
 from .routers.inventario_routers import inventario_routes
-from .routers.facturas_routeres import facturas_routes
+from .routers.facturas_routers import facturas_routes
+from .routers.chat_routers import chat_routes
 from .routers.compras_routers import compras_routes
+from .routers.dashboard_routers import dashboard_routes
+from .websocket_config import check_websocket_health
 api_v1 = Blueprint('api', __name__, url_prefix='/api/v1')
+
+# ------------------------ Ruta Chat --------------------------------------
+api_v1.register_blueprint(chat_routes)
 
 # ======================== Health Check ====================================
 @api_v1.route('/health', methods=['GET'])
 def health_check():
     """Endpoint de verificación de salud del servidor."""
     return jsonify({"status": "ok", "message": "Servidor funcionando correctamente"}), 200
+
+@api_v1.route('/health/websocket', methods=['GET'])
+def websocket_health_check():
+    """Endpoint de diagnóstico para WebSocket."""
+    ws_status = check_websocket_health()
+    status_code = 200 if ws_status.get("status") == "healthy" else 503
+    return jsonify(ws_status), status_code
 
 # ======================== Ruta Cliente ====================================
 api_v1.register_blueprint(cliente_routes)
@@ -42,3 +55,6 @@ api_v1.register_blueprint(facturas_routes)
 
 # ------------------------ Ruta Compras --------------------------------------
 api_v1.register_blueprint(compras_routes)
+
+# ------------------------ Ruta Dashboard ------------------------------------
+api_v1.register_blueprint(dashboard_routes)

@@ -2,8 +2,13 @@
 Script de prueba para validar el sistema de caché.
 Ejecutar con: python api/test_cache.py
 """
+import os
 import sys
 import time
+
+# Añadir el directorio raíz al path para poder importar el paquete 'api'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from api.app.cache.cache_manager import (
     CacheManager, InMemoryCache, CacheKeyGenerator, cached
 )
@@ -22,30 +27,30 @@ def test_inmemory_cache():
     cache.set('test_key', {'data': 'test_value'}, ttl=10)
     value = cache.get('test_key')
     assert value == {'data': 'test_value'}, "SET/GET falló"
-    print("✓ SET/GET funciona")
+    print("OK: SET/GET funciona")
     
     # Test EXISTS
     assert cache.exists('test_key'), "EXISTS falló"
-    print("✓ EXISTS funciona")
+    print("OK: EXISTS funciona")
     
     # Test DELETE
     cache.delete('test_key')
     assert not cache.exists('test_key'), "DELETE falló"
-    print("✓ DELETE funciona")
+    print("OK: DELETE funciona")
     
     # Test CLEAR
     cache.set('key1', 'val1')
     cache.set('key2', 'val2')
     cache.clear()
     assert not cache.exists('key1'), "CLEAR falló"
-    print("✓ CLEAR funciona")
+    print("OK: CLEAR funciona")
     
     # Test TTL expiración
     cache.set('expiring_key', 'value', ttl=1)
     assert cache.get('expiring_key') == 'value', "TTL SET falló"
     time.sleep(1.1)
     assert cache.get('expiring_key') is None, "TTL expiración falló"
-    print("✓ TTL expiración funciona")
+    print("OK: TTL expiración funciona")
     
     # Test STATS
     cache.set('key1', 'val1')
@@ -54,7 +59,7 @@ def test_inmemory_cache():
     stats = cache.get_stats()
     assert stats['size'] == 3, "STATS falló"
     assert stats['usage_percent'] == 3.0, "STATS porcentaje falló"
-    print(f"✓ STATS funciona: {stats}")
+    print(f"OK: STATS funciona: {stats}")
 
 
 def test_cache_key_generator():
@@ -66,7 +71,7 @@ def test_cache_key_generator():
     # Sin parámetros
     key1 = CacheKeyGenerator.generate('servicios', 'get_all')
     assert key1 == 'servicios:get_all', "Generación sin parámetros falló"
-    print(f"✓ Clave sin params: {key1}")
+    print(f"OK: Clave sin params: {key1}")
     
     # Con parámetros
     key2 = CacheKeyGenerator.generate(
@@ -74,7 +79,7 @@ def test_cache_key_generator():
         {'cedula': '1234567890'}
     )
     assert 'servicios:get_by_cedula:' in key2, "Generación con parámetros falló"
-    print(f"✓ Clave con params: {key2}")
+    print(f"OK: Clave con params: {key2}")
     
     # Consistencia
     key3 = CacheKeyGenerator.generate(
@@ -82,7 +87,7 @@ def test_cache_key_generator():
         {'cedula': '1234567890'}
     )
     assert key2 == key3, "Inconsistencia en generación de clave"
-    print("✓ Consistencia de claves validada")
+    print("OK: Consistencia de claves validada")
 
 
 def test_cache_manager_singleton():
@@ -95,13 +100,13 @@ def test_cache_manager_singleton():
     mgr2 = CacheManager()
     
     assert mgr1 is mgr2, "Singleton falló: instancias diferentes"
-    print("✓ Singleton pattern funciona")
+    print("OK: Singleton pattern funciona")
     
     # Test que comparten datos
     mgr1.set('shared_key', 'value123')
     value = mgr2.get('shared_key')
     assert value == 'value123', "Managers no comparten datos"
-    print("✓ Managers comparten datos")
+    print("OK: Managers comparten datos")
 
 
 def test_cache_manager_operations():
@@ -117,21 +122,21 @@ def test_cache_manager_operations():
     mgr.set('test_key', {'servicios': [1, 2, 3]}, ttl=300)
     value = mgr.get('test_key')
     assert value == {'servicios': [1, 2, 3]}, "CacheManager SET/GET falló"
-    print("✓ CacheManager SET/GET funciona")
+    print("OK: CacheManager SET/GET funciona")
     
     # Test generate_key
     key = mgr.generate_key('servicios', 'get_all')
     assert key == 'servicios:get_all', "generate_key falló"
-    print("✓ CacheManager generate_key funciona")
+    print("OK: CacheManager generate_key funciona")
     
     # Test exists
     assert mgr.exists('test_key'), "CacheManager EXISTS falló"
-    print("✓ CacheManager EXISTS funciona")
+    print("OK: CacheManager EXISTS funciona")
     
     # Test delete
     mgr.delete('test_key')
     assert not mgr.exists('test_key'), "CacheManager DELETE falló"
-    print("✓ CacheManager DELETE funciona")
+    print("OK: CacheManager DELETE funciona")
 
 
 def test_cache_config():
@@ -143,18 +148,18 @@ def test_cache_config():
     # Test get_ttl
     ttl = get_ttl('servicios', 'get_all')
     assert ttl == 600, f"TTL servicios.get_all debería ser 600, es {ttl}"
-    print(f"✓ TTL servicios:get_all = {ttl}s")
+    print(f"OK: TTL servicios:get_all = {ttl}s")
     
     ttl = get_ttl('productos', 'get_all')
     assert ttl == 1800, f"TTL productos.get_all debería ser 1800, es {ttl}"
-    print(f"✓ TTL productos:get_all = {ttl}s")
+    print(f"OK: TTL productos:get_all = {ttl}s")
     
     ttl = get_ttl('inventario', 'get_all')
     assert ttl == 300, f"TTL inventario.get_all debería ser 300, es {ttl}"
-    print(f"✓ TTL inventario:get_all = {ttl}s")
+    print(f"OK: TTL inventario:get_all = {ttl}s")
     
-    print("✓ Configuración de TTL validada")
-    print(f"✓ Total de recursos configurados: {len(CACHE_CONFIG)}")
+    print("OK: Configuración de TTL validada")
+    print(f"OK: Total de recursos configurados: {len(CACHE_CONFIG)}")
 
 
 def test_memory_limit():
@@ -171,7 +176,7 @@ def test_memory_limit():
     
     stats = cache.get_stats()
     assert stats['size'] <= 5, "Límite de memoria no se respeta"
-    print(f"✓ Límite de memoria respetado: {stats['size']}/{stats['max_size']}")
+    print(f"OK: Límite de memoria respetado: {stats['size']}/{stats['max_size']}")
 
 
 def test_thread_safety():
@@ -200,8 +205,8 @@ def test_thread_safety():
         thread.join()
     
     stats = cache.get_stats()
-    print(f"✓ 5 threads con 100 operaciones cada una = {stats['size']} entries")
-    print("✓ Thread-safety validado (sin crashes)")
+    print(f"OK: 5 threads con 100 operaciones cada una = {stats['size']} entries")
+    print("OK: Thread-safety validado (sin crashes)")
 
 
 def test_cached_decorator():
@@ -224,26 +229,26 @@ def test_cached_decorator():
     result1 = expensive_function(param='test')
     assert result1 == 'result_test_1', "Primera llamada falló"
     assert call_count == 1, "call_count debería ser 1"
-    print("✓ Primera llamada ejecuta función")
+    print("OK: Primera llamada ejecuta función")
     
     # Segunda llamada con mismo parámetro (desde caché)
     result2 = expensive_function(param='test')
     assert result2 == 'result_test_1', "Debería retornar de caché"
     assert call_count == 1, "call_count debería seguir siendo 1"
-    print("✓ Segunda llamada usa caché")
+    print("OK: Segunda llamada usa caché")
     
     # Tercera llamada con parámetro diferente
     result3 = expensive_function(param='different')
     assert result3 == 'result_different_2', "Parámetro diferente falló"
     assert call_count == 2, "call_count debería ser 2"
-    print("✓ Parámetro diferente ejecuta función nuevamente")
+    print("OK: Parámetro diferente ejecuta función nuevamente")
 
 
 def main():
     """Ejecutar todos los tests."""
-    print("\n" + "🚀 "*20)
+    print("\n" + "* "*20)
     print("PRUEBAS DEL SISTEMA DE CACHÉ")
-    print("🚀 "*20)
+    print("* "*20)
     
     try:
         test_inmemory_cache()
@@ -256,15 +261,15 @@ def main():
         test_cached_decorator()
         
         print("\n" + "="*60)
-        print("✓ TODOS LOS TESTS PASARON EXITOSAMENTE")
+        print("OK: TODOS LOS TESTS PASARON EXITOSAMENTE")
         print("="*60 + "\n")
         return 0
         
     except AssertionError as e:
-        print(f"\n✗ ERROR EN TEST: {e}\n")
+        print(f"\nERROR EN TEST: {e}\n")
         return 1
     except Exception as e:
-        print(f"\n✗ ERROR INESPERADO: {e}\n")
+        print(f"\nERROR INESPERADO: {e}\n")
         import traceback
         traceback.print_exc()
         return 1

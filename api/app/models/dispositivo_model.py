@@ -15,7 +15,7 @@ class Dispositivo(BaseModelMixin, db.Model):
     numero_serie = Column(String(255), nullable=False)
     reporte = Column(Text, nullable=True)
     fecha_ingreso = Column(DateTime, default=datetime.utcnow, server_default=text("now()"))
-  
+
 
     # Relación con Cliente
     cliente = db.relationship('Cliente', back_populates='dispositivos')
@@ -26,7 +26,7 @@ class Dispositivo(BaseModelMixin, db.Model):
     def get_dispositivo(numero_serie):
         """Obtiene un dispositivo por su número de serie."""
         return Dispositivo.query.filter_by(numero_serie=numero_serie, activo=True).first()
-    
+
     @staticmethod
     def get_id_dispositivo(id_dispositivo):
         """Obtiene un dispositivo por su ID."""
@@ -36,7 +36,7 @@ class Dispositivo(BaseModelMixin, db.Model):
     def get_dispositivos():
         """Obtiene todos los dispositivos activos."""
         return Dispositivo.query.filter_by(activo=True).all()
-    
+
     @staticmethod
     def get_dispositivos_by_cliente(cliente_id):
         """Obtiene todos los dispositivos de un cliente específico."""
@@ -44,5 +44,3 @@ class Dispositivo(BaseModelMixin, db.Model):
 
     def __str__(self):
         return self.numero_serie  # Representación en string del objeto
-    
-    

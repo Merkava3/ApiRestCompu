@@ -5,7 +5,7 @@ from ..helpers.const import *
 class ClienteSchemas(Schema):
     class Meta:
         fields = CAMPOS_CLIENTE
-        
+
 class Dispostivoschemas(Schema):
     cliente = serializacion.Nested(ClienteSchemas)
     class Meta:
@@ -38,7 +38,7 @@ class ServiciosCedulaSchemas(Schema):
 for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
     if 'fecha' not in field_name:
         ServiciosSchemas._declared_fields[field_name] = serializacion.Str(attribute=attr_path)
-        
+
 class UsuarioSchemas(Schema):
     class Meta:
         fields = CAMPOS_USUARIO
@@ -56,9 +56,9 @@ class InventarioSchemas(Schema):
 
 class SearchSchema(Schema):
     """Esquema para extraer criterios de búsqueda de las peticiones JSON."""
-    id_servicio = serializacion.Raw(allow_none=True)   
+    id_servicio = serializacion.Raw(allow_none=True)
     cedula = serializacion.Str(allow_none=True)
-    
+
     class Meta:
         unknown = EXCLUDE
 
@@ -88,10 +88,18 @@ class ServicioReporteSchema(Schema):
     class Meta:
         fields = CAMPOS_SERVICIO_REPORTE
 
+class ServicioTareasSchema(Schema):
+    """Esquema para tareas de servicios con información de clientes y dispositivos."""
+    # Fecha formateada para mejor legibilidad
+    fecha_ingreso = serializacion.Function(lambda obj: obj['fecha_ingreso'].strftime('%d/%m/%Y') if obj.get('fecha_ingreso') and hasattr(obj['fecha_ingreso'], 'strftime') else obj.get('fecha_ingreso'))
+
+    class Meta:
+        fields = CAMPOS_SERVICIOS_TAREAS
+
 # --- search schema ---
 api_search = SearchSchema()
 
-# --- serialization cliente ----- 
+# --- serialization cliente -----
 api_cliente  = ClienteSchemas()
 api_clientes = ClienteSchemas(many=True)
 
@@ -128,3 +136,6 @@ api_servicio_ultimo_detalle = ServicioUltimoDetalleSchema()
 
 # --- serialization reporte servicios ---
 api_servicios_reporte = ServicioReporteSchema(many=True)
+
+# --- serialization tareas servicios ---
+api_servicios_tareas = ServicioTareasSchema(many=True)

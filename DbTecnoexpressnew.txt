@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ======================== CREAR TIPOS ENUM ========================
 CREATE TYPE rol_enum AS ENUM ('admin', 'tecnico', 'vendedor');
-CREATE TYPE estado_servicio_enum AS ENUM ('recibido', 'en_proceso', 'finalizado', 'entregado');
+CREATE TYPE estado_servicio_enum AS ENUM ('recibido', 'en_proceso', 'finalizado', 'entregado', 'instalado', 'revision');
 CREATE TYPE metodo_pago_enum AS ENUM ('efectivo', 'tarjeta', 'transferencia', 'credito');
 
 -- ======================== TABLA: USUARIOS ========================
@@ -58,6 +58,15 @@ CREATE TABLE dispositivos (
 CREATE INDEX idx_dispositivos_cliente ON dispositivos(cliente_id_dispositivo);
 CREATE INDEX idx_dispositivos_serie ON dispositivos(numero_serie);
 CREATE INDEX idx_dispositivos_activo ON dispositivos(activo);
+
+ALTER TABLE dispositivos
+ALTER COLUMN fecha_ingreso
+SET DEFAULT NOW();
+
+ALTER TABLE dispositivos
+ALTER COLUMN fecha_ingreso
+TYPE TIMESTAMP WITHOUT TIME ZONE
+USING (fecha_ingreso AT TIME ZONE 'America/Bogota');
 
 -- ======================== TABLA: SERVICIOS ========================
 CREATE TABLE servicios (
@@ -891,22 +900,390 @@ FROM servicios s
 INNER JOIN dispositivos d
     ON d.id_dispositivo = s.dispositivo_id_servicio;
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Resumen mensual de servicios y ganancias:
+
+login :
+
+CREATE OR REPLACE FUNCTION fn_login_usuario(p_email VARCHAR)
+RETURNS JSON
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_email        VARCHAR(255);
+    v_password     VARCHAR(255);
+    v_autenticado  BOOLEAN;
+    v_activo       BOOLEAN;
+    v_expiracion   TIMESTAMP;
+BEGIN
+    -- Obtener datos del usuario
+    SELECT 
+        email_usuario,
+        password,
+        autenticado,
+        activo,
+        token_expiration
+    INTO 
+        v_email,
+        v_password,
+        v_autenticado,
+        v_activo,
+        v_expiracion
+    FROM usuarios
+    WHERE email_usuario = p_email
+    LIMIT 1;
+
+    -- Usuario no existe
+    IF NOT FOUND THEN
+        RETURN json_build_object(
+            'email_usuario', NULL,
+            'password', NULL,
+            'autenticado', FALSE,
+            'activo', FALSE
+        );
+    END IF;
+
+    -- 🔴 Token vencido
+    IF v_expiracion IS NOT NULL
+       AND v_expiracion <= NOW() THEN
+
+        UPDATE usuarios
+        SET autenticado = FALSE,
+            activo = FALSE
+        WHERE email_usuario = p_email;
+
+        v_autenticado := FALSE;
+        v_activo := FALSE;
+
+    ELSE
+        -- 🟢 Token válido → si está autenticado, activar usuario
+        IF v_autenticado = TRUE THEN
+            UPDATE usuarios
+            SET activo = TRUE
+            WHERE email_usuario = p_email;
+
+            v_activo := TRUE;
+        END IF;
+    END IF;
+
+    -- Retorno JSON
+    RETURN json_build_object(
+        'email_usuario', v_email,
+        'password', v_password,
+        'autenticado', v_autenticado,
+        'activo', v_activo
+    );
+
+END;
+$$;
+
+
+======================================================================================================================================================================
+logout:
+
+CREATE OR REPLACE FUNCTION fn_logout_usuario(p_email VARCHAR)
+RETURNS JSON
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_email   VARCHAR(255);
+    v_activo  BOOLEAN;
+BEGIN
+    -- Verificar usuario y hacer logout
+    UPDATE usuarios
+    SET activo = FALSE,
+        autenticado = FALSE
+    WHERE email_usuario = p_email
+    RETURNING email_usuario, activo
+    INTO v_email, v_activo;
+
+    -- Si no existe el usuario
+    IF NOT FOUND THEN
+        RETURN json_build_object(
+            'email_usuario', NULL,
+            'activo', FALSE,
+            'mensaje', 'Usuario no encontrado'
+        );
+    END IF;
+
+    -- Retorno exitoso
+    RETURN json_build_object(
+        'email_usuario', v_email,
+        'activo', v_activo
+    );
+END;
+$$;
+
+======================================================================================================================================================================
+
+select fn_dashboard_resumen() crea un procedimiento almacenado para estas consultas me tiene que devolver en un json
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT COUNT(*) AS dispositivos_hoy
+FROM dispositivos
+WHERE fecha_ingreso >= date_trunc(
+        'day',
+        now() AT TIME ZONE 'America/Bogota'
+      )
+  AND fecha_ingreso < date_trunc(
+        'day',
+        now() AT TIME ZONE 'America/Bogota'
+      ) + INTERVAL '1 day';
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- registro de ingreso de dispositivos por meses
 
 SELECT
-    TO_CHAR(d.fecha_ingreso, 'YYYY-MM') AS mes,
-    COUNT(s.id_servicio) AS servicios_realizados,
-    COUNT(s.fecha_entrega) AS servicios_entregados,
-    COUNT(*) - COUNT(s.fecha_entrega) AS servicios_pendientes,
-    COALESCE(SUM(
-        CASE
-            WHEN s.fecha_entrega IS NOT NULL
-            THEN s.precio_servicio
-            ELSE 0
-        END
-    ), 0) AS ganancias_mensuales
+    TO_CHAR(
+        fecha_ingreso AT TIME ZONE 'America/Bogota',
+        'TMMonth'
+    ) AS mes,
+    EXTRACT(YEAR FROM fecha_ingreso AT TIME ZONE 'America/Bogota') AS anio,
+    COUNT(*) AS total_dispositivos
+FROM dispositivos
+GROUP BY mes, anio
+ORDER BY anio, MIN(fecha_ingreso);
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- ganancias del dia de hoy 
+
+
+SELECT
+    COALESCE(SUM(s.precio_servicio), 0) AS ganancias_hoy
 FROM servicios s
-INNER JOIN dispositivos d
+LEFT JOIN dispositivos d
     ON d.id_dispositivo = s.dispositivo_id_servicio
-GROUP BY TO_CHAR(d.fecha_ingreso, 'YYYY-MM')
-ORDER BY mes DESC;
+WHERE
+(
+    s.estado_servicio = 'entregado'
+    AND s.fecha_entrega >= date_trunc(
+          'day',
+          now() AT TIME ZONE 'America/Bogota'
+        )
+    AND s.fecha_entrega < date_trunc(
+          'day',
+          now() AT TIME ZONE 'America/Bogota'
+        ) + INTERVAL '1 day'
+)
+OR
+(
+    s.estado_servicio = 'recibido'
+    AND d.fecha_ingreso >= date_trunc(
+          'day',
+          now() AT TIME ZONE 'America/Bogota'
+        )
+    AND d.fecha_ingreso < date_trunc(
+          'day',
+          now() AT TIME ZONE 'America/Bogota'
+        ) + INTERVAL '1 day'
+);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_dashboard_resumen()
+
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    inicio_dia TIMESTAMP;
+    fin_dia    TIMESTAMP;
+BEGIN
+    -- Día actual en Colombia
+    inicio_dia := date_trunc('day', now() AT TIME ZONE 'America/Bogota');
+    fin_dia    := inicio_dia + INTERVAL '1 day';
+
+    RETURN jsonb_build_object(
+
+        /* ================= DISPOSITIVOS HOY ================= */
+        'dispositivos_hoy', (
+            SELECT COUNT(*)
+            FROM dispositivos
+            WHERE fecha_ingreso >= inicio_dia
+              AND fecha_ingreso < fin_dia
+        ),
+
+        /* ============ DISPOSITIVOS POR MES ================= */
+        'dispositivos_por_mes', (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'anio', anio,
+                    'mes', mes,
+                    'total', total_dispositivos
+                )
+                ORDER BY anio, mes_num
+            )
+            FROM (
+                SELECT
+                    EXTRACT(YEAR FROM fecha_ingreso AT TIME ZONE 'America/Bogota') AS anio,
+                    EXTRACT(MONTH FROM fecha_ingreso AT TIME ZONE 'America/Bogota') AS mes_num,
+                    TO_CHAR(
+                        fecha_ingreso AT TIME ZONE 'America/Bogota',
+                        'TMMonth'
+                    ) AS mes,
+                    COUNT(*) AS total_dispositivos
+                FROM dispositivos
+                GROUP BY anio, mes_num, mes
+            ) t
+        ),
+
+        /* ================= GANANCIAS HOY ================= */
+        'ganancias_hoy', (
+            SELECT COALESCE(SUM(s.precio_servicio), 0)
+            FROM servicios s
+            LEFT JOIN dispositivos d
+                ON d.id_dispositivo = s.dispositivo_id_servicio
+            WHERE
+            (
+                s.estado_servicio = 'entregado'
+                AND s.fecha_entrega >= inicio_dia
+                AND s.fecha_entrega < fin_dia
+            )
+            OR
+            (
+                s.estado_servicio = 'recibido'
+                AND d.fecha_ingreso >= inicio_dia
+                AND d.fecha_ingreso < fin_dia
+            )
+        )
+    );
+END;
+$$;
+
+
+==================================================================================================================================================================
+
+
+CREATE OR REPLACE FUNCTION fn_dashboard_estadisticas(p_periodo TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    resultado JSONB;
+    hoy TIMESTAMP := now() AT TIME ZONE 'America/Bogota';
+    inicio_anio TIMESTAMP := date_trunc('year', hoy);
+BEGIN
+
+/* =========================================================
+   MONTHLY → Meses transcurridos del año actual
+========================================================= */
+IF p_periodo = 'monthly' THEN
+
+    SELECT jsonb_build_object(
+        'periodo', 'monthly',
+        'labels', COALESCE(jsonb_agg(mes_nombre ORDER BY mes_num), '[]'::jsonb),
+        'data', jsonb_build_object(
+            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY mes_num), '[]'::jsonb),
+            'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY mes_num), '[]'::jsonb),
+            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY mes_num), '[]'::jsonb)
+        )
+    )
+    INTO resultado
+    FROM (
+        SELECT
+            EXTRACT(MONTH FROM m.fecha) AS mes_num,
+            TO_CHAR(m.fecha, 'TMMonth') AS mes_nombre,
+
+            COUNT(DISTINCT s.id_servicio) AS total_servicios,
+            COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
+            COALESCE(SUM(s.precio_servicio), 0) AS ganancias
+
+        FROM generate_series(
+            inicio_anio,
+            date_trunc('month', hoy),
+            interval '1 month'
+        ) m(fecha)
+
+        LEFT JOIN servicios s ON (
+            (
+                s.estado_servicio = 'entregado'
+                AND s.fecha_entrega >= m.fecha
+                AND s.fecha_entrega < m.fecha + interval '1 month'
+            )
+            OR
+            (
+                s.estado_servicio IN ('recibido', 'revision')
+            )
+        )
+
+        LEFT JOIN dispositivos d ON (
+            d.id_dispositivo = s.dispositivo_id_servicio
+            AND d.fecha_ingreso >= m.fecha
+            AND d.fecha_ingreso < m.fecha + interval '1 month'
+        )
+
+        GROUP BY m.fecha
+    ) t;
+
+/* =========================================================
+   QUARTERLY → Trimestres iniciados del año actual
+========================================================= */
+ELSIF p_periodo = 'quarterly' THEN
+
+    SELECT jsonb_build_object(
+        'periodo', 'quarterly',
+        'labels', COALESCE(jsonb_agg('Trimestre ' || trimestre ORDER BY trimestre), '[]'::jsonb),
+        'data', jsonb_build_object(
+            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY trimestre), '[]'::jsonb),
+            'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY trimestre), '[]'::jsonb),
+            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY trimestre), '[]'::jsonb)
+        )
+    )
+    INTO resultado
+    FROM (
+        SELECT
+            EXTRACT(QUARTER FROM d.fecha_ingreso) AS trimestre,
+            COUNT(DISTINCT s.id_servicio) AS total_servicios,
+            COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
+            COALESCE(SUM(s.precio_servicio), 0) AS ganancias
+        FROM servicios s
+        LEFT JOIN dispositivos d
+            ON d.id_dispositivo = s.dispositivo_id_servicio
+        WHERE d.fecha_ingreso >= inicio_anio
+          AND d.fecha_ingreso <= hoy
+        GROUP BY trimestre
+    ) t;
+
+/* =========================================================
+   ANNUALLY → Años con datos
+========================================================= */
+ELSIF p_periodo = 'annually' THEN
+
+    SELECT jsonb_build_object(
+        'periodo', 'annually',
+        'labels', COALESCE(jsonb_agg(anio ORDER BY anio), '[]'::jsonb),
+        'data', jsonb_build_object(
+            'servicios', COALESCE(jsonb_agg(total_servicios ORDER BY anio), '[]'::jsonb),
+            'dispositivos', COALESCE(jsonb_agg(total_dispositivos ORDER BY anio), '[]'::jsonb),
+            'ganancias', COALESCE(jsonb_agg(ganancias ORDER BY anio), '[]'::jsonb)
+        )
+    )
+    INTO resultado
+    FROM (
+        SELECT
+            EXTRACT(YEAR FROM d.fecha_ingreso)::TEXT AS anio,
+            COUNT(DISTINCT s.id_servicio) AS total_servicios,
+            COUNT(DISTINCT d.id_dispositivo) AS total_dispositivos,
+            COALESCE(SUM(s.precio_servicio), 0) AS ganancias
+        FROM servicios s
+        LEFT JOIN dispositivos d
+            ON d.id_dispositivo = s.dispositivo_id_servicio
+        GROUP BY anio
+    ) t;
+
+ELSE
+    RAISE EXCEPTION 'Periodo no válido. Use: monthly | quarterly | annually';
+END IF;
+
+RETURN resultado;
+END;
+$$;
+
+
+
+
+

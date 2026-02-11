@@ -31,8 +31,16 @@ class Help:
     def extract_params(data: Dict, column_list: List, json_fields: List = None, prefix: str = "p_") -> Dict:
         """Extrae y normaliza parámetros de un diccionario."""
         res, json_fields = {}, json_fields or []
+        # Lista de campos que suelen ser monetarios en este proyecto y requieren limpieza
+        monetary_fields = {'precio_servicio', 'pago', 'total', 'precio_venta', 'subtotal', 'precio', 'total_compras'}
+        
         for col in column_list:
             val = data.get(col)
+            
+            # Limpiar campo si es monetario y viene formateado como string
+            if col in monetary_fields and val is not None:
+                val = Help.parse_currency(val)
+                
             if (col in json_fields or not json_fields) and isinstance(val, (list, dict)):
                 val = json.dumps(val, ensure_ascii=False)
             res[f"{prefix}{col}"] = val
@@ -81,6 +89,20 @@ class Help:
             return "$ {:,.0f}".format(val).replace(",", ".")
         except:
             return str(value)
+
+    @staticmethod
+    def parse_currency(value):
+        """Limpia formato de moneda para guardar en BD ($ 50.000 -> 50000)."""
+        if value is None or value == "": return 0
+        if isinstance(value, (int, float)): return value
+        try:
+            # Eliminar $, espacios y puntos (separadores de miles)
+            clean_val = str(value).replace("$", "").replace(" ", "").replace(".", "")
+            # Reemplazar coma por punto para decimales si existen
+            clean_val = clean_val.replace(",", ".")
+            return float(clean_val)
+        except Exception:
+            return 0
 
     @staticmethod
     def map_query_results(results: list, column_list: tuple) -> list[dict]:
@@ -133,11 +155,11 @@ class Help:
                 conn.executescript(f.read())
 
     @staticmethod
-    def save_chat_message(names, phone, msg, admin_email):
+    def save_chat_message(nombres, telefono, chat, correo_admin):
         """Guarda mensaje en SQLite."""
         with sqlite3.connect(CHAT_DB_PATH) as conn:
             cursor = conn.cursor()
-            cursor.execute(SQL_CHAT_INSERT, (names, phone, msg, admin_email))
+            cursor.execute(SQL_CHAT_INSERT, (nombres, telefono, chat, correo_admin))
             return cursor.lastrowid
 
     @staticmethod

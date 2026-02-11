@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify
 
 from ..helpers.helpers import Help
 from ..helpers.websocket_services import WebSocketConnectionManager
+from ..websocket_config import check_websocket_health
 
 chat_routes = Blueprint('chat_routes', __name__)
 ws_manager = WebSocketConnectionManager()
@@ -34,8 +35,8 @@ def get_chat_sessions():
             continue
         unique_users[user_id] = {
             "sid": user_id,
-            "nombres": info['name'],
-            "telefono": info['phone'],
+            "nombres": info.get('name', 'Usuario'),
+            "telefono": info.get('phone', 'N/A'),
             "chat": "",
             "id_anonimo": user_id
         }
@@ -48,9 +49,12 @@ def get_user_history(user_id):
     """Retorna el historial de chat para un usuario."""
     return jsonify(Help.get_chat_history(user_id) or []), 200
 
-@chat_routes.route('/health/websocket', methods=['GET'])
-def websocket_health_check():
-    """Endpoint de diagnóstico para WebSocket."""
-    ws_status = check_websocket_health()
-    status_code = 200 if ws_status.get("status") == "healthy" else 503
-    return jsonify(ws_status), status_code
+
+@chat_routes.route('/chat/history/<user_id>', methods=['DELETE'])
+def delete_user_history(user_id):
+    """Elimina el historial de chat para un usuario."""
+    if Help.delete_chat_history(user_id):
+        return jsonify({"mensaje": "Historial eliminado exitosamente"}), 200
+    return jsonify({"error": "No se pudo eliminar el historial"}), 500
+
+

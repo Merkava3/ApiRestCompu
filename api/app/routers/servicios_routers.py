@@ -6,7 +6,7 @@ from ..helpers.helpers import Help
 from ..helpers.const import *
 from ..helpers.error_handler import handle_endpoint_errors, log_operation
 from ..cache import with_cache, invalidate_cache
-from ..models.auth_decorator import token_required
+from ..models.auth_decorator import token_required, role_required
 
 servicios_routes = Blueprint('servicios_routes', __name__)
 
@@ -55,6 +55,7 @@ def update_partial(servicio):
 @servicios_routes.route('/servicio/estado', methods=['PUT'])
 @handle_endpoint_errors
 @token_required
+@role_required('tecnico')
 @log_operation("Estado Tarea")
 @invalidate_cache(resource='servicios')
 def update_task_status():
@@ -154,6 +155,7 @@ def get_report():
 @servicios_routes.route('/servicio/tareas', methods=['GET'])
 @handle_endpoint_errors
 @token_required
+@role_required('tecnico')
 @with_cache(resource='servicios', operation='get_tareas')
 def get_tasks():
     """Listar servicios en estados activos (tareas)."""

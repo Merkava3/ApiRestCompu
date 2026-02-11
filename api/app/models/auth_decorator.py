@@ -14,57 +14,59 @@ def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
-            # 1. Obtener y validar el header Authorization
+            # El usuario indica que el frontend no envía token, sino que se identifica por correo
+            # Intentamos obtener la identidad de varias formas:
             auth_header = request.headers.get('Authorization')
-            logger.debug(f"Header Authorization recibido: {auth_header}")
+            email_val = request.headers.get('email_usuario') or request.headers.get('Email')
             
-            if not auth_header:
-                logger.warning("No se encontró header Authorization")
-                return unauthorized("Token de autenticación requerido")
+            usuario = None
 
-            # 2. Extraer el token de manera segura
-            token_parts = auth_header.split()
-            if len(token_parts) == 2 and token_parts[0].lower() == 'bearer':
-                token = token_parts[1]
-            elif len(token_parts) == 1:
-                token = token_parts[0]
-            else:
-                logger.warning(f"Formato de token inválido: {auth_header}")
-                return unauthorized("Formato de token inválido. Use: Bearer <token> o <token>")
+            # 1. Intentar por Token si existe el header Authorization
+            if auth_header:
+                token = auth_header.split()[-1]
+                usuario = Usuario.query.filter_by(token=token).first()
+                if usuario:
+                    # Validar expiración si es por token
+                    if usuario.token_expiration and usuario.token_expiration < datetime.utcnow():
+                        logger.warning(f"Token expirado para usuario {usuario.email_usuario}")
+                        return unauthorized("Sesión expirada, por favor inicie sesión de nuevo")
 
-            logger.debug(f"Token extraído: {token[:10]}...")  # Log parcial por seguridad
-
-            # 3. Buscar usuario con token válido
-            usuario = Usuario.query.filter_by(token=token).first()
+            # 2. Intentar por Email (si no se encontró por token o no se envió)
+            if not usuario and email_val:
+                usuario = Usuario.get_by_email(email_val)
+            
+            # 3. Buscar en el cuerpo del JSON o parámetros de consulta (Fallback)
             if not usuario:
-                logger.warning("Token no encontrado en base de datos")
-                return unauthorized("Renovar el token esta vencido")
+                email_from_request = None
+                if request.is_json:
+                    try:
+                        data = request.get_json(silent=True)
+                        if data:
+                            email_from_request = data.get('email_usuario') or data.get('email')
+                    except:
+                        pass
+                
+                if not email_from_request:
+                    email_from_request = request.args.get('email_usuario') or request.args.get('email')
+                
+                if email_from_request:
+                    usuario = Usuario.get_by_email(email_from_request)
 
-            # 4. Verificar expiración
-            if usuario.token_expiration < datetime.utcnow():
-                logger.warning(f"Token expirado para usuario {usuario.id_usuario}")
-                return unauthorized("Renovar el token esta vencido")
+            # Si no encontramos al usuario después de todos los intentos
+            if not usuario:
+                logger.warning("No se pudo identificar al usuario (sin token ni email)")
+                return unauthorized("Identificación requerida (Token o Email)")
 
-            # 5. Verificar estado de autenticación y activo
-            if not usuario.autenticado or not usuario.activo:
-                logger.warning(f"Usuario {usuario.id_usuario} no está autenticado o inactivo")
-                return unauthorized("Renovar el token esta vencido")
+            # Verificación que pide el usuario: "debe estar autenticado el true"
+            if not usuario.autenticado:
+                logger.warning(f"Usuario {usuario.email_usuario} encontrado pero no está autenticado (autenticado=false)")
+                return unauthorized("Usuario no autenticado")
 
-            # 6. Adjuntar usuario al contexto
+            # Adjuntar usuario al contexto para que role_required pueda usarlo
             g.current_user = usuario
-            logger.debug(f"Usuario autenticado: {usuario.email_usuario}")
+            logger.debug(f"Acceso permitido para: {usuario.email_usuario}")
 
-            # 7. Actualizar última actividad (sin bloquear la respuesta si falla)
-            try:
-                usuario.ultima_autenticacion = datetime.utcnow()
-                db.session.commit()
-                logger.debug("Última autenticación actualizada")
-            except Exception as db_error:
-                db.session.rollback()
-                logger.error(f"Error actualizando última autenticación: {str(db_error)}")
-                # No retornamos error, solo lo registramos
-
-            # Se valida si la funcion decorada acepta el argumento usuario para retornar el metodo modificado
+            # Se valida si la funcion decorada acepta el argumento usuario
             sig = signature(f)
             func_params = sig.parameters
 
@@ -78,3 +80,22 @@ def token_required(f):
             return unauthorized("Error validando autenticación")
 
     return decorated_function
+
+def role_required(role_name):
+    """
+    Decorador para restringir acceso por rol. 
+    Debe usarse después de @token_required
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not hasattr(g, 'current_user'):
+                return unauthorized("Error de sistema: Usuario no cargado para validar rol")
+            
+            if g.current_user.rol != role_name:
+                logger.warning(f"Acceso denegado: Usuario {g.current_user.email_usuario} con rol {g.current_user.rol} intentó acceder a recurso de {role_name}")
+                return unauthorized(f"Acceso denegado: Se requiere rol {role_name}")
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator

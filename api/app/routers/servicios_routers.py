@@ -65,7 +65,7 @@ def update_task_status():
     estado = data.get('estado_servicio')
     descripcion = data.get('descripcion')
     
-    if id_serv and estado and descripcion and Servicios.actualizar_estado(id_serv, estado, descripcion):
+    if id_serv and estado and descripcion is not None and Servicios.actualizar_estado(id_serv, estado, descripcion):
         return successfully(message="Estado actualizado")
     return badRequest("ID, Estado o Descripción no válido")
 

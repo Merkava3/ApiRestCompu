@@ -11,12 +11,12 @@ class Cliente(BaseModelMixin, db.Model):
     nombre_cliente = Column(String(255), nullable=False)
     direccion = Column(Text, nullable=True)
     telefono_cliente = Column(String(50), nullable=True)
+    activo = Column(Boolean, default=True)
 
 
     # Relaciones
     dispositivos = db.relationship('Dispositivo', back_populates='cliente', cascade="all, delete-orphan")
     servicios = db.relationship('Servicios', back_populates='cliente', cascade="all, delete-orphan")
-    facturas = db.relationship('Facturas', back_populates='cliente', cascade="all, delete-orphan")
 
     @staticmethod
     def get_cliente(cedula):

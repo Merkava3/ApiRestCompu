@@ -34,8 +34,6 @@ class Usuario(BaseModelMixin, db.Model):
 
     # Relaciones con otros modelos
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")
-    facturas = db.relationship('Facturas', back_populates='usuario', cascade="all, delete-orphan")
-    compras = db.relationship('Compras', back_populates='usuario', cascade="all, delete-orphan")
     
     def generate_auth_token(self, expires_in=3600):
         # Genera un token JWT y actualiza el estado del usuario

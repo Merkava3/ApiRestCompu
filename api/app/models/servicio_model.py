@@ -36,7 +36,7 @@ class Servicios(BaseModelMixin, db.Model):
             Dispositivo.marca, Dispositivo.modelo, Dispositivo.tipo, Dispositivo.numero_serie,
             Servicios.estado_servicio, Dispositivo.reporte, Dispositivo.fecha_ingreso,
             Servicios.fecha_entrega, dias_expr, Servicios.precio_servicio, Usuario.email_usuario
-        ).join(Servicios.usuario).join(Servicios.cliente).join(Servicios.dispositivo)
+        ).outerjoin(Servicios.usuario).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo)
 
     @staticmethod
     def get_servicio_all():
@@ -52,6 +52,7 @@ class Servicios(BaseModelMixin, db.Model):
         elif cedula: q = q.filter(Cliente.cedula == cedula)
         elif not many: return None
 
+        q = q.order_by(Dispositivo.fecha_ingreso.desc())
         res = Help.map_query_results(q.all(), CAMPOS_SERVICIOS_COMPLETOS)
         return res if many else (res[0] if res else None)
 
@@ -68,7 +69,7 @@ class Servicios(BaseModelMixin, db.Model):
             Servicios.id_servicio, Cliente.cedula, Cliente.nombre_cliente, Cliente.direccion,
             Cliente.telefono_cliente, Dispositivo.marca, Dispositivo.tipo, Servicios.estado_servicio,
             Dispositivo.fecha_ingreso, Servicios.precio_servicio, Usuario.email_usuario
-        ).join(Servicios.usuario).join(Servicios.cliente).join(Servicios.dispositivo).filter(Cliente.cedula == cedula)\
+        ).outerjoin(Servicios.usuario).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo).filter(Cliente.cedula == cedula)\
          .order_by(Dispositivo.fecha_ingreso.desc()).first()
         return Help.map_query_results([row], CAMPOS_SERVICIOS_CEDULA)[0] if row else None
 
@@ -80,7 +81,7 @@ class Servicios(BaseModelMixin, db.Model):
             Cliente.direccion, Cliente.telefono_cliente, Dispositivo.tipo, Dispositivo.marca,
             Dispositivo.modelo, Dispositivo.numero_serie, Dispositivo.reporte, Dispositivo.fecha_ingreso,
             Servicios.tipo_servicio, Servicios.precio_servicio
-        ).join(Servicios.usuario).join(Servicios.cliente).join(Servicios.dispositivo)\
+        ).outerjoin(Servicios.usuario).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo)\
          .order_by(Dispositivo.fecha_ingreso.desc()).first()
         return Help.map_query_results([row], CAMPOS_SERVICIO_ULTIMO_DETALLE)[0] if row else None
 
@@ -90,7 +91,7 @@ class Servicios(BaseModelMixin, db.Model):
         res = db.session.query(
             Servicios.id_servicio, Cliente.cedula, Cliente.nombre_cliente, Cliente.telefono_cliente,
             Dispositivo.fecha_ingreso, Servicios.tipo_servicio, Dispositivo.tipo, Dispositivo.reporte
-        ).join(Servicios.usuario).join(Servicios.cliente).join(Servicios.dispositivo).all()
+        ).outerjoin(Servicios.usuario).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo).all()
         return Help.map_query_results(res, CAMPOS_SERVICIO_REPORTE) if res else []
 
     @staticmethod
@@ -100,7 +101,7 @@ class Servicios(BaseModelMixin, db.Model):
             Servicios.id_servicio, Dispositivo.fecha_ingreso, Cliente.nombre_cliente,
             Cliente.telefono_cliente, Dispositivo.tipo, Dispositivo.marca, Dispositivo.modelo,
             Dispositivo.reporte, Servicios.precio_servicio, Servicios.descripcion, Servicios.estado_servicio
-        ).join(Servicios.cliente).join(Servicios.dispositivo).filter(Servicios.estado_servicio.in_(ESTADOS_SERVICIO_ACTIVOS))\
+        ).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo).filter(Servicios.estado_servicio.in_(ESTADOS_SERVICIO_ACTIVOS))\
          .order_by(Dispositivo.fecha_ingreso.desc()).all()
         return Help.map_query_results(res, CAMPOS_SERVICIOS_TAREAS)
 

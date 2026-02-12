@@ -32,7 +32,7 @@ class Help:
         """Extrae y normaliza parámetros de un diccionario."""
         res, json_fields = {}, json_fields or []
         # Lista de campos que suelen ser monetarios en este proyecto y requieren limpieza
-        monetary_fields = {'precio_servicio', 'pago', 'total', 'precio_venta', 'subtotal', 'precio', 'total_compras'}
+        monetary_fields = {'precio_servicio', 'pago', 'total'}
         
         for col in column_list:
             val = data.get(col)
@@ -46,10 +46,6 @@ class Help:
             res[f"{prefix}{col}"] = val
         return res
 
-    @staticmethod
-    def extract_params_factura(data, cols): return Help.extract_params(data, cols, ["productos"])
-    @staticmethod
-    def extract_params_compra(data, cols): return Help.extract_params(data, cols, ["productos"])
     @staticmethod
     def extract_params_servicio_json(data): return Help.extract_params(data, list(CAMPOS_SERVICIO_JSON), prefix="")
 
@@ -137,7 +133,7 @@ class Help:
                 search_args = {k: v for k, v in params.items() if k in sig.parameters and v is not None}
                 if 'many' in sig.parameters: search_args['many'] = many
                 res = model_method(**search_args)
-                return f(res, *args, **kwargs) if res else notFound()
+                return f(res, *args, **kwargs) if res is not None else notFound()
             return wrapper
         return decorator
 

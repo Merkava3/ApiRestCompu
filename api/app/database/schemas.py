@@ -42,18 +42,6 @@ for field_name, attr_path in MAPEO_ATRIBUTOS_SERVICIO.items():
 class UsuarioSchemas(Schema):
     class Meta:
         fields = CAMPOS_USUARIO
-class ProductosSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_PRODUCTOS
-
-class ProveedorSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_PROVEEDOR
-
-class InventarioSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_INVENTARIO
-
 class SearchSchema(Schema):
     """Esquema para extraer criterios de búsqueda de las peticiones JSON."""
     id_servicio = serializacion.Raw(allow_none=True)
@@ -61,22 +49,6 @@ class SearchSchema(Schema):
 
     class Meta:
         unknown = EXCLUDE
-
-class FacturasSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_FACTURAS
-
-class DetalleFacturaSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_DETALLE_FACTURA
-
-class ComprasSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_COMPRAS
-
-class DetalleCompraSchemas(Schema):
-    class Meta:
-        fields = CAMPOS_DETALLE_COMPRA
 
 class ServicioUltimoDetalleSchema(Schema):
     """Esquema para el último servicio con detalle específico."""
@@ -118,18 +90,6 @@ api_servicio_cedula = ServiciosCedulaSchemas()
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()
 api_usuarios = UsuarioSchemas(many=True)
-
-# --- serialization productos ---
-api_producto = ProductosSchemas()
-api_productos = ProductosSchemas(many=True)
-
-# --- serialization proveedor ---
-api_proveedor = ProveedorSchemas()
-api_proveedores = ProveedorSchemas(many=True)
-
-# --- serialization inventario ---
-api_inventario = InventarioSchemas()
-api_inventarios = InventarioSchemas(many=True)
 
 # --- serialization ultimo servicio detalle ---
 api_servicio_ultimo_detalle = ServicioUltimoDetalleSchema()

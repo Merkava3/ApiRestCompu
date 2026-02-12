@@ -16,9 +16,6 @@ ESTADOS_SERVICIO_ACTIVOS = ('recibido', 'revision', 'en_proceso', 'instalando')
 
 
 
-# Métodos de pago
-METODOS_PAGO = ('efectivo', 'tarjeta', 'transferencia', 'credito')
-
 # ======================== CAMPOS DE TABLAS ========================
 CAMPOS_CLIENTE = ('id_cliente', 'cedula', 'nombre_cliente', 'direccion', 'telefono_cliente')
 CAMPOS_DISPOSITIVO = ('id_dispositivo', 'cliente_id_dispositivo', 'tipo', 'marca', 'modelo', 'numero_serie', 'descripcion', 'fecha_ingreso')
@@ -30,20 +27,6 @@ CAMPOS_SERVICIOS = ("id_servicio", "cliente_id_servicio", "dispositivo_id_servic
 CAMPOS_SERVICIO_UPDATE = ("estado_servicio", "precio_servicio", "fecha_entrega")
 CAMPOS_SERVICIOS_COMPLETOS = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo_servicio", "descripcion","marca", "modelo", "tipo", "numero_serie", "estado_servicio", "reporte", "fecha_ingreso", "fecha_entrega", "dias", "precio_servicio", "email_usuario")
 CAMPOS_SERVICIOS_CEDULA = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "tipo", "estado_servicio", "fecha_ingreso", "precio_servicio", "email_usuario")
-
-CAMPOS_PRODUCTOS = ("id_producto", "nombre_producto", "descripcion", "precio_venta", "cantidad_stock")
-
-CAMPOS_PROVEEDOR = ("id_proveedor", "nit", "nombre", "informacion_contacto")
-
-CAMPOS_INVENTARIO = ("id_inventario", "id_producto", "nit", "nombre_proveedor", "nombre_producto", "precio_venta", "cantidad_stock", "ultima_actualizacion")
-
-CAMPOS_FACTURAS = ("id_factura", "cliente_id_factura", "usuario_id_factura", "fecha", "pago", "total")
-
-CAMPOS_DETALLE_FACTURA = ("id_detalle", "factura_id_detalle", "producto_id_detalle", "cantidad_detalle", "subtotal")
-
-CAMPOS_COMPRAS = ("id_compras", "proveedor_id_compras", "usuario_id_compras", "fecha_compras", "total_compras", "metodo_pago")
-
-CAMPOS_DETALLE_COMPRA = ("id_detalles_compras", "compras_id_detalles", "producto_id_detalles", "cantidad", "precio")
 
 CAMPOS_TAREAS = ("revision",'en_proceso', 'instalando' ,'finalizado')
 
@@ -97,35 +80,16 @@ ID_DISPOSITIVO = 'id_dispositivo'
 ID_USUARIO = 'id_usuario'
 EMAIL_USUARIO = 'email_usuario'
 ID_SERVICIO = 'id_servicio'
-ID_PRODUCTO = 'id_producto'
-ID_PROVEEDOR = 'id_proveedor'
-NIT = 'nit'
-ID_INVENTARIO = 'id_inventario'
-ID_FACTURA = 'id_factura'
-ID_COMPRA = 'id_compra'
-ID_DETALLES_COMPRA = 'id_detalles_compras'
-ID_DETALLE_FACTURA = 'id_detalle'
 CLIENTE_ID_DISPOSITIVO = 'cliente_id_dispositivo'
 CLIENTE_ID_SERVICIO = 'cliente_id_servicio'
 DISPOSITIVO_ID_SERVICIO = 'dispositivo_id_servicio'
 USUARIO_ID_SERVICIO = 'usuario_id_servicio'
-USUARIO_ID_FACTURA = 'usuario_id_factura'
-CLIENTE_ID_FACTURA = 'cliente_id_factura'
-USUARIO_ID_COMPRA = 'usuario_id_compras'
-PROVEEDOR_ID_COMPRA = 'proveedor_id_compras'
-PRODUCTO_ID_DETALLE = 'producto_id_detalle'
-FACTURA_ID_DETALLE = 'factura_id_detalle'
-PRODUCTO_ID_DETALLES = 'producto_id_detalles'
-COMPRAS_ID_DETALLES = 'compras_id_detalles'
 
 # ======================== MENSAJES DE RESPUESTA ========================
 SUCCESSFUL = {"mensaje": "Operación exitosa"}
 SUCCESSFULCLIENTE = {"mensaje": "Cliente creado exitosamente"}
 SUCCESSFULDEVICE = {"mensaje": "Dispositivo creado exitosamente"}
 SUCCESSFULSERVICIO = {"mensaje": "Servicio actualizado exitosamente"}
-SUCCESSFULFACTURA = {"mensaje": "Factura creada exitosamente"}
-SUCCESSFULCOMPRA = {"mensaje": "Compra creada exitosamente"}
-SUCCESSFULINVENTARIO = {"mensaje": "Inventario actualizado exitosamente"}
 
 ERROR = "Datos inválidos o faltantes"
 ERROR_NO_ENCONTRADO = "El registro no fue encontrado"

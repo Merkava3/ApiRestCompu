@@ -40,8 +40,11 @@ def handle_endpoint_errors(func):
             
             # Clasificación de error (DB vs General)
             if isinstance(e, (SQLAlchemyError, OperationalError)) or "ssl connection" in str(e).lower():
+                from ..models import db
+                db.session.rollback()  # Asegurar liberación ante errores de conexión
                 user_msg, details = _handle_db_error(e)
                 logger.error(f"DB Error: {str(e)}")
+                # Si es error de conexión, el usuario suele recargar. 503 indica que es temporal.
                 return jsonify({"code": 503, "success": False, "message": user_msg, "details": details}), 503
             
             logger.error(f"Unexpected Error: {str(e)}\n{traceback.format_exc()}")

@@ -53,9 +53,9 @@ class AppSetup:
         try:
             websocket_initialized = init_websocket(app)
             if websocket_initialized:
-                print("✅ WebSocket inicializado correctamente")
+                print("OK: WebSocket inicializado correctamente")
             else:
-                print("⚠️  WebSocket no pudo inicializarse - continuando sin chat")
+                print("WARN: WebSocket no pudo inicializarse - continuando sin chat")
         except Exception as ws_error:
-            print(f"❌ Error crítico inicializando WebSocket: {ws_error}")
-            print("🔧 Servidor continuará sin funcionalidad de chat")
+            print(f"ERROR: Error critico inicializando WebSocket: {ws_error}")
+            print("INFO: Servidor continuara sin funcionalidad de chat")

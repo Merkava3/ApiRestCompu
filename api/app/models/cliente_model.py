@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer
+from sqlalchemy import Column, String, Text, Integer, Boolean
 from . import db
 from .base_model import BaseModelMixin
 
@@ -12,7 +12,6 @@ class Cliente(BaseModelMixin, db.Model):
     direccion = Column(Text, nullable=True)
     telefono_cliente = Column(String(50), nullable=True)
     activo = Column(Boolean, default=True)
-
 
     # Relaciones
     dispositivos = db.relationship('Dispositivo', back_populates='cliente', cascade="all, delete-orphan")

@@ -1,8 +1,7 @@
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, text, Integer
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, text, Integer, Boolean
 from . import db
 from .base_model import BaseModelMixin
-
 
 class Dispositivo(BaseModelMixin, db.Model):
     __tablename__ = 'dispositivos'
@@ -15,7 +14,7 @@ class Dispositivo(BaseModelMixin, db.Model):
     numero_serie = Column(String(255), nullable=False)
     reporte = Column(Text, nullable=True)
     fecha_ingreso = Column(DateTime, default=datetime.utcnow, server_default=text("now()"))
-
+    activo = Column(Boolean, default=True)
 
     # Relación con Cliente
     cliente = db.relationship('Cliente', back_populates='dispositivos')

@@ -6,6 +6,12 @@ class Config:
     DEBUG = False
     TESTING = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+        "pool_size": 10,
+        "max_overflow": 20,
+    }
     DEFAULT_DB = 'postgresql://neondb_owner:npg_iPNr6cuTSbF8@ep-dark-lab-ahal0y0t-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', DEFAULT_DB)
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')

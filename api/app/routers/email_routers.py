@@ -22,6 +22,9 @@ def post_email():
     if not subject or not body or not to:
         return badRequest("Campos 'subject', 'body' y 'to' son requeridos")
 
+    # Depuración para ver qué se está enviando
+    print(f"\n--- DEBUG EMAIL ---\nTo: {to}\nSubject: {subject}\nBody: {body}\n-------------------\n")
+
     if mailer.send_email(subject, body, to):
         return successfully(message="Correo enviado exitosamente")
     

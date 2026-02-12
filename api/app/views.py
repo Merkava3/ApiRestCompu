@@ -5,6 +5,7 @@ from .routers.usuario_routers import usuario_routes
 from .routers.servicios_routers import servicios_routes
 from .routers.chat_routers import chat_routes
 from .routers.dashboard_routers import dashboard_routes
+from .routers.email_routers import email_routes
 from .websocket_config import check_websocket_health
 api_v1 = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -38,3 +39,6 @@ api_v1.register_blueprint(usuario_routes)
 
 # ------------------------ Ruta Dashboard ------------------------------------
 api_v1.register_blueprint(dashboard_routes)
+
+# ------------------------ Ruta Email ----------------------------------------
+api_v1.register_blueprint(email_routes)

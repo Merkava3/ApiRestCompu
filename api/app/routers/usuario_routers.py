@@ -145,7 +145,7 @@ def update_usuario(usuario):
 
 @usuario_routes.route('/usuario/login', methods=['POST'])
 def login_usuario():
-    # Login unificado usando SP de Postgres
+    # Login unificado: verifica si esta autenticado junto con el token internamente
     json = request.get_json(force=True)
     email = json.get(EMAIL_USUARIO)
     password = json.get("password")
@@ -154,27 +154,29 @@ def login_usuario():
         return badRequest("Email y password requeridos")
 
     try:
-        data = Usuario.call_login_sp(email)
-        if not data or not data.get(EMAIL_USUARIO):
+        # Busca el usuario directamente para manejo interno
+        user = Usuario.get_by_email(email)
+        
+        if not user:
             return unauthorized("Usuario no encontrado")
 
-        if not Usuario.verify_password(data.get("password"), password):
+        # Verifica la contraseña usando el método del modelo
+        if not Usuario.verify_password(user.password, password):
             return unauthorized("Contraseña incorrecta")
 
-        if not data.get("autenticado"):
-            return unauthorized("Sesión expirada o no autenticada")
-
-        # Actualizar estado activo a True
-        user = Usuario.get_by_email(email)
-        if user:
-            user.activo = True
-            user.save()
-
-        return successfully({
-            "email_usuario": data.get(EMAIL_USUARIO),
-            "autenticado": data.get("autenticado"),
-            "rol": user.rol if user else data.get("rol")
-        })
+        # Genera el token (esto actualiza autenticado=True y ultima_autenticacion en el modelo)
+        token = user.generate_auth_token()
+        user.activo = True # Marca como activo el usuario en el sistema
+        
+        if user.save():
+            return successfully({
+                "email_usuario": user.email_usuario,
+                "autenticado": user.autenticado,                
+                "rol": user.rol
+            })
+        
+        return serverError("Error al guardar estado de autenticación")
+        
     except Exception as e:
         return serverError(str(e))
 

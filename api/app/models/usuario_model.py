@@ -29,7 +29,8 @@ class Usuario(BaseModelMixin, db.Model):
     autenticado = Column(Boolean, default=False)
     ultima_autenticacion = Column(DateTime, nullable=True)
     token = Column(String(255), nullable=True)
-    token_expiration = Column(DateTime, nullable=True)    
+    token_expiration = Column(DateTime, nullable=True)
+    activo = Column(Boolean, default=False)   
 
     # Relaciones con otros modelos
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")

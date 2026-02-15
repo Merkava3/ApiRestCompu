@@ -106,13 +106,9 @@ def activate_user(token):
         })
     return badRequest("Error en activación")
 
-@usuario_routes.route('/usuario', methods=['GET', 'DELETE'])
+@usuario_routes.route('/usuario', methods=['DELETE'])
 @set_usuarios_by()
-def handle_usuario(usuario):
-    # CRUD individual de usuario
-    if request.method == 'GET':
-        return successfully(api_usuario.dump(usuario))
-    
+def handle_usuario(usuario):    
     if request.method == 'DELETE':
         return delete() if usuario.delete() else badRequest()
 
@@ -165,31 +161,41 @@ def login_usuario():
         if not Usuario.verify_password(user.password, password):
             return unauthorized("Contraseña incorrecta")
 
-        # Genera el token (esto actualiza autenticado=True y ultima_autenticacion en el modelo)
-        token = user.generate_auth_token()
+        # REQUISITO ESTRICTO: Validar que esté autenticado Y que el token NO sea null en la base de datos
+        if not user.autenticado or user.token is None:
+            return unauthorized("El usuario debe estar autenticado por un token.")
+           
+
+        # Si ya tiene token y está autenticado, solo marcamos como activo
+        user.activo = True     
+       
         
         if user.save():
             return successfully({
                 "email_usuario": user.email_usuario,
                 "autenticado": user.autenticado,                
-                "rol": user.rol
-            })
+                "rol": user.rol,               
+                "activo": user.activo
+            }, message="Usuario autenticado")
         
-        return serverError("Error al guardar estado de autenticación")
+        return serverError("Error al guardar estado de sesión")
         
     except Exception as e:
         return serverError(str(e))
 
 @usuario_routes.route('/usuario/logout', methods=['POST'])
 def logout_usuario():
-    # Logout solo actualiza activo a False
+    # Logout actualiza activo a False y revoca el token
     email = request.get_json(force=True).get(EMAIL_USUARIO)
     if not email: return badRequest("Email requerido")
 
     try:
         user = Usuario.get_by_email(email)
         if user:
+            # Revocar token (setea autenticado=False y token=None)
             user.revoke_token()
+            # Marcamos como no activo
+            user.activo = False
             if user.save():
                 return successfully({"mensaje": "Sesión cerrada correctamente"})
         return badRequest("Usuario no encontrado")

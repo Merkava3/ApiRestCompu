@@ -11,7 +11,6 @@ class Cliente(BaseModelMixin, db.Model):
     nombre_cliente = Column(String(255), nullable=False)
     direccion = Column(Text, nullable=True)
     telefono_cliente = Column(String(50), nullable=True)
-    activo = Column(Boolean, default=True)
 
     # Relaciones
     dispositivos = db.relationship('Dispositivo', back_populates='cliente', cascade="all, delete-orphan")
@@ -20,24 +19,24 @@ class Cliente(BaseModelMixin, db.Model):
     @staticmethod
     def get_cliente(cedula):
         """Obtiene un cliente por su cédula."""
-        return Cliente.query.filter_by(cedula=cedula, activo=True).first()
+        return Cliente.query.filter_by(cedula=cedula).first()
 
     @staticmethod
     def get_id_client(id_cliente):
         """Obtiene un cliente por su ID."""
-        return Cliente.query.filter_by(id_cliente=id_cliente, activo=True).first()
+        return Cliente.query.filter_by(id_cliente=id_cliente).first()
 
     @staticmethod
     def get_clientes():
-        """Obtiene todos los clientes activos."""
-        return Cliente.query.filter_by(activo=True).all()
+        """Obtiene todos los clientes."""
+        return Cliente.query.all()
 
     @classmethod
     def count_clients(cls):
-        """Cuenta el total de clientes activos."""
-        return db.session.query(db.func.count(cls.cedula)).filter(cls.activo == True).scalar()
+        """Cuenta el total de clientes."""
+        return db.session.query(db.func.count(cls.cedula)).scalar()
 
     @classmethod
     def get_last_three_clients(cls):
-        """Obtiene los últimos 3 clientes activos ordenados por fecha de creación descendente."""
-        return cls.query.filter_by(activo=True).order_by(cls.created_at.desc()).limit(3).all()
+        """Obtiene los últimos 3 clientes ordenados por ID descendente."""
+        return cls.query.order_by(cls.id_cliente.desc()).limit(3).all()

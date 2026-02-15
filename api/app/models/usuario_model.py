@@ -30,7 +30,6 @@ class Usuario(BaseModelMixin, db.Model):
     ultima_autenticacion = Column(DateTime, nullable=True)
     token = Column(String(255), nullable=True)
     token_expiration = Column(DateTime, nullable=True)    
-    activo = Column(Boolean, default=True)
 
     # Relaciones con otros modelos
     servicios = db.relationship('Servicios', back_populates='usuario', cascade="all, delete-orphan")
@@ -103,7 +102,7 @@ class Usuario(BaseModelMixin, db.Model):
 
     @staticmethod
     def get_active_users(): 
-        return Usuario.query.filter_by(activo=True).all()
+        return Usuario.query.all()
 
     # --- Procedimientos Almacenados ---
     @staticmethod

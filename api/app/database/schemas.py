@@ -68,6 +68,11 @@ class ServicioTareasSchema(Schema):
     class Meta:
         fields = CAMPOS_SERVICIOS_TAREAS
 
+class ServicioUltimoResumenSchema(Schema):
+    """Esquema para la lista simplificada de los últimos servicios."""
+    class Meta:
+        fields = CAMPOS_LISTA_ULTIMOS
+
 # --- search schema ---
 api_search = SearchSchema()
 
@@ -86,6 +91,7 @@ api_servicio_update = ServiciosUpdateSchemas()
 api_servicios_completos = ServiciosCompletosSchemas(many=True)
 api_servicio_completo = ServiciosCompletosSchemas()
 api_servicio_cedula = ServiciosCedulaSchemas()
+api_servicios_ultimo = ServicioUltimoResumenSchema(many=True)
 
 # --- serialization usuario ---
 api_usuario = UsuarioSchemas()

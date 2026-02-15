@@ -4,6 +4,7 @@ from ..models import Usuario
 from ..helpers.response import *
 from ..database.schemas import *
 from ..helpers.helpers import Help
+from ..helpers.validator_input import ValidatorInput
 from ..helpers.const import *
 from ..models.auth_decorator import token_required
 from flask import g
@@ -46,10 +47,11 @@ def post_user():
     json = request.get_json()
     if not json: return badRequest("Datos requeridos")
 
-    # Validar campos obligatorios
+    # Validar campos y formato
+    valid, msg = ValidatorInput.validate_register_input(json)
+    if not valid: return badRequest(msg)
+
     email = str(json.get(EMAIL_USUARIO, "")).strip().lower()
-    if not email or not json.get("password") or not json.get("nombre_usuario"):
-        return badRequest("Nombre, email y password son obligatorios")
 
     if Usuario.get_by_email(email):
         return badRequest("El email ya está registrado")
@@ -59,8 +61,7 @@ def post_user():
         nombre_usuario=str(json["nombre_usuario"]).strip(),
         email_usuario=email,
         rol=str(json.get("rol", "vendedor")).strip().lower(),
-        autenticado=False,
-        activo=False
+        autenticado=False
     )
     user.set_password(str(json["password"]).strip())
     user.generate_auth_token() # Genera token para el enlace
@@ -166,7 +167,6 @@ def login_usuario():
 
         # Genera el token (esto actualiza autenticado=True y ultima_autenticacion en el modelo)
         token = user.generate_auth_token()
-        user.activo = True # Marca como activo el usuario en el sistema
         
         if user.save():
             return successfully({
@@ -189,7 +189,7 @@ def logout_usuario():
     try:
         user = Usuario.get_by_email(email)
         if user:
-            user.activo = False
+            user.revoke_token()
             if user.save():
                 return successfully({"mensaje": "Sesión cerrada correctamente"})
         return badRequest("Usuario no encontrado")

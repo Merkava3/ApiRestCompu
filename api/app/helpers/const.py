@@ -14,6 +14,10 @@ ESTADOS_SERVICIO = ('recibido', "revision",'en_proceso', 'instalando' ,'finaliza
 # Estados de servicios activos (para tareas en curso)
 ESTADOS_SERVICIO_ACTIVOS = ('recibido', 'revision', 'en_proceso', 'instalando')
 
+# Dominios permitidos para registro de usuarios
+ALLOWED_DOMAINS = ('gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com')
+
+
 
 
 # ======================== CAMPOS DE TABLAS ========================
@@ -27,6 +31,7 @@ CAMPOS_SERVICIOS = ("id_servicio", "cliente_id_servicio", "dispositivo_id_servic
 CAMPOS_SERVICIO_UPDATE = ("estado_servicio", "precio_servicio", "fecha_entrega")
 CAMPOS_SERVICIOS_COMPLETOS = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "tipo_servicio", "descripcion","marca", "modelo", "tipo", "numero_serie", "estado_servicio", "reporte", "fecha_ingreso", "fecha_entrega", "dias", "precio_servicio", "email_usuario")
 CAMPOS_SERVICIOS_CEDULA = ("id_servicio", "cedula", "nombre_cliente", "direccion", "telefono_cliente", "marca", "tipo", "estado_servicio", "fecha_ingreso", "precio_servicio", "email_usuario")
+CAMPOS_LISTA_ULTIMOS = ("precio_servicio", "nombre_cliente", "telefono_cliente", "estado_servicio")
 
 CAMPOS_TAREAS = ("revision",'en_proceso', 'instalando' ,'finalizado')
 

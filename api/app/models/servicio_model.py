@@ -58,9 +58,9 @@ class Servicios(BaseModelMixin, db.Model):
 
     @staticmethod
     def get_ultimo_servicio():
-        """Últimos 10 registrados."""
-        res = Servicios._base_query().order_by(Dispositivo.fecha_ingreso.desc()).limit(10).all()
-        return Help.map_query_results(res, CAMPOS_SERVICIOS_COMPLETOS)
+        """Últimos 5 registrados (resumen)."""
+        res = Servicios._base_query().order_by(Dispositivo.fecha_ingreso.desc()).limit(5).all()
+        return Help.map_query_results(res, CAMPOS_LISTA_ULTIMOS)
 
     @staticmethod
     def get_servicio_by_cedula(cedula):

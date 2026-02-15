@@ -7,6 +7,7 @@ from ..helpers.const import *
 from ..helpers.error_handler import handle_endpoint_errors, log_operation
 from ..cache import with_cache, invalidate_cache
 from ..models.auth_decorator import token_required, role_required
+from ..helpers.validator_input import ValidatorInput
 
 servicios_routes = Blueprint('servicios_routes', __name__)
 
@@ -18,18 +19,6 @@ def get_all():
     res = Servicios.get_servicio_all()
     return successfully(api_servicios_completos.dump(res))
 
-@servicios_routes.route('/servicio', methods=['POST'])
-@handle_endpoint_errors
-@log_operation("Crear Servicio")
-@invalidate_cache(resource='servicios')
-def create():
-    """Crear nuevo servicio."""
-    data = request.get_json(force=True)
-    if not data: return badRequest()
-    Help.add_generated_id_to_data(data, ID_SERVICIO)
-    if Servicios.insertar_servicio(data):
-        return response(SUCCESSFULSERVICIO)
-    return badRequest()
 
 @servicios_routes.route('/search/servicio', methods=['POST'])
 @Help.set_resource(Servicios.get_servicio_filter, many=True)
@@ -83,6 +72,12 @@ def create_with_client():
     """Insertar servicio junto con datos de cliente."""
     data = request.get_json(force=True)
     if not data: return badRequest(ERROR)
+    
+    # Validar los datos de entrada
+    is_valid, error_message = ValidatorInput.validate_service_input(data)
+    if not is_valid:
+        return badRequest(error_message)
+    
     Help.add_generated_id_to_data(data, ID_SERVICIO)
     Help.add_default_value_to_data(data, 'estado_servicio', 'recibido')
     if Servicios.insertar_servicio(data):
@@ -92,10 +87,10 @@ def create_with_client():
 @servicios_routes.route('/servicio/ultimo', methods=['GET'])
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_ultimo')
-def get_last_10():
-    """Obtener últimos 10 servicios."""
+def get_last_5():
+    """Obtener últimos 5 servicios (resumen)."""
     res = Servicios.get_ultimo_servicio()
-    return successfully(api_servicios_completos.dump(res)) if res else notFound()
+    return successfully(api_servicios_ultimo.dump(res)) if res else notFound()
 
 @servicios_routes.route('/servicio/update', methods=['POST'])
 @handle_endpoint_errors
@@ -111,6 +106,11 @@ def update_full():
         payload = {COLUMN_LIST_ACTUALIZAR_SERVICIO[i]: params[i] for i in range(len(params))}
     else:
         payload = data
+
+    # Validar los datos de entrada
+    is_valid, error_message = ValidatorInput.validate_service_input(payload)
+    if not is_valid:
+        return badRequest(error_message)
 
     if Servicios.actualizar_servicio_completo(payload):
         return response(SUCCESSFULSERVICIO)

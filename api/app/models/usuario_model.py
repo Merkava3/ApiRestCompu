@@ -59,10 +59,9 @@ class Usuario(BaseModelMixin, db.Model):
             raise ValueError(f"Error generando token: {str(e)}")
     
     def revoke_token(self):
-        # Invalida la sesion actual del usuario
-        self.token = None
-        self.token_expiration = None
-        self.autenticado = False
+        # Invalida la sesión actual del usuario - Mantenemos token y expiration según requerimiento
+        # El logout ahora solo debe gestionar el estado 'activo'
+        self.activo = False
 
     def set_password(self, password):
         # Hashea la contraseña antes de guardar

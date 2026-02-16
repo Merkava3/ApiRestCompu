@@ -39,17 +39,22 @@ class MailerService:
         msg['To'] = to
 
         try:
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+            # Añadimos un timeout de 30 segundos para no bloquear la petición indefinidamente y dar margen a servidores lentos como Yahoo
+            with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=30) as server:
                 server.starttls()
                 server.login(self.email_user, self.email_pass)
                 server.send_message(msg)
                 logger.info(f"Correo enviado exitosamente a {to}")
                 return True
+        except smtplib.SMTPConnectError:
+            logger.error(f"Error de conexión con el servidor SMTP {self.smtp_server}")
+            return False
         except smtplib.SMTPException as e:
             logger.error(f"Error SMTP al enviar correo a {to}: {str(e)}")
             return False
         except Exception as e:
-            logger.error(f"Error inesperado al enviar correo: {str(e)}")
+            # Captura errores de timeout como [WinError 10060]
+            logger.error(f"Error inesperado al enviar correo a {to}: {str(e)}")
             return False
 
 # Instancia global para ser utilizada en la aplicación

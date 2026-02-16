@@ -10,7 +10,6 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 cliente_routes = Blueprint('cliente_routes', __name__)
 
 @cliente_routes.route('/clientes', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_clients():
     clientes = Cliente.query.all()   

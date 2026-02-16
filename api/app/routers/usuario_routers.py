@@ -100,10 +100,7 @@ def activate_user(token):
     usuario.token_expiration = datetime.utcnow() # Dispara trigger DB
     
     if usuario.save():
-        return successfully({
-            "email_usuario": usuario.email_usuario,
-            "autenticado": True
-        })
+        return jsonify({"msg": "token autenticado"}), 200
     return badRequest("Error en activación")
 
 @usuario_routes.route('/usuario', methods=['DELETE'])
@@ -185,16 +182,14 @@ def login_usuario():
 
 @usuario_routes.route('/usuario/logout', methods=['POST'])
 def logout_usuario():
-    # Logout actualiza activo a False y revoca el token
+    # Logout actualiza activo a False (el token debe persistir según requerimiento)
     email = request.get_json(force=True).get(EMAIL_USUARIO)
     if not email: return badRequest("Email requerido")
 
     try:
         user = Usuario.get_by_email(email)
         if user:
-            # Revocar token (setea autenticado=False y token=None)
-            user.revoke_token()
-            # Marcamos como no activo
+            # Marcamos como no activo para cerrar sesión
             user.activo = False
             if user.save():
                 return successfully({"mensaje": "Sesión cerrada correctamente"})

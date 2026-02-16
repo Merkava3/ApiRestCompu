@@ -18,13 +18,27 @@ class AppSetup:
     @staticmethod
     def configure_cors(app: Flask) -> None:
         """Configura el intercambio de recursos de origen cruzado (CORS)."""
+        origins = app.config.get('CORS_ORIGINS')
+        print(f"✅ [CORS] Configurando origenes: {origins}")
+        
+        # Headers adicionales comunes que podrian enviar los navegadores
+        extended_headers = HEADERS + [
+            'Cache-Control', 
+            'Pragma', 
+            'Expires', 
+            'X-Requested-With', 
+            'If-Modified-Since'
+        ]
+        
         CORS(
             app,
-            origins=app.config.get('CORS_ORIGINS', ['*']),
-            methods=METHODS,
-            allow_headers=HEADERS,
-            supports_credentials=True,
-            max_age=3600
+            resources={r"/api/*": {
+                "origins": origins,
+                "methods": METHODS,
+                "allow_headers": extended_headers,
+                "supports_credentials": True,
+                "expose_headers": ["Content-Type", "Authorization"]
+            }}
         )
 
     @staticmethod

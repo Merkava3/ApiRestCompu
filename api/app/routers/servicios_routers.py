@@ -12,6 +12,7 @@ from ..helpers.validator_input import ValidatorInput
 servicios_routes = Blueprint('servicios_routes', __name__)
 
 @servicios_routes.route('/servicios', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_all')
 def get_all():
@@ -21,12 +22,14 @@ def get_all():
 
 
 @servicios_routes.route('/search/servicio', methods=['POST'])
+@token_required
 @Help.set_resource(Servicios.get_servicio_filter, many=True)
 def search(servicios):
     """Buscar servicios por filtro."""
     return successfully(api_servicios_completos.dump(servicios))
 
 @servicios_routes.route('/servicio', methods=['PUT'])
+@token_required
 @Help.set_resource(Servicios.get_servicio_orm)
 @handle_endpoint_errors
 @log_operation("Actualizar Parcial")
@@ -42,6 +45,7 @@ def update_partial(servicio):
     return successfully(api_servicio_update.dump(servicio), "Actualizado") if servicio.save() else badRequest()
 
 @servicios_routes.route('/servicio/estado', methods=['PUT'])
+@token_required
 @handle_endpoint_errors
 @log_operation("Estado Tarea")
 @invalidate_cache(resource='servicios')
@@ -57,6 +61,7 @@ def update_task_status():
     return badRequest("ID, Estado o Descripción no válido")
 
 @servicios_routes.route('/servicio', methods=['DELETE'])
+@token_required
 @Help.set_resource(Servicios.get_servicio_orm)
 @invalidate_cache(resource='servicios')
 def delete(servicio):
@@ -64,6 +69,7 @@ def delete(servicio):
     return successfully(message="Eliminado") if servicio.delete() else badRequest()
 
 @servicios_routes.route('/servicio/cliente', methods=['POST'])
+@token_required
 @handle_endpoint_errors
 @log_operation("Insertar con Cliente")
 def create_with_client():
@@ -83,6 +89,7 @@ def create_with_client():
     return badEquals()
 
 @servicios_routes.route('/servicio/ultimo', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_ultimo')
 def get_last_5():
@@ -91,6 +98,7 @@ def get_last_5():
     return successfully(api_servicios_ultimo.dump(res)) if res else notFound()
 
 @servicios_routes.route('/servicio/update', methods=['POST'])
+@token_required
 @handle_endpoint_errors
 @log_operation("Actualizar Completo")
 @invalidate_cache(resource='servicios')
@@ -115,6 +123,7 @@ def update_full():
     return badEquals()
 
 @servicios_routes.route('/servicio/entrega_fecha', methods=['PUT'])
+@token_required
 @handle_endpoint_errors
 @log_operation("Fecha Entrega")
 @invalidate_cache(resource='servicios')
@@ -132,9 +141,10 @@ def get_by_cedula():
     data = request.get_json(force=True)
     if not data or 'cedula' not in data: return badRequest(ERROR)
     res = Servicios.get_servicio_by_cedula(data['cedula'])
-    return successfully(api_servicio_cedula.dump(res)) if res else notFound(ERROR_NO_ENCONTRADO)
+    return successfully(api_servicio_completo.dump(res)) if res else notFound(ERROR_NO_ENCONTRADO)
 
 @servicios_routes.route('/servicio/ultimo_detalle', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_ultimo_detalle')
 def get_last_detail():
@@ -143,6 +153,7 @@ def get_last_detail():
     return successfully(api_servicio_ultimo_detalle.dump(res)) if res else notFound(ERROR_NO_ENCONTRADO)
 
 @servicios_routes.route('/servicio/reporte', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_reporte')
 def get_report():
@@ -151,6 +162,7 @@ def get_report():
     return successfully(api_servicios_reporte.dump(res)) if res else notFound(ERROR_NO_ENCONTRADO)
 
 @servicios_routes.route('/servicio/tareas', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 @with_cache(resource='servicios', operation='get_tareas')
 def get_tasks():

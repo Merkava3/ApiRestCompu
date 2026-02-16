@@ -741,8 +741,32 @@ DECLARE
     v_id_dispositivo  INTEGER;
     v_id_servicio     INTEGER;
 BEGIN
+
     ---------------------------------------------------
-    -- 1. Validar usuario
+    -- 1. Obtener ID del servicio desde el JSON
+    ---------------------------------------------------
+    v_id_servicio := (p_data->>'id_servicio')::INTEGER;
+
+    IF v_id_servicio IS NULL THEN
+        RAISE EXCEPTION 'Debe enviar id_servicio';
+    END IF;
+
+    ---------------------------------------------------
+    -- 2. Validar que el servicio exista
+    ---------------------------------------------------
+    SELECT cliente_id_servicio,
+           dispositivo_id_servicio
+    INTO v_id_cliente,
+         v_id_dispositivo
+    FROM servicios
+    WHERE id_servicio = v_id_servicio;
+
+    IF v_id_cliente IS NULL THEN
+        RAISE EXCEPTION 'No existe servicio con id: %', v_id_servicio;
+    END IF;
+
+    ---------------------------------------------------
+    -- 3. Validar usuario
     ---------------------------------------------------
     SELECT id_usuario
     INTO v_id_usuario
@@ -755,40 +779,14 @@ BEGIN
     END IF;
 
     ---------------------------------------------------
-    -- 2. Buscar cliente
-    ---------------------------------------------------
-    SELECT id_cliente
-    INTO v_id_cliente
-    FROM clientes
-    WHERE cedula = p_data->>'cedula';
-
-    IF v_id_cliente IS NULL THEN
-        RAISE EXCEPTION 'Cliente no existe con cédula: %',
-            p_data->>'cedula';
-    END IF;
-
-    ---------------------------------------------------
-    -- 3. Actualizar cliente
+    -- 4. Actualizar cliente
     ---------------------------------------------------
     UPDATE clientes
     SET
         nombre_cliente   = p_data->>'nombre_cliente',
-        direccion         = p_data->>'direccion',
-        telefono_cliente  = p_data->>'telefono_cliente'
+        direccion        = p_data->>'direccion',
+        telefono_cliente = p_data->>'telefono_cliente'
     WHERE id_cliente = v_id_cliente;
-
-    ---------------------------------------------------
-    -- 4. Buscar dispositivo
-    ---------------------------------------------------
-    SELECT id_dispositivo
-    INTO v_id_dispositivo
-    FROM dispositivos
-    WHERE numero_serie = p_data->>'numero_serie';
-
-    IF v_id_dispositivo IS NULL THEN
-        RAISE EXCEPTION 'Dispositivo no existe con serie: %',
-            p_data->>'numero_serie';
-    END IF;
 
     ---------------------------------------------------
     -- 5. Actualizar dispositivo
@@ -802,27 +800,14 @@ BEGIN
     WHERE id_dispositivo = v_id_dispositivo;
 
     ---------------------------------------------------
-    -- 6. Buscar servicio asociado
-    ---------------------------------------------------
-    SELECT id_servicio
-    INTO v_id_servicio
-    FROM servicios
-    WHERE cliente_id_servicio    = v_id_cliente
-      AND dispositivo_id_servicio = v_id_dispositivo;
-
-    IF v_id_servicio IS NULL THEN
-        RAISE EXCEPTION 'No existe servicio para ese cliente y dispositivo';
-    END IF;
-
-    ---------------------------------------------------
-    -- 7. Actualizar servicio
+    -- 6. Actualizar servicio directamente por ID
     ---------------------------------------------------
     UPDATE servicios
     SET
-        tipo_servicio    = p_data->>'tipo_servicio',
-        precio_servicio  = (p_data->>'precio_servicio')::NUMERIC,
-        descripcion      = p_data->>'descripcion',
-        estado_servicio  = (p_data->>'estado_servicio')::estado_servicio_enum,
+        tipo_servicio       = p_data->>'tipo_servicio',
+        precio_servicio     = (p_data->>'precio_servicio')::NUMERIC,
+        descripcion         = p_data->>'descripcion',
+        estado_servicio     = (p_data->>'estado_servicio')::estado_servicio_enum,
         usuario_id_servicio = v_id_usuario
     WHERE id_servicio = v_id_servicio;
 
@@ -832,22 +817,25 @@ END;
 $$;
 
 CALL sp_actualizar_servicio_json(
-'{
-  "usuario_email": "lisa@planta742.com",
-  "cedula": "742742742",
+'
+{
+  "id_servicio": 27775685,
+  "usuario_email": "homero@planta742.com",
+  "cedula": "11111111188",
   "nombre_cliente": "Homer Simpson",
   "direccion": "742 Evergreen Terrace",
-  "telefono_cliente": "555-9393",
+  "telefono_cliente": "3005007400",
   "tipo": "Televisor",
   "marca": "KrustyBrand",
   "modelo": "K2000",
   "numero_serie": "SN-SIMPSON-001",
   "reporte": "Pantalla no enciende",
   "tipo_servicio": "Reparación",
-  "precio_servicio": 150.50,
+  "precio_servicio": 180000,
   "descripcion": "",
-  "estado_servicio": "finalizado"
-}'
+  "estado_servicio": "recibido"
+}
+'
 );
 
 ============================================================= asignacion tareas ===========================================================================

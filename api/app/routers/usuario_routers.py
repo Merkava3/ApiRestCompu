@@ -34,6 +34,7 @@ def set_usuarios_by():
     return decorator
 
 @usuario_routes.route('/usuarios', methods=['GET'])
+@token_required
 @handle_endpoint_errors
 def get_usuarios():
     # Obtiene lista de usuarios activos
@@ -158,21 +159,17 @@ def login_usuario():
         if not Usuario.verify_password(user.password, password):
             return unauthorized("Contraseña incorrecta")
 
-        # REQUISITO ESTRICTO: Validar que esté autenticado Y que el token NO sea null en la base de datos
-        if not user.autenticado or user.token is None:
-            return unauthorized("El usuario debe estar autenticado por un token.")
-           
-
-        # Si ya tiene token y está autenticado, solo marcamos como activo
-        user.activo = True     
-       
+        # Generar nuevo token y marcar como activo al realizar login exitoso
+        user.generate_auth_token()
+        user.activo = True  
         
         if user.save():
             return successfully({
                 "email_usuario": user.email_usuario,
                 "autenticado": user.autenticado,                
                 "rol": user.rol,               
-                "activo": user.activo
+                "activo": user.activo,
+                "token": user.token
             }, message="Usuario autenticado")
         
         return serverError("Error al guardar estado de sesión")

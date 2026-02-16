@@ -152,7 +152,7 @@ FIELD_MAPPING = {
 }
 
 METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
-HEADERS = ['Content-Type', 'Authorization']
+HEADERS = ['Content-Type', 'Authorization', 'email_usuario', 'email']
 
 # ======================== DASHBOARD ========================
 # Períodos válidos para estadísticas del dashboard

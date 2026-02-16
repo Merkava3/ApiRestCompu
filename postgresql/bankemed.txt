@@ -1,0 +1,22 @@
+Estructura de carpetas en Backend: organización profesional del proyecto
+Una buena estructura de carpetas en el backend es clave para mantener el código ordenado, escalable y fácil de mantener. Separar responsabilidades permite que cada parte del sistema tenga una función clara dentro del proyecto. A continuación, se describen las carpetas y archivos más comunes en una arquitectura backend organizada.
+config – Configuración
+Contiene archivos relacionados con la configuración general del proyecto, como conexión a la base de datos y variables globales.
+controllers – Lógica de negocio
+Gestionan lo que ocurre cuando un usuario accede a una ruta. Procesan la petición y devuelven una respuesta.
+middlewares – Intermediarios
+Son funciones que se ejecutan antes de llegar al controlador, como validaciones o verificación de autenticación.
+models – Modelos de datos
+Definen la estructura de las tablas o colecciones en la base de datos mediante esquemas.
+routes – Rutas de la API
+Especifican los endpoints disponibles y conectan las solicitudes con sus respectivos controladores.
+seeds – Datos iniciales
+Permiten insertar datos de prueba o iniciales en la base de datos para desarrollo o testing.
+services – Servicios externos
+Contienen lógica adicional o comunicación con APIs externas, manteniendo los controladores más limpios.
+utils – Utilidades
+Incluyen funciones reutilizables que apoyan diferentes partes del sistema, como formateo de datos o encriptación.
+app.js / server.js – Punto de inicio
+Es el archivo principal donde se configura e inicia el servidor.
+Conclusión
+Organizar correctamente las carpetas en un proyecto backend mejora la claridad del código, facilita el trabajo en equipo y permite que la aplicación crezca de forma estructurada y profesional.  

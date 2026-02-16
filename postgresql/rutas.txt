@@ -1,0 +1,36 @@
+en helpers.py aplicando los conceptos de buenas practicas de programacion, DRY(No te repitas), patrones de diseño y codigo limprio de robert c martin limpia el archivo de manera escalable mantenible y los comentarios que sea cortos y especificos legibles faciles de leer elimina codigo que no se esta usando  
+
+
+servicios:
+
+http://127.0.0.1:5000/api/v1/servicio/estado
+http://127.0.0.1:5000/api/v1/servicio/reporte
+http://127.0.0.1:5000/api/v1/servicio/ultimo_detalle
+http://127.0.0.1:5000/api/v1/search/servicio/cedula
+http://127.0.0.1:5000/api/v1/servicio/entrega_fecha
+http://127.0.0.1:5000/api/v1/servicio/ultimo 
+http://127.0.0.1:5000/api/v1/servicio - para eliminar
+http://127.0.0.1:5000/api/v1/servicio/update
+http://127.0.0.1:5000/api/v1/search/servicio
+http://127.0.0.1:5000/api/v1/servicio/cliente
+http://127.0.0.1:5000/api/v1/servicios
+http://127.0.0.1:5000/api/v1/servicio/tareas
+http://127.0.0.1:5000/api/v1/health
+
+usuarios:
+
+http://127.0.0.1:5000/api/v1/usuario/login
+http://127.0.0.1:5000/api/v1/usuario/register
+https://127.0.0.1:5000/api/v1/usuario/ - delete
+https://apirestcompu.onrender.com/api/v1/usuario/auth - Actualizar autentificacion arreglar
+http://127.0.0.1:5000/api/v1/usuario/logout - logout
+http://127.0.0.1:5000/api/v1/usuario/update
+http://127.0.0.1:5000/api/v1/usuario/activate//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOb25lIiwiZW1haWwiOiJob3BvZGV3MzMyQGhvbXVuby5jb20iLCJyb2wiOiJ2ZW5kZWRvciIsImlhdCI6MTc3MDkwOTQzOSwiZXhwIjoxNzcwOTEzMDM5fQ.PAU-TOBGw1cCekUr8tVsmE0R1YzGW8zsWbLMAF68jF4
+
+dasboard :
+
+http://127.0.0.1:5000/api/v1/dashboard/estadisticas?periodo=monthly		
+
+email:
+http://127.0.0.1:5000/api/v1/send-email
+

@@ -64,14 +64,9 @@ class Servicios(BaseModelMixin, db.Model):
 
     @staticmethod
     def get_servicio_by_cedula(cedula):
-        """Último servicio de un cliente por cédula."""
-        row = db.session.query(
-            Servicios.id_servicio, Cliente.cedula, Cliente.nombre_cliente, Cliente.direccion,
-            Cliente.telefono_cliente, Dispositivo.marca, Dispositivo.tipo, Servicios.estado_servicio,
-            Dispositivo.fecha_ingreso, Servicios.precio_servicio, Usuario.email_usuario
-        ).outerjoin(Servicios.usuario).outerjoin(Servicios.cliente).outerjoin(Servicios.dispositivo).filter(Cliente.cedula == cedula)\
-         .order_by(Dispositivo.fecha_ingreso.desc()).first()
-        return Help.map_query_results([row], CAMPOS_SERVICIOS_CEDULA)[0] if row else None
+        """Último servicio de un cliente por cédula (Detallado)."""
+        row = Servicios._base_query().filter(Cliente.cedula == cedula).order_by(Dispositivo.fecha_ingreso.desc()).first()
+        return Help.map_query_results([row], CAMPOS_SERVICIOS_COMPLETOS)[0] if row else None
 
     @staticmethod
     def get_ultimo_servicio_detalle():

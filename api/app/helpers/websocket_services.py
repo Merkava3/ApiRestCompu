@@ -162,10 +162,10 @@ class ChatPersistenceService(IPersistenceService):
     def save_message(self, sender: str, message: str, receiver: str, **kwargs) -> bool:
         try:
             Help.save_chat_message(
-                nombres=kwargs.get('name', 'Usuario'),
-                telefono=sender,
-                chat=message,
-                correo_admin=receiver
+                name=kwargs.get('name', 'Usuario'),
+                phone=sender,
+                msg=message,
+                admin_email=receiver
             )
             return True
         except Exception as e:

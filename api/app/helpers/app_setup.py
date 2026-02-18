@@ -17,9 +17,10 @@ class AppSetup:
 
     @staticmethod
     def configure_cors(app: Flask) -> None:
-        """Configura el intercambio de recursos de origen cruzado (CORS)."""
-        origins = app.config.get('CORS_ORIGINS')
-        print(f"✅ [CORS] Configurando origenes: {origins}")
+        """Configura el intercambio de recursos de origen cruzado (CORS) sin restricciones."""
+        # Se permite TODO el tráfico para evitar problemas con CORS
+        origins = "*"
+        print("✅ [CORS] Seguridad deshabilitada: Permitiendo TODOS los orígenes (*)")
         
         # Headers adicionales comunes que podrian enviar los navegadores
         extended_headers = HEADERS + [
@@ -27,17 +28,21 @@ class AppSetup:
             'Pragma', 
             'Expires', 
             'X-Requested-With', 
-            'If-Modified-Since'
+            'If-Modified-Since',
+            'Authorization',
+            'email_usuario'
         ]
         
+        # Al poner supports_credentials=False, permitimos el uso de "*" de forma segura
+        # y resolvemos el problema de la cabecera faltante en algunos entornos.
         CORS(
             app,
-            resources={r"/api/*": {
+            resources={r"/*": {
                 "origins": origins,
                 "methods": METHODS,
                 "allow_headers": extended_headers,
-                "supports_credentials": True,
-                "expose_headers": ["Content-Type", "Authorization"]
+                "supports_credentials": False,
+                "expose_headers": ["Content-Type", "Authorization", "email_usuario"]
             }}
         )
 

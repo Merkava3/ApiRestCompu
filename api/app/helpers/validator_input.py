@@ -20,9 +20,10 @@ class ValidatorInput:
         if not email or not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
             return False, "El correo electrónico no es válido"
         
-        domain = email.split('@')[1]
-        if domain not in ALLOWED_DOMAINS:
-            return False, f"Dominio de correo no permitido. Use: {', '.join(ALLOWED_DOMAINS)}"
+        # Se remueve la restriccion de dominios permitidos para que pueda ingresar cualquier usuario
+        # domain = email.split('@')[1]
+        # if domain not in ALLOWED_DOMAINS:
+        #     return False, f"Dominio de correo no permitido. Use: {', '.join(ALLOWED_DOMAINS)}"
 
 
         # Validar password (exactamente 8 caracteres)

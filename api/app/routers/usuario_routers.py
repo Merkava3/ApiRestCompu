@@ -144,6 +144,7 @@ def login_usuario():
     json = request.get_json(force=True)
     email = json.get(EMAIL_USUARIO)
     password = json.get("password")
+    print(email, password)
 
     if not email or not password:
         return badRequest("Email y password requeridos")

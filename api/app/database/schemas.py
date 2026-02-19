@@ -1,104 +1,76 @@
-from marshmallow import Schema, EXCLUDE, pre_dump, post_dump
+from marshmallow import Schema, EXCLUDE
 from marshmallow import fields as serializacion
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from ..models import Cliente, Dispositivo, Servicios, Usuario
 from ..helpers.const import *
 
-# ======================== BASES Y MIXINS (SOLID, DRY & CLEAN CODE) ========================
+# ======================== BASES Y MIXINS (SOLID & DRY) ========================
 
 class BaseAutoSchema(SQLAlchemyAutoSchema):
-    """Esquema base para modelos SQLAlchemy con configuración común."""
+    """Esquema base para modelos SQLAlchemy."""
     class Meta:
         load_instance = True
         include_fk = True
         unknown = EXCLUDE
 
-class ClientFieldsMixin:
-    """Encapsula los campos de Cliente para reutilización (DRY)."""
-    id_cliente = serializacion.Int(dump_only=True)
-    cedula = serializacion.Str()
-    nombre_cliente = serializacion.Str()
-    direccion = serializacion.Str()
-    telefono_cliente = serializacion.Str()
-
-class DispositivoFieldsMixin:
-    """Encapsula los campos de Dispositivo para reutilización (DRY)."""
-    id_dispositivo = serializacion.Int(dump_only=True)
-    cliente_id_dispositivo = serializacion.Int()
-    tipo = serializacion.Str()
-    marca = serializacion.Str()
-    modelo = serializacion.Str()
-    numero_serie = serializacion.Str()
-    descripcion = serializacion.Str()
-    reporte = serializacion.Str()
-    fecha_ingreso = serializacion.Raw()
-
-class ServiceBaseFieldsMixin:
-    """Campos base de la tabla Servicios."""
-    id_servicio = serializacion.Int(dump_only=True)
-    cliente_id_servicio = serializacion.Int()
-    dispositivo_id_servicio = serializacion.Int()
-    usuario_id_servicio = serializacion.Int()
-    tipo_servicio = serializacion.Str()
-    precio_servicio = serializacion.Raw() # Raw para manejar moneda/float
-    descripcion = serializacion.Str()
-    estado_servicio = serializacion.Str()
-    fecha_servicio = serializacion.Raw()
-    fecha_entrega = serializacion.Raw()
-
-class ServiceFlattenedMixin:
-    """Mapeos de atributos aplanados para Servicios (SOLID)."""
-    # Mapeos de Cliente
+class ClientMappedMixin:
+    """Campos aplanados de la relación Cliente."""
     cedula = serializacion.Str(attribute="cliente.cedula", dump_only=True)
     nombre_cliente = serializacion.Str(attribute="cliente.nombre_cliente", dump_only=True)
     direccion = serializacion.Str(attribute="cliente.direccion", dump_only=True)
     telefono_cliente = serializacion.Str(attribute="cliente.telefono_cliente", dump_only=True)
-    
-    # Mapeos de Dispositivo
+
+class DispositivoMappedMixin:
+    """Campos aplanados de la relación Dispositivo."""
     marca = serializacion.Str(attribute="dispositivo.marca", dump_only=True)
     modelo = serializacion.Str(attribute="dispositivo.modelo", dump_only=True)
-    tipo = serializacion.Str(attribute="dispositivo.tipo", dump_only=True)
     numero_serie = serializacion.Str(attribute="dispositivo.numero_serie", dump_only=True)
+    tipo_dispositivo = serializacion.Str(attribute="dispositivo.tipo", dump_only=True)
     reporte = serializacion.Str(attribute="dispositivo.reporte", dump_only=True)
     
-    # Mapeos de Usuario
+    # Campo compartido para ingreso
+    fecha_ingreso_formato = serializacion.Function(
+        lambda obj: (obj.dispositivo.fecha_ingreso if hasattr(obj, 'dispositivo') and obj.dispositivo else None).strftime('%d/%m/%Y') 
+        if hasattr(obj, 'dispositivo') and obj.dispositivo and obj.dispositivo.fecha_ingreso else None,
+        dump_only=True
+    )
+
+class UsuarioMappedMixin:
+    """Campos aplanados de la relación Usuario."""
     email_usuario = serializacion.Str(attribute="usuario.email_usuario", dump_only=True)
-    usuario_email = serializacion.Str(attribute="usuario.email_usuario", dump_only=True) # Alias para compatibilidad
     nombre_usuario = serializacion.Str(attribute="usuario.nombre_usuario", dump_only=True)
-    
-    # Campos calculados / Formateo (Lógica de Negocio)
-    dias = serializacion.Raw(dump_only=True)
-    
-    @pre_dump
-    def format_dates(self, obj, **kwargs):
-        """Formatea fechas antes de la serialización si son objetos datetime."""
-        if hasattr(obj, 'fecha_ingreso') and hasattr(obj.fecha_ingreso, 'strftime'):
-            obj.fecha_ingreso_str = obj.fecha_ingreso.strftime('%d/%m/%Y')
-        # Nota: La lógica de formateo específica de fecha_ingreso de dispositivo se maneja mejor en el serializador si es necesario
-        return obj
 
-# ======================== ESQUEMAS PRINCIPALES ========================
+# ======================== ESQUEMAS DE MODELOS ========================
 
-class ClienteSchemas(BaseAutoSchema, ClientFieldsMixin):
+class ClienteSchemas(BaseAutoSchema):
     class Meta(BaseAutoSchema.Meta):
         model = Cliente
         fields = CAMPOS_CLIENTE
 
-class Dispostivoschemas(BaseAutoSchema, DispositivoFieldsMixin):
-    # Relación anidada
+class Dispostivoschemas(BaseAutoSchema, ClientMappedMixin):
+    """Esquema para Dispositivo con información de Cliente."""
     cliente = serializacion.Nested(ClienteSchemas)
+    # Aliases
+    descripcion = serializacion.Str(attribute="reporte")
     
-    # Atributos aplanados de Cliente (Explícito como en la imagen)
-    cedula = serializacion.Str(attribute="cliente.cedula", dump_only=True)
-    nombre_cliente = serializacion.Str(attribute="cliente.nombre_cliente", dump_only=True)
-    direccion = serializacion.Str(attribute="cliente.direccion", dump_only=True)
-    telefono_cliente = serializacion.Str(attribute="cliente.telefono_cliente", dump_only=True)
-
     class Meta(BaseAutoSchema.Meta):
         model = Dispositivo
         fields = CAMPOS_DISPOSITIVO_CON_CLIENTE
 
-class ServiciosSchemas(BaseAutoSchema, ServiceBaseFieldsMixin):
+class ServiciosSchemas(BaseAutoSchema, ClientMappedMixin, DispositivoMappedMixin, UsuarioMappedMixin):
+    """Esquema base para Servicios."""
+    # Sobrescribimos fecha_ingreso de campos base si es necesario
+    fecha_ingreso = serializacion.Function(
+        lambda obj: obj.dispositivo.fecha_ingreso.strftime('%d/%m/%Y') 
+        if hasattr(obj, 'dispositivo') and obj.dispositivo and obj.dispositivo.fecha_ingreso else None,
+        dump_only=True
+    )
+    fecha_servicio = serializacion.Function(
+        lambda obj: obj.fecha_servicio.strftime('%d/%m/%Y') 
+        if hasattr(obj, 'fecha_servicio') and obj.fecha_servicio and not isinstance(obj.fecha_servicio, str) else obj.fecha_servicio,
+        dump_only=True
+    )
+
     class Meta(BaseAutoSchema.Meta):
         model = Servicios
         fields = CAMPOS_SERVICIOS
@@ -107,56 +79,71 @@ class ServiciosUpdateSchemas(ServiciosSchemas):
     class Meta(ServiciosSchemas.Meta):
         fields = CAMPOS_SERVICIO_UPDATE
 
-class ServiciosCompletosSchemas(BaseAutoSchema, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    class Meta(BaseAutoSchema.Meta):
-        model = Servicios
+class ServiciosCompletosSchemas(ServiciosSchemas):
+    """Extensión para servicios detallados con días calculados."""
+    dias = serializacion.Raw(dump_only=True)
+    
+    class Meta(ServiciosSchemas.Meta):
         fields = CAMPOS_SERVICIOS_COMPLETOS
 
-class ServiciosCedulaSchemas(BaseAutoSchema, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    class Meta(BaseAutoSchema.Meta):
-        model = Servicios
+class ServiciosCedulaSchemas(ServiciosSchemas):
+    class Meta(ServiciosSchemas.Meta):
         fields = CAMPOS_SERVICIOS_CEDULA
 
 class UsuarioSchemas(BaseAutoSchema):
-    id_usuario = serializacion.Int(dump_only=True)
-    email_usuario = serializacion.Str()
-    nombre_usuario = serializacion.Str()
-    rol = serializacion.Str()
-
     class Meta(BaseAutoSchema.Meta):
         model = Usuario
         fields = CAMPOS_USUARIO
 
-# ======================== ESQUEMAS AUXILIARES ========================
+# ======================== ESQUEMAS AUXILIARES / DICCIONARIOS ========================
 
-class SearchSchema(Schema):
+class PlainSchema(Schema):
+    """Base para esquemas que trabajan con diccionarios (Resultados de queries)."""
+    class Meta:
+        unknown = EXCLUDE
+
+class SearchSchema(PlainSchema):
     id_servicio = serializacion.Raw(allow_none=True)
     cedula = serializacion.Str(allow_none=True)
-    class Meta:
-        unknown = EXCLUDE
 
-class ServicioUltimoDetalleSchema(BaseAutoSchema, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    class Meta(BaseAutoSchema.Meta):
-        model = Servicios
+class ServicioUltimoDetalleSchema(ServiciosSchemas):
+    # Hereda mapeos pero usa campos específicos
+    class Meta(ServiciosSchemas.Meta):
         fields = CAMPOS_SERVICIO_ULTIMO_DETALLE
 
-class ServicioReporteSchema(Schema, ClientFieldsMixin, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    """Esquema para reportes (Datos suelen venir como diccionarios)."""
-    class Meta:
+class DictionaryFieldsMixin:
+    """Declara campos comunes usados en esquemas de diccionario."""
+    id_servicio = serializacion.Raw()
+    cedula = serializacion.Str()
+    nombre_cliente = serializacion.Str()
+    telefono_cliente = serializacion.Str()
+    fecha_ingreso = serializacion.Raw()
+    tipo_servicio = serializacion.Str()
+    tipo = serializacion.Str()
+    reporte = serializacion.Str()
+    marca = serializacion.Str()
+    modelo = serializacion.Str()
+    precio_servicio = serializacion.Raw()
+    descripcion = serializacion.Str()
+    estado_servicio = serializacion.Str()
+
+class ServicioReporteSchema(PlainSchema, DictionaryFieldsMixin):
+    class Meta(PlainSchema.Meta):
         fields = CAMPOS_SERVICIO_REPORTE
-        unknown = EXCLUDE
 
-class ServicioTareasSchema(Schema, ClientFieldsMixin, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    """Esquema para tareas (Datos suelen venir como diccionarios)."""
-    class Meta:
+class ServicioTareasSchema(PlainSchema, DictionaryFieldsMixin):
+    # Formateo especial para diccionarios
+    fecha_ingreso = serializacion.Function(
+        lambda obj: obj['fecha_ingreso'].strftime('%d/%m/%Y') 
+        if isinstance(obj, dict) and obj.get('fecha_ingreso') and hasattr(obj['fecha_ingreso'], 'strftime') else obj.get('fecha_ingreso'),
+        dump_only=True
+    )
+    class Meta(PlainSchema.Meta):
         fields = CAMPOS_SERVICIOS_TAREAS
-        unknown = EXCLUDE
 
-class ServicioUltimoResumenSchema(Schema, ClientFieldsMixin, ServiceBaseFieldsMixin, ServiceFlattenedMixin):
-    """Esquema para resumen (Datos suelen venir como diccionarios)."""
-    class Meta:
+class ServicioUltimoResumenSchema(PlainSchema, DictionaryFieldsMixin):
+    class Meta(PlainSchema.Meta):
         fields = CAMPOS_LISTA_ULTIMOS
-        unknown = EXCLUDE
 
 # ======================== INSTANCIAS (SINGLETONS) ========================
 

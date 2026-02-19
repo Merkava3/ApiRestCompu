@@ -2,7 +2,7 @@ simple-websocket==1.1.0
 gevent==24.11.1
 gunicorn==23.0.0
 python-dotenv
-PyJWT
+PyJWT        
 flask
 flask-cors
 flask-sock

@@ -44,7 +44,7 @@ CACHE_MEMORY_CONFIG = {
 }
 
 # Definir si usar caché globalmente
-CACHE_ENABLED = True
+CACHE_ENABLED = False
 
 # Operaciones que invalidarán caché
 CACHE_INVALIDATE_ON = ['POST', 'PUT', 'DELETE', 'PATCH']

@@ -1,2 +1,12 @@
-simple-websocket==1.1.0
-gevent==24.11.1
+flask
+flask-cors
+flask-sock
+flask-sqlalchemy
+marshmallow
+gunicorn
+gevent
+simple-websocket
+python-dotenv
+psycopg2-binary
+flask-marshmallow
+marshmallow-sqlalchemy

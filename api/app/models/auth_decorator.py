@@ -1,47 +1,48 @@
 from functools import wraps
-from flask import request, g
-from datetime import datetime
-from . import Usuario
-from . import db
+from flask import g
 from inspect import signature
-from ..helpers.response import unauthorized
+from types import SimpleNamespace
 import logging
 
 # Configurar logging
 logger = logging.getLogger(__name__)
 
 def token_required(f):
+    """
+    Versión LIBRE del decorador.
+    No valida nada, siempre permite el acceso e inyecta un usuario admin de sistema.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # MODO LIBRE: Seguridad totalmente deshabilitada
-        try:
-            # Siempre creamos un usuario de debug con rol admin para que nada falle
-            from types import SimpleNamespace
-            usuario = SimpleNamespace(
-                id_usuario=0,
-                email_usuario="libre_acceso@system",
-                rol="admin",
-                autenticado=True,
-                token="libre-token-debug"
-            )
-            g.current_user = usuario
-            
-            sig = signature(f)
-            if 'usuario' in sig.parameters:
-                return f(*args, usuario=g.current_user, **kwargs)
-            return f(*args, **kwargs)
-        except Exception as e:
-            return f(*args, **kwargs)
+        # Siempre creamos un usuario de debug con rol admin para que nada falle aguas abajo
+        g.current_user = SimpleNamespace(
+            id_usuario=0,
+            email_usuario="libre_acceso@system",
+            rol="admin",
+            autenticado=True,
+            token="libre-token-debug"
+        )
+        
+        # Inyectar el usuario si la función lo espera como argumento
+        sig = signature(f)
+        if 'usuario' in sig.parameters:
+            return f(*args, usuario=g.current_user, **kwargs)
+        
+        return f(*args, **kwargs)
 
     return decorated_function
 
 def role_required(role_name):
+    """
+    Versión LIBRE del decorador de roles.
+    Ignora cualquier validación de rol.
+    """
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # MODO LIBRE: Ignorar validación de rol
-            if not hasattr(g, 'current_user'):
-                from types import SimpleNamespace
+            # Asegurar que g.current_user exista
+            if not hasattr(g, 'current_user') or g.current_user is None:
                 g.current_user = SimpleNamespace(
                     id_usuario=0,
                     email_usuario="libre_acceso@system",

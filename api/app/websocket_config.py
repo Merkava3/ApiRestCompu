@@ -92,7 +92,7 @@ class WebSocketManager:
             Help.init_chat_db()
 
             sock = Sock(app)
-            @sock.route("/chat")
+            @sock.route("/api/v1/chat")
             def chat_endpoint(ws):
                 WebSocketConnection(ws, self._services).handle_connection()
 

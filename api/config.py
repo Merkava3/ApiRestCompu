@@ -1,8 +1,5 @@
 """Configuración de la aplicación."""
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class Config:
     """Configuración base."""
@@ -17,7 +14,7 @@ class Config:
     }
     DEFAULT_DB = 'postgresql://neondb_owner:npg_iPNr6cuTSbF8@ep-dark-lab-ahal0y0t-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', DEFAULT_DB)
-    CORS_ORIGINS = [x.strip() for x in os.getenv('CORS_ORIGINS', 'http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173').split(',')]
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
 
 class DevelopmentConfig(Config):
     DEBUG = True

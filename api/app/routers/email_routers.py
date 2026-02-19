@@ -6,7 +6,6 @@ from ..models.auth_decorator import token_required
 email_routes = Blueprint('email_routes', __name__)
 
 @email_routes.route('/send-email', methods=['POST'])
-@token_required
 def post_email():
     """
     Endpoint para enviar correos electrónicos.

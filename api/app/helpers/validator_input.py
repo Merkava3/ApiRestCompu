@@ -41,42 +41,43 @@ class ValidatorInput:
         """
         
         # Validar cedula (solo números)
-        cedula = str(data.get('cedula', ''))
+        cedula = str(data.get('cedula', '')).strip()
         if not cedula or not re.match(r"^\d+$", cedula):
             return False, "La cédula solo debe contener números"
         
-        # Validar nombre_cliente (solo letras con espacios)
-        nombre_cliente = data.get('nombre_cliente', '')
+        # Validar nombre_cliente (letras con espacios y acentos)
+        nombre_cliente = str(data.get('nombre_cliente', '')).strip()
         if not nombre_cliente or not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", nombre_cliente):
             return False, "El nombre del cliente solo debe contener letras y espacios"
         
         # Validar telefono_cliente (solo números)
-        telefono = str(data.get('telefono_cliente', ''))
+        telefono = str(data.get('telefono_cliente', '')).strip()
         if not telefono or not re.match(r"^\d+$", telefono):
             return False, "El teléfono solo debe contener números"
         
-        # Validar marca (solo letras)
-        marca = data.get('marca', '')
+        # Validar marca (letras y acentos, sin espacios)
+        marca = str(data.get('marca', '')).strip()
         if not marca or not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$", marca):
             return False, "La marca solo debe contener letras (sin espacios)"
         
-        # Validar tipo_servicio (solo letras con espacios)
-        tipo_servicio = data.get('tipo_servicio', '')
+        # Validar tipo_servicio (letras, espacios y acentos)
+        tipo_servicio = str(data.get('tipo_servicio', '')).strip()
         if not tipo_servicio or not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", tipo_servicio):
             return False, "El tipo de servicio solo debe contener letras y espacios"
         
-        # Validar modelo (números, letras y espacios, sin caracteres especiales)
-        modelo = data.get('modelo', '')
-        if not modelo or not re.match(r"^[a-zA-Z0-9\s]+$", modelo):
+        # Validar modelo (letras, números, espacios y acentos)
+        modelo = str(data.get('modelo', '')).strip()
+        if not modelo or not re.match(r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+$", modelo):
             return False, "El modelo solo debe contener letras, números y espacios (sin caracteres especiales)"
         
-        # Validar reporte (solo letras con espacios)
-        reporte = data.get('reporte', '')
-        if not reporte or not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", reporte):
-            return False, "El reporte solo debe contener letras y espacios"
+        # Validar reporte (letras, números y espacios, sin caracteres especiales)
+        # Usamos \w para soportar cualquier letra unicode + números
+        reporte = str(data.get('reporte', '')).strip()
+        if not reporte or not re.match(r"^[\w\sñÑáéíóúÁÉÍÓÚ]+$", reporte):
+            return False, "El reporte solo debe contener letras, números y espacios"
         
         # Validar precio_servicio (solo números)
-        precio_servicio = str(data.get('precio_servicio', ''))
+        precio_servicio = str(data.get('precio_servicio', '')).strip()
         if not precio_servicio or not re.match(r"^\d+$", precio_servicio):
             return False, "El precio del servicio solo debe contener números"
         

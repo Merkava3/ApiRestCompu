@@ -16,7 +16,7 @@ El sistema de validación para servicios verifica que los datos cumplan con los 
 | `marca` | Solo letras (sin espacios) | `"KrustyBrand"` | `"Krusty Brand"` |
 | `tipo_servicio` | Solo letras con espacios | `"Reparacion"` | `"Reparacion123"` |
 | `modelo` | Letras, números y espacios (sin caracteres especiales) | `"K2000"` | `"K-2000@"` |
-| `reporte` | Solo letras con espacios | `"Pantalla no enciende"` | `"Pantalla123"` |
+| `reporte` | Letras, números y espacios (sin caracteres especiales) | `"Windows 11 instalado"` | `"Dañó la board @#$"` |
 | `precio_servicio` | Solo números | `150800` | `"150.80"` |
 
 ## Ejemplo de JSON Válido
@@ -90,7 +90,7 @@ El sistema de validación para servicios verifica que los datos cumplan con los 
 4. `"La marca solo debe contener letras (sin espacios)"`
 5. `"El tipo de servicio solo debe contener letras y espacios"`
 6. `"El modelo solo debe contener letras, números y espacios (sin caracteres especiales)"`
-7. `"El reporte solo debe contener letras y espacios"`
+7. `"El reporte solo debe contener letras, números y espacios"`
 8. `"El precio del servicio solo debe contener números"`
 
 ## Implementación Técnica

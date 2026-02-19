@@ -119,14 +119,22 @@ test_cases = [
         "campo_error": "modelo"
     },
     {
-        "nombre": "Reporte con numeros",
-        "data": {**test_data_correcto, "reporte": "Pantalla123"},
-        "campo_error": "reporte"
+        "nombre": "Reporte con numeros (Debe pasar)",
+        "data": {**test_data_correcto, "reporte": "Windows 11 instalado"},
+        "campo_error": "reporte",
+        "espera_exito": True
+    },
+    {
+        "nombre": "Reporte con caracteres especiales",
+        "data": {**test_data_correcto, "reporte": "Dañó la board @#$%"},
+        "campo_error": "reporte",
+        "espera_exito": False
     },
     {
         "nombre": "Precio con decimales",
         "data": {**test_data_correcto, "precio_servicio": "150.80"},
-        "campo_error": "precio_servicio"
+        "campo_error": "precio_servicio",
+        "espera_exito": False
     },
 ]
 
@@ -134,10 +142,19 @@ for i, test_case in enumerate(test_cases, 1):
     print(f"\n{i}. {test_case['nombre']}")
     print(f"   Campo: {test_case['campo_error']} = {test_case['data'][test_case['campo_error']]}")
     is_valid, message = ValidatorInput.validate_service_input(test_case['data'])
+    
+    espera_exito = test_case.get('espera_exito', False)
+    
     if is_valid:
-        print(f"   [FALLO] Se esperaba error pero paso la validacion")
+        if espera_exito:
+            print(f"   [OK] CORRECTO: Paso la validación como se esperaba")
+        else:
+            print(f"   [FALLO] Se esperaba error pero paso la validacion")
     else:
-        print(f"   [OK] CORRECTO: {message}")
+        if espera_exito:
+            print(f"   [FALLO] Se esperaba exito pero retorno error: {message}")
+        else:
+            print(f"   [OK] CORRECTO: {message}")
 
 print("\n" + "=" * 80)
 print("FIN DE LAS PRUEBAS")

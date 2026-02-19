@@ -76,12 +76,13 @@ class ChatMessageHandler(BaseMessageHandler):
         )
 
     def _process_message(self, message: Dict[str, Any], context: IMessageContext) -> None:
+        # MODO LIBRE: Si no hay user_id, asignamos uno por defecto para permitir el chat
         if not context.user_id:
-            context.send_error("Authentication required")
-            return
+            context.user_id = message.get('user_id') or "usuario_anonimo"
+            logger.info(f"⚠️ [MODO LIBRE] Chat permitido sin auth previa para: {context.user_id}")
 
-        text = message['message'].strip()
-        receiver_id = message['receiver_id']
+        text = message.get('message', '').strip()
+        receiver_id = message.get('receiver_id')
 
         if text.lower() == f"/{WS_ACTION_CLEAN}":
             self._handle_clean(receiver_id, context)

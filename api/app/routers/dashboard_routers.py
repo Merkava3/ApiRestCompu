@@ -10,7 +10,6 @@ from sqlalchemy import text
 dashboard_routes = Blueprint('dashboard_routes', __name__)
 
 @dashboard_routes.route('/dashboard/resumen', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_dashboard_resumen():
     """
@@ -54,7 +53,6 @@ def get_dashboard_resumen():
 
 
 @dashboard_routes.route('/dashboard/estadisticas', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_dashboard_estadisticas():
     """
@@ -105,7 +103,6 @@ def get_dashboard_estadisticas():
 
 
 @dashboard_routes.route('/dashboard/pie-estado-mes', methods=['GET'])
-@token_required
 def get_dashboard_pie_estado_mes():
     """
     Obtiene los datos para el gráfico de torta de estados del mes actual.
@@ -129,7 +126,6 @@ def get_dashboard_pie_estado_mes():
 
 
 @dashboard_routes.route('/dashboard/bar-meses-anio', methods=['GET'])
-@token_required
 def get_dashboard_bar_meses_anio():
     """
     Obtiene los datos para el gráfico de barras por meses del año actual.

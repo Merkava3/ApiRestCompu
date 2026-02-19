@@ -31,14 +31,12 @@ def set_dispositivo_by():
     return decorator
 
 @dispositivo_routes.route('/dispositivos', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_dispositivos():
     dispositivo = Dispositivo.get_dispositivos_con_clientes() 
     return successfully(api_dispositivos.dump(dispositivo))
 
 @dispositivo_routes.route('/dispositivo', methods=['POST'])
-@token_required
 @handle_endpoint_errors
 @log_operation("Crear Dispositivo")
 def post_dispositivo():
@@ -53,19 +51,16 @@ def post_dispositivo():
     return badRequest()
 
 @dispositivo_routes.route('/dispositivo', methods=['GET'])
-@token_required
 @set_dispositivo_by()
 def get_dispositivo(dispositivo):  
     return successfully(api_dispositivo.dump(dispositivo))
 
 @dispositivo_routes.route('/IDdispositivo', methods=['GET'])
-@token_required
 @set_dispositivo_by()
 def get_id_dispositivo(dispositivo):  
     return successfully(api_dispositivo.dump(dispositivo))
 
 @dispositivo_routes.route('/dispositivo', methods=['DELETE'])
-@token_required
 @set_dispositivo_by()
 def delete_dispositivo(dispositivo):
     if dispositivo.delete():
@@ -73,7 +68,6 @@ def delete_dispositivo(dispositivo):
     return badRequest()
 
 @dispositivo_routes.route('/dispositivo', methods=['PUT'])
-@token_required
 @set_dispositivo_by()
 @handle_endpoint_errors
 @log_operation("Actualizar Dispositivo")
@@ -86,7 +80,6 @@ def update_dispositivo(dispositivo):
     return badRequest()
 
 @dispositivo_routes.route('/dispositivo/cliente', methods=['POST'])
-@token_required
 @handle_endpoint_errors
 @log_operation("Insertar Dispositivo con Cliente")
 def post_cliente_dispositivo():

@@ -34,7 +34,6 @@ def set_usuarios_by():
     return decorator
 
 @usuario_routes.route('/usuarios', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_usuarios():
     # Obtiene lista de usuarios activos
@@ -196,15 +195,9 @@ def logout_usuario():
         return serverError(str(e))
 
 @usuario_routes.route('/usuario/me', methods=['GET'])
-@token_required
-def get_current_user(usuario):
-    # Retorna datos del usuario actual autenticado
-    return successfully({"usuario": api_usuario.dump(usuario), "is_authenticated": True})
+def get_current_user():
+    return successfully({"mensaje": "Endpoint libre (sin usuario específico)"})
 
 @usuario_routes.route('/renovar-token', methods=['POST'])
-@token_required
 def renovar_token():
-    # Genera nuevo token para sesion activa
-    usuario = g.current_user
-    usuario.generate_auth_token()
-    return successfully({"token": usuario.token}) if usuario.save() else badRequest()
+    return successfully({"mensaje": "Endpoint libre"})

@@ -150,11 +150,14 @@ class Servicios(BaseModelMixin, db.Model):
 
     @classmethod
     def actualizar_fecha_entrega(cls, data):
-        """Actualiza fecha de entrega a NOW()."""
+        """Actualiza fecha de entrega a NOW() y el estado a 'entregado'."""
         try:
             id_serv = data.get(ID_SERVICIO)
             if not id_serv: return False
-            nrows = db.session.query(cls).filter(cls.id_servicio == id_serv).update({cls.fecha_entrega: func.now()}, synchronize_session=False)
+            nrows = db.session.query(cls).filter(cls.id_servicio == id_serv).update({
+                cls.fecha_entrega: func.now(),
+                cls.estado_servicio: 'entregado'
+            }, synchronize_session=False)
             db.session.commit()
             return nrows > 0
         except Exception:

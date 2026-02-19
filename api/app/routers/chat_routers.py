@@ -13,7 +13,6 @@ ws_manager = WebSocketConnectionManager()
 
 
 @chat_routes.route('/chat/sessions', methods=['GET'])
-@token_required
 def get_chat_sessions():
     """Retorna todas las sesiones de chat."""
     history = Help.get_chat_history() or []
@@ -47,14 +46,12 @@ def get_chat_sessions():
 
 
 @chat_routes.route('/chat/history/<user_id>', methods=['GET'])
-@token_required
 def get_user_history(user_id):
     """Retorna el historial de chat para un usuario."""
     return jsonify(Help.get_chat_history(user_id) or []), 200
 
 
 @chat_routes.route('/chat/history/<user_id>', methods=['DELETE'])
-@token_required
 def delete_user_history(user_id):
     """Elimina el historial de chat para un usuario."""
     if Help.delete_chat_history(user_id):

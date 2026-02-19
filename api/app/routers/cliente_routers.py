@@ -10,20 +10,17 @@ from ..helpers.error_handler import handle_endpoint_errors, log_operation
 cliente_routes = Blueprint('cliente_routes', __name__)
 
 @cliente_routes.route('/clientes', methods=['GET'])
-@token_required
 @handle_endpoint_errors
 def get_clients():
     clientes = Cliente.query.all()   
     return successfully(api_clientes.dump(clientes))
    
 @cliente_routes.route('/cliente', methods=['GET'])
-@token_required
 @Help.set_resource(Cliente.get_cliente)
 def get_client(cliente):
     return successfully(api_cliente.dump(cliente))
 
 @cliente_routes.route('/cliente', methods=['POST'])
-@token_required
 @handle_endpoint_errors
 @log_operation("Crear Cliente")
 def post_client():
@@ -40,7 +37,6 @@ def post_client():
     return badRequest()  
 
 @cliente_routes.route('/cliente', methods=['PUT'])
-@token_required
 @Help.set_resource(Cliente.get_id_client)
 @handle_endpoint_errors
 @log_operation("Actualizar Cliente")
@@ -52,7 +48,6 @@ def update_client(cliente):
     return badRequest()
 
 @cliente_routes.route('/cliente', methods=['DELETE'])
-@token_required
 @Help.set_resource(Cliente.get_cliente)
 @handle_endpoint_errors
 @log_operation("Eliminar Cliente")
@@ -62,13 +57,11 @@ def delete_client(cliente):
     return badRequest()
 
 @cliente_routes.route('/clientes/count', methods=['GET'])
-@token_required
 def count_clients():
     count = Cliente.count_clients()
     return successfully({"total_clients": count})
 
 @cliente_routes.route('/clientes/ultimos', methods=['GET'])
-@token_required
 def three_clients():
    theree= Cliente.get_last_three_clients()
    return successfully(api_clientes.dump(theree))
